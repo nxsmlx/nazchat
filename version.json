@@ -1,0 +1,8 @@
+{
+  "version": "2.0.0",
+  "versionCode": 5,
+  "name": "NazChat",
+  "changelog": "Polished workspace UI, composer model selector, image and document attachments, reasoning depth controls, backup tools, and GitHub update checks.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
+}

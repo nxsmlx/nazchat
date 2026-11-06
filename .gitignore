@@ -1,0 +1,14 @@
+# Android build outputs
+nazchat-apk/obj/
+nazchat-apk/out/
+nazchat-apk/base.apk
+nazchat-apk/compiled.flata
+nazchat-apk/nazchat.keystore
+nazchat-apk/NazChat.apk
+nazchat-apk/NazChat.apk.idsig
+nazchat-apk/build.log
+
+# Local/test files
+.attachments/
+*.log
+.DS_Store
