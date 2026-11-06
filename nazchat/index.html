@@ -152,10 +152,16 @@ header{display:flex; align-items:center; gap:6px; padding:10px 10px; padding-top
 #composerWrap{padding:10px 12px calc(12px + var(--safe-b)); background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 88%,transparent),var(--bg)); border-top:1px solid var(--border);}
 #composer{max-width:820px; margin:0 auto;}
 #toggles{display:flex; align-items:center; gap:7px; margin-bottom:9px; overflow-x:auto; scrollbar-width:none; padding:0 2px;}
-.model-chip{display:flex;align-items:center;gap:7px;max-width:220px;flex:1;min-width:150px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:8px 11px;font-size:12px;font-weight:700;overflow:hidden;}
-.model-chip .model-orb{width:23px;height:23px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#67e8c4);color:#062a21;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
-.model-chip .model-label{overflow:hidden;text-align:left;white-space:nowrap;text-overflow:ellipsis;}
-.model-chip .model-label small{display:block;color:var(--text2);font-size:10px;font-weight:500;margin-top:2px;overflow:hidden;text-overflow:ellipsis;}
+.model-chip{display:flex;align-items:center;gap:6px;max-width:168px;flex:0 1 168px;min-width:118px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:11px;padding:6px 8px;font-size:11px;font-weight:800;overflow:hidden;}
+.model-chip .model-orb{width:20px;height:20px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#67e8c4);color:#062a21;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;}
+.model-chip .model-label{overflow:hidden;text-align:left;white-space:nowrap;text-overflow:ellipsis;line-height:1.1;}
+.model-chip .model-label small{display:none;}
+.model-chip>span:last-child{font-size:12px;color:var(--text2);margin-left:auto;}
+.tool-cluster{display:flex;align-items:center;gap:2px;padding:2px;background:color-mix(in srgb,var(--bg3) 75%,transparent);border:1px solid var(--border);border-radius:11px;flex-shrink:0;}
+.tool-btn{width:31px;height:31px;border:0;border-radius:8px;background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:15px;padding:0;position:relative;}
+.tool-btn .tool-label{display:none;}
+.tool-btn.on{background:rgba(16,163,127,.16);color:var(--accent);}
+.tool-btn:active{background:var(--bg);transform:scale(.94);}
 #toggles .tgl{flex-shrink:0;}
 #toggles::-webkit-scrollbar{display:none;}
 .tgl{display:flex; align-items:center; gap:6px; background:var(--bg3); border:1px solid var(--border); border-radius:999px; padding:7px 13px; font-size:13px; color:var(--text2); white-space:nowrap; flex-shrink:0; font-weight:600;}
@@ -205,8 +211,10 @@ header{display:flex; align-items:center; gap:6px; padding:10px 10px; padding-top
 /* Model picker */
 .model-search{margin-bottom:5px;}
 .model-search input{background:var(--bg3);border-radius:12px;padding:11px 13px;font-size:14px;}
-.model-group{font-size:11px; font-weight:800; color:var(--text2); text-transform:uppercase; letter-spacing:.1em; margin:14px 0 5px;}
+.model-group{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0 5px;padding:8px 9px;border-radius:10px;background:var(--bg3);font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;cursor:pointer;}
+.model-group .group-chevron{font-size:14px;transition:transform .18s}.model-group.closed .group-chevron{transform:rotate(-90deg)}
 .model-item small{color:var(--text2);opacity:.8;}
+@media (max-width:370px){.model-chip{min-width:105px;max-width:135px}.tool-btn{width:29px;height:29px;font-size:14px;}}
 .model-item{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 12px; border-radius:10px; cursor:pointer;}
 .model-item:active{background:var(--bg3);}
 .model-item.sel{background:rgba(16,163,127,.14);}
@@ -288,10 +296,12 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
     <div id="composerWrap">
       <div id="composer">
         <div id="toggles">
-          <button class="model-chip" id="bottomModelBtn" aria-label="Choose model"><span class="model-orb">✦</span><span class="model-label"><span id="modelName">Select a model</span><small id="providerName">Choose provider</small></span><span>⌄</span></button>
-          <button class="tgl" id="tglThink">🧠 Thinking</button>
-          <button class="tgl" id="effortBtn">Depth · High</button>
-          <button class="tgl" id="tglSearch">🌐 Search</button>
+          <button class="model-chip" id="bottomModelBtn" aria-label="Choose model" title="Choose model"><span class="model-orb">✦</span><span class="model-label"><span id="modelName">Select a model</span><small id="providerName">Choose provider</small></span><span>⌄</span></button>
+          <div class="tool-cluster" aria-label="Chat tools">
+            <button class="tool-btn" id="tglThink" aria-label="Toggle thinking" title="Thinking">🧠<span class="tool-label">Thinking</span></button>
+            <button class="tool-btn" id="effortBtn" aria-label="Reasoning depth" title="Reasoning depth">◒<span class="tool-label">High</span></button>
+            <button class="tool-btn" id="tglSearch" aria-label="Toggle web search" title="Web search">⌕<span class="tool-label">Search</span></button>
+          </div>
         </div>
         <div id="attachmentPreview"></div>
         <div id="inputRow">
@@ -324,7 +334,7 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
       <button class="icon-btn" id="settingsBtn" title="Providers"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
       <button class="icon-btn" id="themeBtn" title="Theme">🌙</button>
       <div style="flex:1"></div>
-      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.5</span>
+      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.5.1</span>
     </div>
   </div>
 </div>
@@ -388,8 +398,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "2.5.0";
-const APP_VERSION_CODE = 6;
+const APP_VERSION = "2.5.1";
+const APP_VERSION_CODE = 7;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -645,14 +655,19 @@ function renderModelSheet(){
   const cur=currentModel();
   if(!db.providers.length){list.appendChild(el("div","",`<div style="color:var(--text2);text-align:center;padding:28px 0">No models yet.<br>Add a provider in Settings.</div>`));const add=el("button","btn","＋ Add Provider");add.onclick=()=>{closeSheet("modelSheet");openProvForm(null);};list.appendChild(add);return;}
   const searchWrap=el("div","model-search");const search=el("input");search.placeholder="Search models…";searchWrap.appendChild(search);list.appendChild(searchWrap);
+  const collapsed={};
   const draw=()=>{
     list.querySelectorAll(".model-group,.model-item,.model-empty").forEach(x=>x.remove());
-    const q=search.value.trim().toLowerCase();
+    const q=search.value.trim().toLowerCase(); let visible=0;
     db.providers.forEach(p=>{
       const models=p.selectedModels.filter(id=>!q||id.toLowerCase().includes(q)||prettyModel(id).toLowerCase().includes(q));
       if(!models.length)return;
-      list.appendChild(el("div","model-group",esc(p.name)));
+      const group=el("button","model-group"+(collapsed[p.id]&&!q?" closed":""));
+      group.innerHTML=`<span>${esc(p.name)} <small style="font-weight:500;letter-spacing:0">${models.length}</small></span><span class="group-chevron">⌄</span>`;
+      group.onclick=()=>{collapsed[p.id]=!collapsed[p.id];draw();}; list.appendChild(group);
+      if(collapsed[p.id]&&!q)return;
       models.forEach(mid=>{
+        visible++;
         const it=el("div","model-item"+(cur&&cur.provider.id===p.id&&cur.modelId===mid?" sel":""));
         const context=p.modelMeta?.[mid]?.context_length||p.modelMeta?.[mid]?.contextLength;
         it.innerHTML=`<span class="nm"><strong>${esc(prettyModel(mid))}</strong><small>${esc(mid)}${context?` · ${Math.round(context/1000)}k context`:""}</small></span>`;
@@ -660,7 +675,7 @@ function renderModelSheet(){
         it.onclick=()=>{db.lastProviderId=p.id;db.lastModelId=mid;if(conv){conv.providerId=p.id;conv.modelId=mid;}save();renderHeader();closeSheet("modelSheet");if(conv)renderAll();haptic("success");};list.appendChild(it);
       });
     });
-    if(!list.querySelector(".model-item"))list.appendChild(el("div","model-empty",`<div style="color:var(--text2);font-size:13px;padding:15px 3px">No matching models</div>`));
+    if(!visible)list.appendChild(el("div","model-empty",`<div style="color:var(--text2);font-size:13px;padding:15px 3px">No matching models</div>`));
   };
   search.oninput=draw; draw();
 }
@@ -1233,13 +1248,15 @@ document.querySelectorAll(".sugg button").forEach(b=>b.onclick=()=>{ if(!generat
 function syncToggles(){
   $("#tglThink").classList.toggle("on", db.thinking);
   $("#tglSearch").classList.toggle("on", db.search);
-  $("#effortBtn").textContent = "Depth · "+db.reasoningEffort[0].toUpperCase()+db.reasoningEffort.slice(1);
+  const effort=db.reasoningEffort[0].toUpperCase()+db.reasoningEffort.slice(1);
+  $("#effortBtn").innerHTML = `◒<span class="tool-label">${effort}</span>`;
+  $("#effortBtn").title = "Reasoning depth: "+effort;
 }
 $("#tglThink").onclick = ()=>{ db.thinking=!db.thinking; save(); syncToggles(); };
 $("#tglSearch").onclick = ()=>{ db.search=!db.search; save(); syncToggles(); };
 $("#effortBtn").onclick = ()=>{
   const options=["low","high","max"]; const box=$("#effortOptions"); box.innerHTML="";
-  options.forEach(v=>{ const b=el("button","btn secondary",v[0].toUpperCase()+v.slice(1)+ (v===db.reasoningEffort?"  ✓":"")); b.onclick=()=>{db.reasoningEffort=v;save();syncToggles();$("#effortScrim").classList.remove("open");}; box.appendChild(b); });
+  options.forEach(v=>{ const b=el("button","btn secondary",v[0].toUpperCase()+v.slice(1)+ (v===db.reasoningEffort?"  ✓":"")); b.onclick=()=>{db.reasoningEffort=v;save();syncToggles();$("#effortScrim").classList.remove("open");haptic("success");}; box.appendChild(b); });
   $("#effortScrim").classList.add("open");
 };
 $("#effortCancel").onclick=()=>$("#effortScrim").classList.remove("open");
