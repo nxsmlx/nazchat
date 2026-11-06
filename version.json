@@ -2,7 +2,7 @@
   "version": "2.5.1",
   "versionCode": 7,
   "name": "NazChat",
-  "changelog": "Compact composer controls, smaller model selector, collapsible provider groups, cleaner minimalist Thinking/Reasoning/Search controls, and improved mobile spacing."
+  "changelog": "Compact composer controls, smaller model selector, collapsible provider groups, cleaner minimalist Thinking/Reasoning/Search controls, and improved mobile spacing.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }
