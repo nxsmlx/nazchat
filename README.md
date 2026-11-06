@@ -2,8 +2,9 @@
 
 NazChat is a polished, mobile-first Android AI chat client for OpenAI-compatible providers.
 
-## v2.0.0
+## v2.5.0
 
+- Refined commercial-style app shell with motion, haptic feedback, and accessibility motion reduction
 - Composer model selector (kept out of the header)
 - Multiple providers and selectable models
 - Lyber / OpenAI-compatible native networking without browser CORS restrictions
@@ -15,6 +16,7 @@ NazChat is a polished, mobile-first Android AI chat client for OpenAI-compatible
 - Search conversations and local backup export/import
 - Dark/light theme
 - GitHub update check from Settings
+- Conversation search, date grouping, pinning, double-tap rename, and polished sidebar
 
 ## Project layout
 

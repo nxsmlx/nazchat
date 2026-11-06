@@ -58,6 +58,7 @@ public class MainActivity extends Activity {
         // Native bridges — CORS-free networking for any provider
         web.addJavascriptInterface(new NazBridge(), "NazBridge");
         web.addJavascriptInterface(new NazStream(), "NazStream");
+        web.addJavascriptInterface(new NazHaptics(this), "NazHaptics");
 
         web.setWebViewClient(new WebViewClient() {
             @Override

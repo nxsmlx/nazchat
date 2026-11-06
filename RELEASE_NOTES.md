@@ -1,8 +1,12 @@
-# NazChat 2.0.0
+# NazChat 2.5.0
 
 NazChat 2.0 is a substantial UI and workflow refresh.
 
 ## Highlights
+
+- Commercial-style refinement pass with better motion, surfaces, spacing, and tactile feedback
+- Searchable, grouped, pinnable, renameable conversation sidebar
+- Richer model picker with provider grouping, filtering, and context metadata
 
 - Composer-first model selection: the model is no longer placed in the top header.
 - Cleaner mobile chat workspace with a calmer header, better typography, table overflow, and streaming cursor.

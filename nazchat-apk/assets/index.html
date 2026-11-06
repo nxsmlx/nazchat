@@ -58,12 +58,21 @@ header{display:flex; align-items:center; gap:6px; padding:10px 10px; padding-top
 #sidebarPanel{position:absolute; top:0; left:0; bottom:0; width:min(84vw,320px); background:var(--bg2); transform:translateX(-100%); transition:transform .25s; display:flex; flex-direction:column; padding-top:var(--safe-t);}
 #sidebar.open #sidebarPanel{transform:none;}
 .side-head{display:flex; align-items:center; justify-content:space-between; padding:12px 14px;}
-.side-title{font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text2); padding:0 14px;}
-#convList{flex:1; overflow-y:auto; padding:6px 8px; padding-bottom:calc(8px + var(--safe-b));}
-.conv-item{display:flex; align-items:center; gap:6px; padding:11px 10px; border-radius:10px; font-size:14.5px; cursor:pointer;}
-.conv-item:active, .conv-item.active{background:var(--bg3);}
+.side-title{font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:var(--text2); padding:6px 14px 4px;}
+.conv-search{margin:0 12px 8px;position:relative;}
+.conv-search input{height:40px;padding:9px 12px 9px 36px;border-radius:12px;background:var(--bg3);font-size:13px;}
+.conv-search:before{content:"⌕";position:absolute;z-index:1;left:13px;top:7px;color:var(--text2);font-size:19px;}
+.conv-group-label{padding:10px 10px 4px;color:var(--text2);font-size:11px;font-weight:800;letter-spacing:.04em;}
+#convList{flex:1; overflow-y:auto; padding:0 8px; padding-bottom:calc(8px + var(--safe-b));}
+.conv-item{display:flex; align-items:center; gap:7px; padding:10px 9px; border-radius:11px; font-size:13.5px; cursor:pointer; transition:background .16s,transform .16s;}
+.conv-item:active{background:var(--bg3);transform:scale(.985);}
+.conv-item.active{background:color-mix(in srgb,var(--accent) 12%,var(--bg3));box-shadow:inset 2px 0 0 var(--accent);}
 .conv-item .t{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.conv-item .del{background:none;border:none;color:var(--text2);width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.conv-item .pin{font-size:11px;color:var(--accent);display:none}.conv-item.pinned .pin{display:inline;}
+.conv-item .conv-actions{display:flex;gap:1px;opacity:.45;}
+.conv-item:active .conv-actions,.conv-item:hover .conv-actions{opacity:1;}
+.conv-item .del,.conv-item .pin-btn{background:none;border:none;color:var(--text2);width:26px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;}
+.conv-item .del:active,.conv-item .pin-btn:active{background:var(--bg);color:var(--text);}
 .side-foot{padding:10px 14px; border-top:1px solid var(--border); display:flex; gap:8px;}
 .side-foot .icon-btn{background:var(--bg3);}
 
@@ -137,6 +146,7 @@ header{display:flex; align-items:center; gap:6px; padding:10px 10px; padding-top
 .typing i{width:7px;height:7px;background:var(--text2);border-radius:50%;animation:blink 1.2s infinite;}
 .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important;}}
 
 /* ===== Composer ===== */
 #composerWrap{padding:10px 12px calc(12px + var(--safe-b)); background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 88%,transparent),var(--bg)); border-top:1px solid var(--border);}
@@ -193,7 +203,10 @@ header{display:flex; align-items:center; gap:6px; padding:10px 10px; padding-top
 .grab{width:36px;height:4px;border-radius:2px;background:var(--border);margin:10px auto 0;}
 
 /* Model picker */
-.model-group{font-size:12px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.06em; margin:8px 0 4px;}
+.model-search{margin-bottom:5px;}
+.model-search input{background:var(--bg3);border-radius:12px;padding:11px 13px;font-size:14px;}
+.model-group{font-size:11px; font-weight:800; color:var(--text2); text-transform:uppercase; letter-spacing:.1em; margin:14px 0 5px;}
+.model-item small{color:var(--text2);opacity:.8;}
 .model-item{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 12px; border-radius:10px; cursor:pointer;}
 .model-item:active{background:var(--bg3);}
 .model-item.sel{background:rgba(16,163,127,.14);}
@@ -304,13 +317,14 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
       <button class="icon-btn" id="closeSide"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <button class="btn" style="margin:0 14px 10px; width:calc(100% - 28px)" id="sideNew">＋ New Chat</button>
+    <div class="conv-search"><input id="convSearch" type="search" placeholder="Search conversations…" autocomplete="off"></div>
     <div class="side-title">Conversations</div>
     <div id="convList"></div>
     <div class="side-foot">
       <button class="icon-btn" id="settingsBtn" title="Providers"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
       <button class="icon-btn" id="themeBtn" title="Theme">🌙</button>
       <div style="flex:1"></div>
-      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.0</span>
+      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.5</span>
     </div>
   </div>
 </div>
@@ -374,8 +388,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "2.0.0";
-const APP_VERSION_CODE = 5;
+const APP_VERSION = "2.5.0";
+const APP_VERSION_CODE = 6;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -383,6 +397,9 @@ const $ = s => document.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if(cls) e.className = cls; if(html!=null) e.innerHTML = html; return e; };
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),2200); }
 function miniToast(msg){ const t=$("#toastMini"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),1600); }
+function haptic(kind="light"){
+  try{ if(window.NazHaptics?.vibrate) window.NazHaptics.vibrate(kind==="success"?18:kind==="heavy"?32:10); else if(navigator.vibrate) navigator.vibrate(kind==="success"?18:kind==="heavy"?32:10); }catch(e){}
+}
 async function copyText(txt, btn, label){
   try{ await navigator.clipboard.writeText(txt); }
   catch(e){ const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
@@ -436,7 +453,7 @@ function enhance(container){
 }
 
 /* ===================== Sidebar / Conversations ===================== */
-function renderSidebar(){
+function renderSidebarLegacy(){
   const list = $("#convList"); list.innerHTML = "";
   const sorted = [...db.conversations].sort((a,b)=>b.updatedAt-a.updatedAt);
   if(!sorted.length){ list.appendChild(el("div","", `<div style="color:var(--text2);font-size:13.5px;padding:14px">No conversations yet</div>`)); return; }
@@ -451,7 +468,38 @@ function renderSidebar(){
     list.appendChild(item);
   });
 }
-function openSidebar(){ $("#sidebar").classList.add("open"); }
+function conversationDay(ts){
+  const d=new Date(ts), now=new Date();
+  const a=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const b=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const days=Math.round((a-b)/86400000);
+  if(days<=0) return "Today"; if(days===1) return "Yesterday"; if(days<7) return "Previous 7 days"; return "Older";
+}
+function renameConversation(c){
+  const next=prompt("Rename conversation",c.title||"New chat");
+  if(next && next.trim()){ c.title=next.trim().slice(0,80); c.updatedAt=Date.now(); save(); renderAll(); haptic(); }
+}
+function renderSidebar(){
+  const list=$("#convList"); list.innerHTML="";
+  const search=$("#convSearch");
+  if(search && !search._bound){search._bound=true;search.oninput=()=>renderSidebar();}
+  const q=(search?.value||"").trim().toLowerCase();
+  const sorted=[...db.conversations].filter(c=>!q||(c.title||"").toLowerCase().includes(q)).sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.updatedAt-a.updatedAt));
+  if(!sorted.length){list.appendChild(el("div","",`<div style="color:var(--text2);font-size:13px;padding:16px 10px">${q?"No matching conversations":"No conversations yet"}</div>`));return;}
+  let previousGroup="";
+  sorted.forEach(c=>{
+    const group=conversationDay(c.updatedAt);
+    if(group!==previousGroup){list.appendChild(el("div","conv-group-label",group));previousGroup=group;}
+    const item=el("div","conv-item"+(conv&&c.id===conv.id?" active":"")+(c.pinned?" pinned":""));
+    item.innerHTML=`<span class="pin">●</span><div class="t">${esc(c.title||"New chat")}</div><div class="conv-actions"><button class="pin-btn" title="${c.pinned?"Unpin":"Pin"}">${c.pinned?"★":"☆"}</button><button class="del" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2-2H7a2 2 0 01-2-2V6"/></svg></button></div>`;
+    item.querySelector(".pin-btn").onclick=e=>{e.stopPropagation();c.pinned=!c.pinned;save();renderSidebar();haptic();};
+    item.querySelector(".del").onclick=e=>{e.stopPropagation();if(confirm("Delete this conversation?")){db.conversations=db.conversations.filter(x=>x.id!==c.id);if(conv&&conv.id===c.id)conv=null;save();renderAll();haptic();}};
+    item.ondblclick=()=>renameConversation(c);
+    item.onclick=()=>{conv=c;closeSidebar();renderAll();haptic();};
+    list.appendChild(item);
+  });
+}
+function openSidebar(){ $("#sidebar").classList.add("open"); haptic(); }
 function closeSidebar(){ $("#sidebar").classList.remove("open"); }
 
 /* ===================== Chat rendering ===================== */
@@ -564,7 +612,7 @@ document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>closeSheet(b.
 document.querySelectorAll(".sheet-scrim").forEach(s=>s.onclick=()=>{ s.classList.remove("open"); document.querySelector(".sheet.open")?.classList.remove("open"); });
 
 /* Model picker */
-function renderModelSheet(){
+function renderModelSheetLegacy(){
   const list = $("#modelList"); list.innerHTML = "";
   const cur = currentModel();
   if(!db.providers.length){
@@ -590,6 +638,31 @@ function renderModelSheet(){
       list.appendChild(it);
     });
   });
+}
+
+function renderModelSheet(){
+  const list=$("#modelList"); list.innerHTML="";
+  const cur=currentModel();
+  if(!db.providers.length){list.appendChild(el("div","",`<div style="color:var(--text2);text-align:center;padding:28px 0">No models yet.<br>Add a provider in Settings.</div>`));const add=el("button","btn","＋ Add Provider");add.onclick=()=>{closeSheet("modelSheet");openProvForm(null);};list.appendChild(add);return;}
+  const searchWrap=el("div","model-search");const search=el("input");search.placeholder="Search models…";searchWrap.appendChild(search);list.appendChild(searchWrap);
+  const draw=()=>{
+    list.querySelectorAll(".model-group,.model-item,.model-empty").forEach(x=>x.remove());
+    const q=search.value.trim().toLowerCase();
+    db.providers.forEach(p=>{
+      const models=p.selectedModels.filter(id=>!q||id.toLowerCase().includes(q)||prettyModel(id).toLowerCase().includes(q));
+      if(!models.length)return;
+      list.appendChild(el("div","model-group",esc(p.name)));
+      models.forEach(mid=>{
+        const it=el("div","model-item"+(cur&&cur.provider.id===p.id&&cur.modelId===mid?" sel":""));
+        const context=p.modelMeta?.[mid]?.context_length||p.modelMeta?.[mid]?.contextLength;
+        it.innerHTML=`<span class="nm"><strong>${esc(prettyModel(mid))}</strong><small>${esc(mid)}${context?` · ${Math.round(context/1000)}k context`:""}</small></span>`;
+        if(cur&&cur.provider.id===p.id&&cur.modelId===mid)it.innerHTML+=`<svg class="check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+        it.onclick=()=>{db.lastProviderId=p.id;db.lastModelId=mid;if(conv){conv.providerId=p.id;conv.modelId=mid;}save();renderHeader();closeSheet("modelSheet");if(conv)renderAll();haptic("success");};list.appendChild(it);
+      });
+    });
+    if(!list.querySelector(".model-item"))list.appendChild(el("div","model-empty",`<div style="color:var(--text2);font-size:13px;padding:15px 3px">No matching models</div>`));
+  };
+  search.oninput=draw; draw();
 }
 
 /* ===================== Provider management ===================== */
@@ -714,7 +787,9 @@ function renderProvForm(){
       const res = await netFetch(modelsUrl, { headers: buildHeaders(f) });
       if(!res.ok) throw new Error("HTTP "+res.status);
       const data = await res.json();
-      f.fetchedModels = (data.data||data.models||data||[]).map(m=>m.id||m.name||String(m)).filter(Boolean).sort();
+      const rawModels = data.data||data.models||data||[];
+      f.modelMeta = Object.fromEntries(rawModels.filter(m=>m && typeof m==="object" && (m.id||m.name)).map(m=>[m.id||m.name,m]));
+      f.fetchedModels = rawModels.map(m=>m.id||m.name||String(m)).filter(Boolean).sort();
       status.className="status-line ok"; status.textContent = `✓ Connected — ${f.fetchedModels.length} models found`;
       renderModelPick();
     }catch(e){
@@ -766,7 +841,7 @@ function renderProvForm(){
       const i = db.providers.findIndex(p=>p.id===f.id);
       db.providers[i] = {...db.providers[i], ...f};
     } else {
-      const p = { id:uid(), name:f.name, baseUrl:f.baseUrl.replace(/\/+$/,""), endpointMode:f.endpointMode, apiType:f.apiType, modelType:f.modelType||"chat", apiKey:f.apiKey, headers:f.headers.filter(h=>h.key), selectedModels:f.selectedModels, createdAt:Date.now() };
+      const p = { id:uid(), name:f.name, baseUrl:f.baseUrl.replace(/\/+$/,""), endpointMode:f.endpointMode, apiType:f.apiType, modelType:f.modelType||"chat", apiKey:f.apiKey, headers:f.headers.filter(h=>h.key), selectedModels:f.selectedModels, modelMeta:f.modelMeta||{}, createdAt:Date.now() };
       db.providers.push(p);
       if(!db.lastProviderId){ db.lastProviderId=p.id; db.lastModelId=p.selectedModels[0]; }
     }
