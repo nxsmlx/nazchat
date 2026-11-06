@@ -2,7 +2,7 @@
   "version": "2.5.0",
   "versionCode": 6,
   "name": "NazChat",
-  "changelog": "Ultimate UI polish: conversation search and pinning, richer model picker, adaptive composer, better attachment cards, haptics, accessibility motion controls, and cleaner settings."
+  "changelog": "Ultimate UI polish: conversation search and pinning, richer model picker, adaptive composer, better attachment cards, haptics, accessibility motion controls, and cleaner settings.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }
