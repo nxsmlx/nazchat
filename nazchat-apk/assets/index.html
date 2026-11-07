@@ -794,8 +794,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "3.0.0";
-const APP_VERSION_CODE = 14;
+const APP_VERSION = "3.0.1";
+const APP_VERSION_CODE = 15;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -837,7 +837,7 @@ function enhance(container){
   container.querySelectorAll("pre > code").forEach(code=>{
     const pre = code.parentElement;
     if(pre.parentElement && pre.parentElement.classList.contains("code-wrap")) return;
-    const lang = (code.className.match(/language-([\w+-]+)/)||[])[1] || "text";
+    const lang = ((code.className.match(/language-([\w+-]+)/)||[])[1] || "text").toLowerCase();
     const rawCode = code.textContent || "";
     const lines = rawCode.replace(/\n$/,"").split("\n").length;
     let highlighted = esc(rawCode);
@@ -1075,6 +1075,8 @@ function renderAssistant(bubble, msg, live){
     if(msg.comparisons?.length){const compare=el("button","act-btn","⇄ Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
     else if(db.providers.reduce((n,p)=>n+p.selectedModels.length,0)>1){const compare=el("button","act-btn","⇄ Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
     if(/```[\w+-]*\n[\s\S]+/.test(msg.content||"")){
+      const htmlCandidate=(msg.content.match(/```(?:html|xhtml)\s*\n([\s\S]*?)(?:```|$)/i)||[])[1];
+      if(htmlCandidate){const pv=el("button","act-btn","▶ Preview");pv.onclick=()=>openPreview(htmlCandidate,{live:false});bar.appendChild(pv);}
       const review=el("button","act-btn","✦ Review & Improve");
       review.onclick=()=>reviewAndImprove(msg);
       bar.appendChild(review);
@@ -1089,7 +1091,7 @@ function scrollBottom(){ const s=$("#chatScroll"); s.scrollTop = s.scrollHeight;
 let previewOriginal = "", previewLiveState = null, previewNonce = "";
 function buildPreviewDoc(html, runJs){
   const isFull = /<html[\s>]/i.test(html) || /^\s*<!doctype/i.test(html);
-  const bridge = `<script>try{const _l=console.log,_w=console.warn,_e=console.error;const send=(t,a)=>{try{parent.postMessage({__naz:'console',nonce:'${previewNonce}',type:t,text:[...a].map(String).join(' ')},'*')}catch(e){}};console.log=(...a)=>{_l.apply(console,a);send('log',a)};console.warn=(...a)=>{_w.apply(console,a);send('warn',a)};console.error=(...a)=>{_e.apply(console,a);send('error',a)};window.addEventListener('error',e=>{try{parent.postMessage({__naz:'console',type:'error',text:e.message||String(e.error||'error'),src:(e.filename||'')+':'+(e.lineno||'')},'*')}catch(_){}});}catch(e){}<\/script>`;
+  const bridge = `<script>try{const _l=console.log,_w=console.warn,_e=console.error;const send=(t,a)=>{try{parent.postMessage({__naz:'console',nonce:'${previewNonce}',type:t,text:[...a].map(String).join(' ')},'*')}catch(e){}};console.log=(...a)=>{_l.apply(console,a);send('log',a)};console.warn=(...a)=>{_w.apply(console,a);send('warn',a)};console.error=(...a)=>{_e.apply(console,a);send('error',a)};window.addEventListener('error',e=>{try{parent.postMessage({__naz:'console',type:'error',nonce:'${previewNonce}',text:e.message||String(e.error||'error'),src:(e.filename||'')+':'+(e.lineno||'')},'*')}catch(_){}});}catch(e){}<\/script>`;
   if(isFull){
     let doc = html;
     const security = runJs ? "" : `<script>window.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('script').forEach(s=>s.type='text/blocked')},true)<\/script>`;
@@ -1415,7 +1417,7 @@ function renderProvList(){
 
 let provFormState = null;
 function openProvForm(p, preset){
-  const base=p ? {...p} : {...(preset||{}),id:null, name:preset?.name||"", baseUrl:preset?.baseUrl||"", endpointMode:"base", apiType:preset?.apiType||"chat_completions", apiKey:"", headers:[], selectedModels:[], capabilities:{}};
+  const base=p ? {...p} : {...(preset||{}),id:null, name:preset?.name||"", baseUrl:preset?.baseUrl||"", endpointMode:"base", apiType:preset?.apiType||"chat_completions", apiKey:"", headers:[], selectedModels:[], capabilities:{}, secretRef:"draft:"+uid()};
   provFormState = base;
   renderProvForm();
   closeSheet("setSheet");
@@ -1463,7 +1465,7 @@ function renderProvForm(){
 
   const key = el("label","fld","API Key");
   const pw = el("div","pw-wrap");
-  const keyIn = el("input"); keyIn.type="password"; keyIn.value = f.apiKey||""; keyIn.placeholder = hasNativeSecrets() && f.id && providerSecret(f) ? "Stored securely — enter a new key to replace" : "sk-...";
+  const keyIn = el("input"); keyIn.type="password"; keyIn.value = f.apiKey||""; keyIn.placeholder = hasNativeSecrets() && f.id && hasProviderSecret(f) ? "Stored securely — enter a new key to replace" : "sk-...";
   keyIn.oninput = ()=>f.apiKey = keyIn.value;
   const eye = el("button","eye","👁");
   eye.onclick = ()=>{ keyIn.type = keyIn.type==="password" ? "text":"password"; };
@@ -1551,7 +1553,8 @@ function renderProvForm(){
       const i = db.providers.findIndex(p=>p.id===f.id);
       db.providers[i] = {...db.providers[i], ...f};
     } else {
-      const p = { id:uid(), name:f.name, baseUrl:f.baseUrl.replace(/\/+$/,""), endpointMode:f.endpointMode, apiType:f.apiType, apiKey:f.apiKey, headers:f.headers.filter(h=>h.key), selectedModels:f.selectedModels, modelMeta:f.modelMeta||{}, createdAt:Date.now() };
+      const id=uid();
+      const p = { id, name:f.name, baseUrl:f.baseUrl.replace(/\/+$/,""), endpointMode:f.endpointMode, apiType:f.apiType, secretRef:f.secretRef||("provider:"+id), apiKey:f.apiKey, headers:f.headers.filter(h=>h.key), selectedModels:f.selectedModels, modelMeta:f.modelMeta||{}, capabilities:f.capabilities||{}, createdAt:Date.now() };
       db.providers.push(p);
       if(!db.lastProviderId){ db.lastProviderId=p.id; db.lastModelId=p.selectedModels[0]; }
     }
@@ -1751,7 +1754,8 @@ async function send(text, opts){
   opts = opts||{};
   if(generating) return;
   const model = currentModel();
-  if(!model){ toast("Add a provider & select a model first"); openSidebar(); setTimeout(()=>{$("#settingsBtn").click();},300); return; }
+  if(!model){ toast("Add a provider & select a model first"); openSidebar(); setTimeout(()=>$("#settingsBtn").click(),300); return; }
+  if(HAS_NATIVE && !hasProviderSecret(model.provider)){ toast("Provider key missing — open Settings and enter it again"); openSidebar(); setTimeout(()=>$("#settingsBtn").click(),300); return; }
   const conv_ = ensureConv();
   conv_.providerId = model.provider.id; conv_.modelId = model.modelId;
 

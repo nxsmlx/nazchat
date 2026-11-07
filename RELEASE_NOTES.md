@@ -1,3 +1,11 @@
+# Kita Chat 3.0.1 — Reply and Preview hotfix
+
+- Fixes provider secret references for newly added providers after the Keystore migration.
+- Shows a clear missing-key recovery message instead of silently sending an unauthenticated request.
+- Restores a direct Preview action on completed HTML answers.
+- Normalizes fenced language labels so `HTML`/`XHTML` blocks preview correctly.
+- Adds preview console nonce/source validation without suppressing runtime error messages.
+
 # Kita Chat 3.0.0 — Flagship BYOK foundation
 
 Kita Chat is the rebrand and security/UX overhaul of NazChat. The existing Android package ID remains compatible so users can update without losing app installation identity.

@@ -1,9 +1,9 @@
 {
-  "version": "3.0.0",
-  "versionCode": 14,
+  "version": "3.0.1",
+  "versionCode": 15,
   "name": "Kita Chat",
-  "changelog": "Kita Chat rebrand, Keystore-backed provider secrets, safe backups, provider presets, Projects, prompt library, response styles, artifacts, token/cost estimates, model comparison and hardened native streaming.",
+  "changelog": "Bug fix: restore native replies after secure key migration, preserve provider secret references, and restore Preview for completed HTML/code answers.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
-  "sha256": "7e42fe7673ea636349d1586456cabf835a4707567345743f2e604f04e3587d4b",
+  "sha256": "82a320d010e709b1fa8d0dde91e1dab589b537a212f72eeddec49cf6909779bc",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }
