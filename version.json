@@ -1,9 +1,9 @@
 {
-  "version": "3.0.1",
-  "versionCode": 15,
+  "version": "3.1.0",
+  "versionCode": 16,
   "name": "Kita Chat",
-  "changelog": "Bug fix: restore native replies after secure key migration, preserve provider secret references, and restore Preview for completed HTML/code answers.",
+  "changelog": "Production UI polish: refined spacing, typography, hierarchy, composer density, sheets, controls, code blocks, and dark/light visual tokens for a cleaner Kita Chat workspace.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
-  "sha256": "82a320d010e709b1fa8d0dde91e1dab589b537a212f72eeddec49cf6909779bc",
+  "sha256": "b4d2edcc024eb32292c35c679d69fa2f9f5117d1aa12a23925337308d323d8ad",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }

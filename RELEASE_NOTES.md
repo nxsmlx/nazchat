@@ -1,3 +1,12 @@
+# Kita Chat 3.1.0 — Production UI polish
+
+- Refined mobile-first spacing with a consistent 4/8 rhythm and calmer vertical pacing.
+- Rebalanced typography with Manrope body text and Space Grotesk display/control hierarchy.
+- Reduced generic rounded-card treatment and replaced it with quieter borders, surfaces and depth.
+- Improved composer density, touch targets, model hierarchy and tool grouping.
+- Refined sidebar, sheets, settings rows, code blocks, markdown rhythm and preview controls.
+- Improved dark/light tokens, contrast, focus states and compact desktop scaling.
+
 # Kita Chat 3.0.1 — Reply and Preview hotfix
 
 - Fixes provider secret references for newly added providers after the Keystore migration.
