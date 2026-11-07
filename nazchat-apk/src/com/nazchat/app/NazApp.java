@@ -10,10 +10,13 @@ public class NazApp {
 
     static void post(final String js) {
         if (activity == null || webView == null) return;
+        if (android.os.Build.VERSION.SDK_INT >= 17 && activity.isDestroyed()) return;
         activity.runOnUiThread(new Runnable() {
             public void run() {
                 webView.evaluateJavascript(js, null);
             }
         });
     }
+
+    static void clear() { activity = null; webView = null; }
 }

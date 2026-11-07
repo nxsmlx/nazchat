@@ -13,6 +13,7 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
  });
  await p.route('https://raw.githubusercontent.com/nxsmlx/nazchat/main/skills.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({packVersion:1,skills:[{id:'frontend-design',name:'Updated design',content:'Use deliberate design.'}]})}));
  await p.goto('file:///data/user/0/id.griphub.agent/files/home/workspace/build-a-web-app-116-648/nazchat/index.html');
+ await p.evaluate(()=>{localStorage.setItem('nazchat_v1',JSON.stringify({schemaVersion:3,providers:[],conversations:[],projects:[],prompts:[],styles:[],artifacts:[],activeProjectId:null,lastProviderId:null,lastModelId:null,theme:'dark',thinking:false,search:false,reasoningEffort:'high',onboardingDone:true,parametersByModel:{},skillSettings:{mode:'auto',selected:[],disabled:[],custom:[]}}));location.reload();});
  await p.waitForTimeout(400);
  await p.evaluate(()=>{
    db.providers=[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'secret',headers:[],selectedModels:['model-a'],modelMeta:{'model-a':{context_length:8192}}}];
@@ -26,7 +27,7 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
  }
  assert.strictEqual(requests.length,4);
  const systems=requests.map(r=>r.messages[0]);
- assert(systems.every(x=>x.role==='system'&&x.content.includes('You are NazChat')));
+ assert(systems.every(x=>x.role==='system'&&x.content.includes('You are Kita Chat')));
  assert(systems[3].content.includes('Active expert guidance')&&!systems[3].content.includes('[Skill:'));
  assert(systems[0].content.includes('design lead'));
  assert(requests.every(r=>JSON.stringify(r).length<100000));
@@ -62,7 +63,11 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
  console.log('PASS code collapse, skill badges, and Review & Improve');
  await p.click('#menuBtn');await p.click('#settingsBtn');await p.waitForTimeout(100);assert(await p.locator('#setSheet.open').count());assert((await p.locator('#provList').innerText()).includes('Skill Library'));
  await p.click('#manageSkillsBtn');assert(await p.locator('#skillSheet.open').count());
- await p.screenshot({path:'/tmp/naz-v28-library.png',fullPage:true});console.log('PASS settings skill library');
+ await p.screenshot({path:'/tmp/kita-v30-library.png',fullPage:true});console.log('PASS settings skill library');
+ await p.evaluate(()=>{db.projects=[{id:'project-1',name:'Docs',instructions:'Cite project sources.',sources:[]}];db.activeProjectId='project-1';indexProjectDocument({name:'guide.txt',text:'Kita Chat uses a local-first Android Keystore architecture.',type:'text/plain'});db.styles=[{id:'style-1',name:'Concise',instructions:'Be concise.'}];db.activeStyleId='style-1';db.parametersByModel['p:model-a']={temperature:.2,top_p:.9,max_tokens:512};db.artifacts=[{id:'artifact-1',name:'HTML artifact',kind:'html',content:'<h1>Kita</h1>',createdAt:Date.now()}];save();});
+ assert(await p.evaluate(()=>retrieveProjectContext('What uses Android Keystore?').includes('Keystore')));assert(await p.evaluate(()=>currentStyle().name==='Concise'));assert(await p.evaluate(()=>modelParameters(currentModel()).max_tokens===512));
+ await p.evaluate(()=>{const backup=JSON.parse(JSON.stringify(db));backup.providers.forEach(x=>delete x.apiKey);if(backup.providers.some(x=>Object.prototype.hasOwnProperty.call(x,'apiKey')))throw new Error('raw secret field in safe backup');});
+ console.log('PASS projects, local retrieval, styles, parameters, artifacts, and safe backup');
  assert.deepStrictEqual(errors,[]);console.log('PASS no page errors');
  await b.close();
 })().catch(e=>{console.error(e);process.exit(1)});

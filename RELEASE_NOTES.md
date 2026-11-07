@@ -1,36 +1,44 @@
-# NazChat 2.8.0 — Skill Pack
+# Kita Chat 3.0.0 — Flagship BYOK foundation
 
-NazChat can now apply focused expert guidance to relevant requests without sending a large prompt on every chat.
+Kita Chat is the rebrand and security/UX overhaul of NazChat. The existing Android package ID remains compatible so users can update without losing app installation identity.
 
-## Skills included
+## Trust & identity
 
-- Planning & Brainstorming
-- Frontend Design
-- UI/UX & Accessibility
-- TypeScript & Web Engineering
-- Backend & API Engineering
-- Database & Supabase
-- Systematic Debugging
-- Testing & Verification
-- Code Review & Improvement
-- Android & Kotlin
-- Application Security
-- MCP & Integrations
+- Kita Chat brand, onboarding, empty state, updater labels and adaptive K speech-mark icon
+- Schema versioning and migration for existing NazChat local state
+- Android Keystore-backed AES-GCM provider secret storage
+- Raw provider keys removed from Android localStorage snapshots and safe backups
+- Provider key remove/status control in Settings
+- Safe `kita-chat-backup-v2.json` export format with secrets excluded
 
-## Using skills
+## Provider and chat workflow
 
-- Tap ✦ in the composer to choose Auto or Manual mode.
-- Auto selects at most 3 relevant skills per request. Casual chat receives no specialist skill injection.
-- Settings → Skill Library provides enable/disable controls, skill details, custom skills, and SKILL.md file/URL import.
-- Answers display the skills used, and code answers include Review & Improve.
-- The built-in pack works offline. Pack updates download silently from this repository.
+- Provider presets for OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek, Ollama/local and custom endpoints
+- Secure native model-fetch and stream paths that load API keys only inside the native network layer
+- Model parameters: temperature, top-p and max output tokens
+- Project-level instructions and local source indexing/retrieval
+- Prompt library with reusable prompts
+- Response style profiles
+- Context/token estimate and estimated cost shown on assistant responses when usage data is available
+- Sequential multi-model comparison for a completed answer
+- Save HTML/code outputs to the local artifact library
+- First-run onboarding explaining the BYOK model
 
-## Image features removed
+## Native hardening
 
-Image generation options and image/vision attachments have been removed. PDF, DOCX, text, Markdown, CSV, JSON, HTML, CSS, XML, and source-code attachments remain supported.
+- Native streams are cancelled during Activity destruction
+- Static WebView references are cleared during teardown
+- Mixed content is disabled
+- Cross-file and universal file URL access are disabled while keeping bundled assets loadable
+- Native secrets bridge exposes presence/removal but does not return raw key values to JavaScript
+
+## Compatibility and limitations
+
+- The existing package ID remains `com.nazchat.app` for seamless updates; the visible app identity is Kita Chat.
+- Browser preview mode cannot use Android Keystore and falls back to browser storage; the Android APK is the secure target.
+- Full Room/Compose migration, background resumable streams, voice mode and encrypted cross-device sync remain future architecture work.
+- Image generation and image/vision attachments remain removed. PDF, DOCX, text, Markdown, CSV, JSON, HTML, CSS, XML and source-code attachments remain supported.
 
 ## Attribution
 
-Skill instructions are adapted for NazChat from Anthropic Agent Skills (Apache-2.0), Superpowers (MIT), UI UX Pro Max (MIT), and Awesome Cursor Rules (CC0-1.0). See `THIRD_PARTY_NOTICES.md` and `licenses/`.
-
-Skills improve task guidance; they do not change the selected model or guarantee correctness. Provider API keys and custom skills remain on the device.
+Skill instructions remain adapted from Anthropic Agent Skills (Apache-2.0), Superpowers (MIT), UI UX Pro Max (MIT), and Awesome Cursor Rules (CC0-1.0). See `THIRD_PARTY_NOTICES.md` and `licenses/`.

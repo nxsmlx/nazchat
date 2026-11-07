@@ -31,6 +31,16 @@ public class NazStream {
 
     @JavascriptInterface
     public int open(final String urlStr, final String headersJson, final String bodyJson) {
+        return openInternal(urlStr, headersJson, bodyJson, "");
+    }
+
+    /** Native-only secret path: Java loads the provider key from Android Keystore. */
+    @JavascriptInterface
+    public int openSecret(final String urlStr, final String headersJson, final String bodyJson, final String secretRef) {
+        return openInternal(urlStr, headersJson, bodyJson, secretRef);
+    }
+
+    private int openInternal(final String urlStr, final String headersJson, final String bodyJson, final String secretRef) {
         final int id;
         synchronized (NazStream.class) { id = nextId++; }
 
@@ -45,6 +55,10 @@ public class NazStream {
                     c.setRequestMethod("POST");
                     try {
                         JSONObject h = new JSONObject(headersJson == null ? "{}" : headersJson);
+                        if (secretRef != null && secretRef.length() > 0) {
+                            String key = NazSecrets.getStored(NazApp.activity, secretRef);
+                            if (key != null && key.length() > 0) h.put("Authorization", "Bearer " + key);
+                        }
                         Iterator<String> it = h.keys();
                         while (it.hasNext()) { String k = it.next(); c.setRequestProperty(k, h.getString(k)); }
                     } catch (Exception ignored) {}
@@ -80,6 +94,23 @@ public class NazStream {
         t.setDaemon(true);
         t.start();
         return id;
+    }
+
+    public static void cancelAll() {
+        Integer[] ids;
+        synchronized (NazStream.class) { ids = conns.keySet().toArray(new Integer[0]); }
+        for (Integer id : ids) if (id != null) closeStored(id);
+    }
+
+    private static void closeStored(int id) {
+        BufferedReader r;
+        HttpURLConnection c;
+        synchronized (NazStream.class) {
+            r = readers.remove(id);
+            c = conns.remove(id);
+        }
+        try { if (r != null) r.close(); } catch (Exception ignored) {}
+        try { if (c != null) c.disconnect(); } catch (Exception ignored) {}
     }
 
     @JavascriptInterface

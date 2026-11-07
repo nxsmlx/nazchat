@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -38,7 +39,10 @@ public class NazUpdater {
     }
 
     @JavascriptInterface
-    public void downloadAndInstall(final String apkUrl) {
+    public void downloadAndInstall(final String apkUrl) { downloadAndInstall(apkUrl, ""); }
+
+    @JavascriptInterface
+    public void downloadAndInstall(final String apkUrl, final String expectedSha256) {
         if (busy) return;
         busy = true;
         new Thread(new Runnable() {
@@ -68,6 +72,10 @@ public class NazUpdater {
                     out.flush(); out.close(); in.close(); c.disconnect();
 
                     if (apk.length() < 1000) throw new Exception("empty download");
+                    if (expectedSha256 != null && expectedSha256.trim().length() > 0) {
+                        String actual = sha256(apk);
+                        if (!actual.equalsIgnoreCase(expectedSha256.trim())) throw new Exception("checksum mismatch");
+                    }
 
                     String authority = activity.getPackageName() + ".updateprovider";
                     Uri uri = new Uri.Builder().scheme("content").authority(authority).path(apk.getName()).build();
@@ -84,6 +92,17 @@ public class NazUpdater {
                 }
             }
         }).start();
+    }
+
+    private static String sha256(File file) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        InputStream in = new java.io.FileInputStream(file);
+        byte[] buf = new byte[8192]; int n;
+        while ((n = in.read(buf)) > 0) md.update(buf, 0, n);
+        in.close();
+        StringBuilder out = new StringBuilder();
+        for (byte b : md.digest()) out.append(String.format("%02x", b & 0xff));
+        return out.toString();
     }
 
     private static void emit(String state) {

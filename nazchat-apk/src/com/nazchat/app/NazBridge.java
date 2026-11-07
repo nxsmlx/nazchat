@@ -16,6 +16,16 @@ public class NazBridge {
 
     @JavascriptInterface
     public int fetch(final String url, final String method, final String headersJson, final String body) {
+        return startFetch(url, method, headersJson, body, "");
+    }
+
+    /** Native-only secret path: Java loads the key from Android Keystore. */
+    @JavascriptInterface
+    public int fetchSecret(final String url, final String method, final String headersJson, final String body, final String secretRef) {
+        return startFetch(url, method, headersJson, body, secretRef);
+    }
+
+    private int startFetch(final String url, final String method, final String headersJson, final String body, final String secretRef) {
         final int reqId;
         synchronized (NazBridge.class) { reqId = nextReqId++; }
 
@@ -31,6 +41,10 @@ public class NazBridge {
                 int status;
                 String text;
                 try {
+                    if (secretRef != null && secretRef.length() > 0) {
+                        String key = NazSecrets.getStored(NazApp.activity, secretRef);
+                        if (key != null && key.length() > 0) headers.put("Authorization", "Bearer " + key);
+                    }
                     java.net.URL u = new java.net.URL(url);
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
                     c.setConnectTimeout(15000);

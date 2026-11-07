@@ -1,6 +1,18 @@
-# NazChat
+# Kita Chat
 
-NazChat is a polished, mobile-first Android AI chat client for OpenAI-compatible providers.
+Kita Chat is a private, local-first Android BYOK AI chat client for OpenAI-compatible providers.
+
+## v3.0.0 — Kita Chat flagship foundation
+
+- Kita Chat branding and adaptive K speech-mark launcher icon
+- Keystore-backed API secret storage in the APK; raw keys are excluded from localStorage snapshots and backups
+- Legacy NazChat state migration with schema versioning
+- Provider presets for OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek, Ollama/local and custom endpoints
+- Project workspaces with project instructions and local document source indexing/retrieval
+- Prompt library, response styles, saved artifacts and model parameter controls
+- Context/token estimates, per-response usage/cost display, and multi-model comparison action
+- Hardened stream cleanup and native secret-aware network paths
+- First-run Kita Chat onboarding and safe backup format
 
 ## v2.8.0
 
@@ -30,9 +42,9 @@ NazChat is a polished, mobile-first Android AI chat client for OpenAI-compatible
 
 ## Project layout
 
-- `nazchat/index.html` — standalone web app / preview source
+- `nazchat/index.html` — Kita Chat web source — standalone web app / preview source
 - `nazchat-apk/` — native WebView APK wrapper and network bridge
-- `NazChat.apk` — built signed APK
+- `NazChat.apk` — signed Kita Chat APK artifact (kept for update compatibility) — built signed APK
 - `version.json` — APK update manifest consumed by the app
 - `skills.json` — remotely updatable skill pack, also bundled into the app
 - `THIRD_PARTY_NOTICES.md` and `licenses/` — skill attribution and licenses
@@ -45,4 +57,4 @@ NazChat is a polished, mobile-first Android AI chat client for OpenAI-compatible
 4. Tap Test Connection & Fetch Models.
 5. Select models and save.
 
-API keys are stored locally on the device. This app does not operate a proxy server.
+In the Android APK, API keys are encrypted using an Android Keystore-backed AES-GCM secret store and are sent directly to the selected provider. Safe backups exclude raw keys. The browser preview falls back to local browser storage because Android Keystore is unavailable there. Kita Chat does not operate a proxy server.

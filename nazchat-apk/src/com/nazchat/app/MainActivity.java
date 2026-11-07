@@ -26,6 +26,7 @@ import java.util.Map;
 public class MainActivity extends Activity {
     static WebView web;
     private ValueCallback<Uri[]> fileCallback;
+    private NazVoice voice;
     private static final int FILE_PICKER = 7401;
 
     @Override
@@ -38,20 +39,26 @@ public class MainActivity extends Activity {
         NazApp.activity = this;
         NazApp.webView = web;
         NazUpdater.activity = this;
+        voice = new NazVoice(this);
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
+        // Keep local app assets loadable; block cross-file and universal file access.
         s.setAllowFileAccess(true);
-        s.setAllowContentAccess(true);
+        s.setAllowContentAccess(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            s.setAllowFileAccessFromFileURLs(false);
+            s.setAllowUniversalAccessFromFileURLs(false);
+        }
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         s.setUseWideViewPort(true);
         s.setLoadWithOverviewMode(true);
         s.setTextZoom(100);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            s.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+            s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         }
         WebView.setWebContentsDebuggingEnabled(false);
 
@@ -62,6 +69,8 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NazStream(), "NazStream");
         web.addJavascriptInterface(new NazHaptics(this), "NazHaptics");
         web.addJavascriptInterface(new NazUpdater(), "NazUpdater");
+        web.addJavascriptInterface(new NazSecrets(this), "NazSecrets");
+        web.addJavascriptInterface(voice, "NazVoice");
 
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -69,6 +78,8 @@ public class MainActivity extends Activity {
                 // Open external links in browser, keep app internal
                 Uri u = Uri.parse(url);
                 String host = u.getHost() == null ? "" : u.getHost();
+                String scheme = u.getScheme() == null ? "" : u.getScheme();
+                if ("file".equals(scheme) || ("https".equals(scheme) && host.equals("appassets.androidplatform.net"))) return false;
                 if (host.endsWith("duckduckgo.com") || host.endsWith("jina.ai")
                         || host.equals("localhost") || host.equals("127.0.0.1")) {
                     return false; // in-app fetch targets
@@ -107,7 +118,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        web.loadUrl("file:///android_asset/index.html");
+        web.loadUrl("file:///android_asset/index.html"); // bundled Kita Chat shell; keep file origin for update compatibility
     }
 
     @Override
@@ -128,12 +139,20 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (voice != null) voice.onPermissionResult(requestCode, grantResults);
+    }
+
+    @Override
     protected void onPause() { if (web != null) web.onPause(); super.onPause(); }
     @Override
     protected void onResume() { if (web != null) web.onResume(); super.onResume(); }
     @Override
     protected void onDestroy() {
-        if (web != null) web.destroy();
+        NazStream.cancelAll();
+        if (web != null) { web.stopLoading(); web.removeAllViews(); web.destroy(); web = null; }
+        NazApp.clear();
         super.onDestroy();
     }
     @Override
