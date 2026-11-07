@@ -6,8 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
+import android.webkit.WebResourceRequest;import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -70,16 +69,20 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NazHaptics(this), "NazHaptics");
         web.addJavascriptInterface(new NazUpdater(), "NazUpdater");
         web.addJavascriptInterface(new NazSecrets(this), "NazSecrets");
+        web.addJavascriptInterface(new NazPreview(), "NazPreview");
         web.addJavascriptInterface(voice, "NazVoice");
 
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                // Open external links in browser, keep app internal
                 Uri u = Uri.parse(url);
                 String host = u.getHost() == null ? "" : u.getHost();
-                String scheme = u.getScheme() == null ? "" : u.getScheme();
-                if ("file".equals(scheme) || ("https".equals(scheme) && host.equals("appassets.androidplatform.net"))) return false;
+                String scheme = u.getScheme() == null ? "" : u.getScheme().toLowerCase();
+                // Never hijack in-page renderers or embedded artifacts.
+                if ("data".equals(scheme) || "blob".equals(scheme) || "about".equals(scheme)
+                        || "javascript".equals(scheme)) return false;
+                if ("file".equals(scheme)) return false;
+                if (("https".equals(scheme) || "http".equals(scheme)) && host.equals("appassets.androidplatform.net")) return false;
                 if (host.endsWith("duckduckgo.com") || host.endsWith("jina.ai")
                         || host.equals("localhost") || host.equals("127.0.0.1")) {
                     return false; // in-app fetch targets
@@ -89,6 +92,14 @@ public class MainActivity extends Activity {
                     startActivity(i);
                 } catch (Exception ignored) {}
                 return true;
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (request == null) return false;
+                // Sub-frame navigations always stay inside the app.
+                if (!request.isForMainFrame()) return false;
+                return shouldOverrideUrlLoading(view, request.getUrl() == null ? "" : request.getUrl().toString());
             }
 
             // Allow CORS-free fetches for the free web search: intercept and proxy

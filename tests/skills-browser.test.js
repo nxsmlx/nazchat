@@ -68,7 +68,15 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
  assert(await p.evaluate(()=>retrieveProjectContext('What uses Android Keystore?').includes('Keystore')));assert(await p.evaluate(()=>currentStyle().name==='Concise'));assert(await p.evaluate(()=>modelParameters(currentModel()).max_tokens===512));
  await p.evaluate(()=>{const backup=JSON.parse(JSON.stringify(db));backup.providers.forEach(x=>delete x.apiKey);if(backup.providers.some(x=>Object.prototype.hasOwnProperty.call(x,'apiKey')))throw new Error('raw secret field in safe backup');});
  console.log('PASS projects, local retrieval, styles, parameters, artifacts, and safe backup');
- await p.evaluate(()=>openPreview('<!doctype html><html><body><h1>Preview regression</h1></body></html>',{live:false}));await p.waitForTimeout(150);assert(await p.locator('#htmlPreview.open').count());assert(await p.evaluate(()=>document.querySelector('#previewFrame').src.startsWith('data:text/html')));await p.click('#previewClose');console.log('PASS HTML preview data-document renderer');
+ await p.evaluate(()=>openPreview('<!doctype html><html><body><h1 id="preview-ok">Preview regression</h1><p>Rendered content check.</p></body></html>',{live:false}));await p.waitForTimeout(700);
+ assert(await p.locator('#htmlPreview.open').count(),'preview screen did not open');
+ const frameBox=await p.locator('#previewFrame').boundingBox();assert(frameBox&&frameBox.height>120,'preview frame collapsed: '+JSON.stringify(frameBox));
+ let rendered=false;
+ for(const f of p.frames()){ if(f===p.mainFrame())continue; try{ const t=await f.locator('#preview-ok').innerText({timeout:1200}); if(t.includes('Preview regression'))rendered=true; }catch(e){} }
+ assert(rendered,'preview iframe did not render the HTML document');
+ assert.strictEqual(await p.locator('#previewDiag.show').count(),0,'diagnostics panel should be hidden on success');
+ await p.screenshot({path:'/tmp/kita-preview-render.png'});
+ await p.click('#previewClose');console.log('PASS HTML preview renders real content (pixel/frame check)');
  assert.deepStrictEqual(errors,[]);console.log('PASS no page errors');
  await b.close();
 })().catch(e=>{console.error(e);process.exit(1)});

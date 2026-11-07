@@ -323,12 +323,20 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
 .vp-btn.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.2);}
 .js-toggle{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--text2);cursor:pointer;}
 .js-toggle input{width:17px;height:17px;accent-color:var(--accent);margin:0;}
-.preview-stage{flex:1;position:relative;display:flex;min-height:0;padding-bottom:var(--safe-b);}
-.preview-frame-wrap{flex:1;display:flex;align-items:flex-start;justify-content:center;overflow:auto;background:radial-gradient(circle,var(--bg3) 1px,transparent 1px);background-size:22px 22px;position:relative;}
-#previewFrame{background:#fff;border:0;width:100%;height:100%;box-shadow:0 0 0 1px var(--border);}
-.preview-frame-wrap.vp-mobile #previewFrame{width:390px;max-width:100%;height:calc(100% - 16px);margin:8px 0;border-radius:16px;}
-.preview-frame-wrap.vp-tablet #previewFrame{width:768px;max-width:100%;height:calc(100% - 16px);margin:8px 0;border-radius:12px;}
+.preview-stage{flex:1;position:relative;display:flex;min-height:0;height:100vh;padding-bottom:var(--safe-b);}
+@supports (height:100dvh){.preview-stage{height:100dvh;}}
+.preview-frame-wrap{position:relative;flex:1;min-height:0;overflow:hidden;background:radial-gradient(circle,var(--bg3) 1px,transparent 1px);background-size:22px 22px;}
+#previewFrame{position:absolute;inset:0;width:100%;height:100%;min-height:120px;background:#fff;border:0;box-shadow:0 0 0 1px var(--border);}
+.preview-frame-wrap.vp-mobile #previewFrame,.preview-frame-wrap.vp-tablet #previewFrame{inset:8px auto 8px 50%;transform:translateX(-50%);height:calc(100% - 16px);border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.28),0 0 0 1px var(--border);}
+.preview-frame-wrap.vp-mobile #previewFrame{width:390px;max-width:100%;}
+.preview-frame-wrap.vp-tablet #previewFrame{width:768px;max-width:100%;}
 .preview-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:13.5px;pointer-events:none;}
+.preview-diag{position:absolute;left:10px;right:10px;bottom:10px;z-index:3;background:color-mix(in srgb,var(--bg2) 96%,transparent);border:1px solid var(--border);border-radius:11px;padding:10px 11px;box-shadow:0 10px 28px rgba(0,0,0,.28);font-size:11.5px;line-height:1.5;color:var(--text2);display:none;}
+.preview-diag.show{display:block;}
+.preview-diag strong{display:block;color:var(--text);font-size:12px;margin-bottom:3px;}
+.preview-diag code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;color:var(--text);word-break:break-word;display:block;max-height:66px;overflow:auto;margin-top:5px;}
+.preview-diag-acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.preview-diag-acts button{flex:1;min-height:32px;border:1px solid var(--border);background:var(--bg3);color:var(--text);border-radius:7px;font-size:11px;font-weight:700;padding:4px 8px;}
 #previewCode{flex:1;display:none;border:0;border-radius:0;background:#0d1117;color:#e6edf3;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55;padding:14px;resize:none;}
 .preview-stage.show-code #previewCode{display:block;}
 .preview-stage.show-code .preview-frame-wrap,.preview-stage.show-console .preview-frame-wrap,.preview-stage.show-code .preview-toolbar,.preview-stage.show-console .preview-toolbar{display:none;}
@@ -581,6 +589,7 @@ input,textarea,select{border-radius:9px;padding:11px 12px;background:var(--bg3);
     <div class="preview-frame-wrap" id="previewFrameWrap">
       <iframe id="previewFrame" title="HTML preview" sandbox="allow-scripts allow-modals allow-popups allow-downloads"></iframe>
       <div class="preview-empty" id="previewEmpty">Run HTML to see the preview</div>
+      <div class="preview-diag" id="previewDiag"></div>
     </div>
     <textarea id="previewCode" spellcheck="false" placeholder="HTML code…"></textarea>
     <div id="previewConsole" class="preview-console"><div class="console-empty">Console output from previewed page…</div></div>
@@ -865,8 +874,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "3.1.1";
-const APP_VERSION_CODE = 17;
+const APP_VERSION = "3.1.2";
+const APP_VERSION_CODE = 18;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -928,7 +937,7 @@ function enhance(container){
       toggle.innerHTML = collapsed ? "Expand ⌄" : "Collapse ⌃";
     };
     btnWrap.appendChild(toggle);
-    if(lang === "html" || lang === "xhtml"){
+    if(lang === "html" || lang === "xhtml" || lang === "htm"){
       const pv = el("button","preview-btn","▶ Preview");
       pv.title = "Preview this HTML";
       pv.onclick = ()=>openPreview(rawCode, {live:false});
@@ -1100,7 +1109,7 @@ function renderAssistant(bubble, msg, live){
     md.innerHTML += '<span class="stream-cursor" aria-hidden="true"></span>';
     // If preview is open in live mode, refresh it (debounced) as HTML streams in
     if(previewLiveState && $("#htmlPreview").classList.contains("open")){
-      const htmlBlock = (msg.content.match(/```html\n?([\s\S]*?)(?:```|$)/i) || [])[1];
+      const htmlBlock = extractHtmlBlock(msg.content);
       if(htmlBlock && htmlBlock.length > 40 && htmlBlock.length < 240000){
         const now = Date.now();
         clearTimeout(previewLiveState.timer);
@@ -1145,8 +1154,8 @@ function renderAssistant(bubble, msg, live){
     bar.appendChild(cp); bar.appendChild(rg);
     if(msg.comparisons?.length){const compare=el("button","act-btn","⇄ Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
     else if(db.providers.reduce((n,p)=>n+p.selectedModels.length,0)>1){const compare=el("button","act-btn","⇄ Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
-    if(/```[\w+-]*\n[\s\S]+/.test(msg.content||"")){
-      const htmlCandidate=(msg.content.match(/```(?:html|xhtml)\s*\n([\s\S]*?)(?:```|$)/i)||[])[1];
+    if(/```[\w+-]*\n[\s\S]+/.test(msg.content||"") || extractHtmlBlock(msg.content)){
+      const htmlCandidate=extractHtmlBlock(msg.content);
       if(htmlCandidate){const pv=el("button","act-btn","▶ Preview");pv.onclick=()=>openPreview(htmlCandidate,{live:false});bar.appendChild(pv);}
       const review=el("button","act-btn","✦ Review & Improve");
       review.onclick=()=>reviewAndImprove(msg);
@@ -1159,7 +1168,47 @@ function renderAssistant(bubble, msg, live){
 function scrollBottom(){ const s=$("#chatScroll"); s.scrollTop = s.scrollHeight; }
 
 /* ===================== HTML Preview ===================== */
-let previewOriginal = "", previewLiveState = null, previewNonce = "";
+let previewOriginal = "", previewLiveState = null, previewNonce = "", previewRenderSeq = 0, previewDiagText = "";
+let previewRenderState = { renderer:"", timer:null };
+function extractHtmlBlock(content){
+  const src = String(content||"");
+  if(!src.trim()) return "";
+  const fences = Array.from(src.matchAll(/```[ \t]*(html|htm|xhtml)[ \t]*\r?\n([\s\S]*?)(?:```|$)/gi));
+  if(fences.length) return fences.sort((a,b)=>b[2].length-a[2].length)[0][2].trim();
+  const bare = src.match(/(?:<!doctype html[\s\S]*<\/html\s*>|<html[\s\S]*<\/html\s*>)/i);
+  return bare ? bare[0].trim() : "";
+}
+function hasNativePreview(){ return typeof window.NazPreview === "object" && typeof window.NazPreview.open === "function"; }
+function previewDiagInfo(reason){
+  const frame = $("#previewFrame");
+  const ua = navigator.userAgent || "unknown";
+  const wv = (ua.match(/Chrome\/([\d.]+)/)||[])[1] || "unknown";
+  return [
+    "Renderer: " + (previewRenderState.renderer || "none"),
+    "Reason: " + (reason || "unknown"),
+    "App: " + APP_VERSION + " (" + APP_VERSION_CODE + ")",
+    "WebView/Chrome: " + wv,
+    "Native preview: " + (hasNativePreview() ? "yes" : "no"),
+    "HTML length: " + String(previewOriginal||"").length,
+    "Frame size: " + Math.round(frame?.clientWidth||0) + "x" + Math.round(frame?.clientHeight||0),
+    "Frame scheme: " + String(frame?.src||"").slice(0,20),
+    "URL: " + location.href.slice(0,70),
+    "UA: " + ua.slice(0,110)
+  ].join("\n");
+}
+function hidePreviewDiag(){ $("#previewDiag").classList.remove("show"); }
+function showPreviewDiag(reason){
+  previewDiagText = previewDiagInfo(reason);
+  const box = $("#previewDiag");
+  box.innerHTML = `<strong>Preview could not be displayed</strong><span>${esc(reason||"Unknown renderer failure")}. Your HTML is still in the Code tab.</span><code>${esc(previewDiagText.replace(/\n/g," | "))}</code>`;
+  const acts = el("div","preview-diag-acts");
+  const retry = el("button",null,"Retry"); retry.onclick = ()=>{ hidePreviewDiag(); renderPreview(); };
+  const copy = el("button",null,"Copy diagnostics"); copy.onclick = ()=>copyText(previewDiagText, copy, "✓ Copied");
+  acts.appendChild(retry); acts.appendChild(copy);
+  if(hasNativePreview()){ const nat = el("button",null,"Open native"); nat.onclick = ()=>openNativePreview(); acts.appendChild(nat); }
+  box.appendChild(acts);
+  box.classList.add("show");
+}
 function buildPreviewDoc(html, runJs){
   const isFull = /<html[\s>]/i.test(html) || /^\s*<!doctype/i.test(html);
   const bridge = `<script>try{const _l=console.log,_w=console.warn,_e=console.error;const send=(t,a)=>{try{parent.postMessage({__naz:'console',nonce:'${previewNonce}',type:t,text:[...a].map(String).join(' ')},'*')}catch(e){}};console.log=(...a)=>{_l.apply(console,a);send('log',a)};console.warn=(...a)=>{_w.apply(console,a);send('warn',a)};console.error=(...a)=>{_e.apply(console,a);send('error',a)};window.addEventListener('error',e=>{try{parent.postMessage({__naz:'console',type:'error',nonce:'${previewNonce}',text:e.message||String(e.error||'error'),src:(e.filename||'')+':'+(e.lineno||'')},'*')}catch(_){}});}catch(e){}<\/script>`;
@@ -1188,36 +1237,68 @@ function addConsole(type, text, src){
   const count = box.querySelectorAll(".console-line").length;
   $("#consoleCount").textContent = count;
 }
-function renderPreview(){
+function assignPreview(frame, url, doc){
+  return new Promise((resolve)=>{
+    let settled=false;
+    const finish=(ok)=>{ if(settled) return; settled=true; clearTimeout(timer); frame.onload=null; frame.onerror=null; resolve(ok); };
+    const timer=setTimeout(()=>finish(false), 2200);
+    frame.onload=()=>finish(true);
+    frame.onerror=()=>finish(false);
+    try{
+      frame.removeAttribute("srcdoc");
+      if(url){ frame.removeAttribute("src"); frame.src=url; }
+      else { frame.removeAttribute("src"); frame.srcdoc=doc; }
+    }catch(e){ finish(false); }
+  });
+}
+async function renderPreview(){
   const code = $("#previewCode").value;
   const runJs = $("#previewJs").checked;
   const frame = $("#previewFrame");
-  const doc = buildPreviewDoc(code, runJs);
-  // Android WebView builds can leave srcdoc blank when the parent page is file://.
-  // Use a data document as the primary renderer; it remains sandboxed and does not receive native bridges.
-  frame.removeAttribute("srcdoc");
-  frame.src = "data:text/html;charset=utf-8," + encodeURIComponent(doc);
-  frame.dataset.previewReady = "true";
+  const seq = ++previewRenderSeq;
+  hidePreviewDiag();
   $("#previewEmpty").style.display = "none";
+  const doc = buildPreviewDoc(code, runJs);
+  const candidates = [];
+  try{ candidates.push({name:"blob", url:URL.createObjectURL(new Blob([doc],{type:"text/html"}))}); }catch(e){}
+  candidates.push({name:"data", url:"data:text/html;charset=utf-8,"+encodeURIComponent(doc)});
+  candidates.push({name:"srcdoc", url:""});
+  for(const c of candidates){
+    if(seq!==previewRenderSeq) return;
+    previewRenderState.renderer = c.name;
+    const ok = await assignPreview(frame, c.url, doc);
+    if(ok && seq===previewRenderSeq) return;
+  }
+  if(seq!==previewRenderSeq) return;
+  showPreviewDiag("No preview renderer produced a page");
+}
+function openNativePreview(){
+  if(!hasNativePreview()) return false;
+  try{ window.NazPreview.open(buildPreviewDoc(previewOriginal, $("#previewJs").checked), "Kita Chat Preview"); haptic("light"); return true; }catch(e){ return false; }
 }
 function openPreview(html, opts){
-  opts = opts || {}; previewNonce=uid();
+  opts = opts || {};
+  previewNonce = uid();
   previewOriginal = html || "";
+  previewDiagText = "";
+  if(!previewOriginal.trim()){ toast("Nothing to preview in this block"); return; }
+  if(hasNativePreview() && !opts.inApp && openNativePreview()) return;
   $("#previewCode").value = previewOriginal;
   $("#consoleCount").textContent = "0";
   $("#previewConsole").innerHTML = `<div class="console-empty">Console output from previewed page…</div>`;
   $("#previewLive").style.display = opts.live ? "" : "none";
   previewLiveState = opts.live ? { lastRun: 0, timer: null, interacted: false } : null;
   showPreviewTab("preview");
-  renderPreview();
   const scr = $("#htmlPreview"); scr.classList.add("open"); scr.setAttribute("aria-hidden","false");
+  renderPreview();
   haptic();
 }
 function closePreview(){
   const scr = $("#htmlPreview"); scr.classList.remove("open"); scr.setAttribute("aria-hidden","true");
-  $("#previewFrame").removeAttribute("srcdoc");
-  $("#previewFrame").src = "about:blank";
+  const frame=$("#previewFrame");
+  frame.removeAttribute("srcdoc"); frame.src = "about:blank";
   previewLiveState = null;
+  hidePreviewDiag();
 }
 /* Live preview bridge from streaming assistant output */
 function previewFromCodeBlock(codeText){

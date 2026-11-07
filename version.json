@@ -1,9 +1,9 @@
 {
-  "version": "3.1.1",
-  "versionCode": 17,
+  "version": "3.1.2",
+  "versionCode": 18,
   "name": "Kita Chat",
-  "changelog": "Preview hotfix: render HTML previews through a sandboxed data document so Android WebView displays the preview reliably instead of a blank frame.",
+  "changelog": "Preview rebuild: native fullscreen HTML renderer via loadDataWithBaseURL, layered blob/data/srcdoc fallback, non-collapsing layout, broader HTML detection, and a copyable diagnostics panel when a preview cannot render.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
-  "sha256": "93642e2dcb4fa01b36037a4d5599d62954c666ea4be6cb7e729276d6cad5b5ef",
+  "sha256": "8d623ff51debb39828b9303d55acb7e09272a007561435db607fff382baecdda",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }

@@ -1,6 +1,6 @@
 # Kita Chat architecture
 
-## Current release: 3.0.0
+## Current release: 3.1.2
 
 Kita Chat remains an incremental hybrid Android client so existing `com.nazchat.app` installations can update in place. The visible identity, icon and UI are Kita Chat; the package id is intentionally retained for update compatibility.
 

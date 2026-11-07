@@ -2,6 +2,12 @@
 
 Kita Chat is a private, local-first Android BYOK AI chat client for OpenAI-compatible providers.
 
+## v3.1.2 — Preview rebuilt
+
+- APK previews generated HTML in a dedicated `PreviewActivity` using `loadDataWithBaseURL`, with Blob/data/srcdoc fallback in the browser build
+- Preview frame no longer relies on percentage heights, so it cannot collapse
+- Broader HTML fence detection and a copyable diagnostics panel when rendering fails
+
 ## v3.1.1 — HTML Preview hotfix
 
 - Android WebView HTML Preview now uses a sandboxed data document renderer to avoid blank `srcdoc` frames
