@@ -1,8 +1,8 @@
 {
-  "version": "2.6.1",
-  "versionCode": 9,
+  "version": "2.7.0",
+  "versionCode": 10,
   "name": "NazChat",
-  "changelog": "Update is now silent: tap Install update and the APK downloads in the background, then the installer opens — no browser, no download screen. Also keeps the new HTML live preview and quieter Settings.",
+  "changelog": "Layout polish inspired by a cleaner mobile AI app: centered brand header, large greeting, suggestion cards, and a floating composer card with model and tools inside.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }
