@@ -1,8 +1,8 @@
 {
-  "version": "2.7.1",
-  "versionCode": 11,
+  "version": "2.7.2",
+  "versionCode": 12,
   "name": "NazChat",
-  "changelog": "Long code blocks are now collapsible: preview shows a compact section with a Show all code button, so chats stay short and readable.",
+  "changelog": "Code blocks are now fully collapsed by default (Expand / Collapse toggle), with clean light-mode syntax contrast and duplicate header fix.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }

@@ -44,15 +44,9 @@ header{display:flex; align-items:center; gap:6px; padding:8px 8px; padding-top:c
 header .menu-btn{background:var(--bg3);}
 .header-brand{flex:1; display:flex; align-items:center; justify-content:center; gap:8px; color:var(--text); font-size:17px; font-weight:800; letter-spacing:-.02em; pointer-events:none;}
 .header-brand .brand-mark{width:26px;height:26px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#5eead4);display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 4px 14px rgba(16,163,127,.25);}
-.header-title{display:none;}
-.header-status{display:none;}
+.header-title{display:none!important;}
+.header-status{display:none!important;}
 .icon-btn{background:none; border:none; color:var(--text); width:42px;height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .18s, transform .18s;}
-.header-title{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; line-height:1.15;}
-.header-title strong{font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:55vw;}
-.header-title small{font-size:10px; letter-spacing:.11em; text-transform:uppercase; color:var(--text2); margin-top:3px;}
-.header-status{width:42px;height:42px;display:flex;align-items:center;justify-content:center;color:var(--text2);}
-.header-status .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(16,163,127,.12);}
-.header-status.offline .dot{background:var(--text2);box-shadow:none;}
 
 /* ===== Sidebar ===== */
 #sidebar{position:fixed; inset:0; z-index:40; visibility:hidden;}
@@ -111,18 +105,32 @@ header .menu-btn{background:var(--bg3);}
 .md a{color:#58a6ff;}
 .md hr{border:none; border-top:1px solid var(--border); margin:16px 0;}
 .md img{max-width:100%; border-radius:10px;}
-.code-wrap{margin:12px 0; border-radius:12px; overflow:hidden; border:1px solid #30363d; background:#0d1117; position:relative;}
-.code-wrap.collapsed pre{max-height:240px; overflow:hidden;}
-.code-fade{position:absolute; left:0; right:0; bottom:0; height:92px; background:linear-gradient(to bottom, transparent, rgba(13,17,23,.96)); display:none; pointer-events:none;}
-.code-wrap.collapsed .code-fade{display:block;}
-.code-toggle{position:absolute; left:50%; bottom:12px; transform:translateX(-50%); z-index:2; display:none; align-items:center; gap:6px; background:#21262d; color:#c9d1d9; border:1px solid #3a424c; border-radius:999px; padding:7px 12px; font-size:12px; font-weight:700; box-shadow:0 8px 20px rgba(0,0,0,.28);}
-.code-wrap.collapsed .code-toggle{display:inline-flex;}
-.code-toggle:active{background:#2d333b;}
-.code-head{display:flex; align-items:center; justify-content:space-between; background:#161b22; padding:7px 12px; font-size:12px; color:#8b949e; font-family:ui-monospace,Menlo,Consolas,monospace;}
-.copy-btn{background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; padding:4px 10px; font-size:12px; display:flex; align-items:center; gap:6px;}
+.code-wrap{margin:12px 0; border-radius:14px; overflow:hidden; border:1px solid #30363d; background:#0d1117; color:#e6edf3; position:relative;}
+[data-theme="light"] .code-wrap{background:#f6f8fa; border-color:#d0d7de; color:#1f2328;}
+.code-wrap.collapsed pre{display:none;}
+.code-head{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; background:#161b22; padding:10px 12px; font-size:12px; color:#c9d1d9; font-family:ui-monospace,Menlo,Consolas,monospace;}
+[data-theme="light"] .code-head{background:#eaeef2; color:#1f2328; border-bottom:1px solid #d0d7de;}
+.code-wrap.collapsed .code-head{border-bottom:0;}
+.code-meta{display:flex; align-items:center; gap:7px; font-weight:700;}
+.code-meta .code-lines{font-weight:500; color:#8b949e; font-size:11.5px;}
+[data-theme="light"] .code-meta .code-lines{color:#57606a;}
+.code-actions{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.code-toggle,.copy-btn,.preview-btn{background:#21262d; color:#e6edf3; border:1px solid #30363d; border-radius:8px; padding:6px 10px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:5px; margin:0;}
+.preview-btn{color:#3fb950; border-color:#238636;}
+[data-theme="light"] .code-toggle,[data-theme="light"] .copy-btn{background:#ffffff; color:#1f2328; border-color:#d0d7de;}
+[data-theme="light"] .preview-btn{background:#dafbe1; color:#1a7f37; border-color:#4ac26b;}
 .copy-btn.copied{color:#3fb950; border-color:#238636;}
-.code-wrap pre{margin:0; overflow-x:auto; padding:14px;}
-.code-wrap code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; line-height:1.55; background:none !important; padding:0 !important; white-space:pre;}
+[data-theme="light"] .copy-btn.copied{color:#1a7f37; border-color:#1a7f37;}
+.code-wrap pre{margin:0; overflow-x:auto; padding:14px; background:#0d1117; color:#e6edf3;}
+[data-theme="light"] .code-wrap pre{background:#f6f8fa; color:#1f2328;}
+.code-wrap code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; line-height:1.58; background:none !important; padding:0 !important; white-space:pre; color:#e6edf3;}
+[data-theme="light"] .code-wrap code{color:#1f2328;}
+[data-theme="light"] .code-wrap .hljs-keyword,[data-theme="light"] .code-wrap .hljs-doctag,[data-theme="light"] .code-wrap .hljs-template-tag{color:#cf222e;}
+[data-theme="light"] .code-wrap .hljs-title,[data-theme="light"] .code-wrap .hljs-title.function_{color:#8250df;}
+[data-theme="light"] .code-wrap .hljs-attr,[data-theme="light"] .code-wrap .hljs-attribute,[data-theme="light"] .code-wrap .hljs-literal,[data-theme="light"] .code-wrap .hljs-number{color:#0550ae;}
+[data-theme="light"] .code-wrap .hljs-string,[data-theme="light"] .code-wrap .hljs-regexp{color:#0a3069;}
+[data-theme="light"] .code-wrap .hljs-name,[data-theme="light"] .code-wrap .hljs-tag,[data-theme="light"] .code-wrap .hljs-selector-tag{color:#116329;}
+[data-theme="light"] .code-wrap .hljs-comment{color:#6e7781;}
 .inline-code{background:var(--bg3); padding:2px 6px; border-radius:5px; font-family:ui-monospace,Menlo,monospace; font-size:.88em;}
 
 /* Thinking accordion */
@@ -406,7 +414,7 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
       <button class="icon-btn" id="settingsBtn" title="Providers"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
       <button class="icon-btn" id="themeBtn" title="Theme">🌙</button>
       <div style="flex:1"></div>
-      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.7.1</span>
+      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.7.2</span>
     </div>
   </div>
 </div>
@@ -510,8 +518,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "2.7.1";
-const APP_VERSION_CODE = 11;
+const APP_VERSION = "2.7.2";
+const APP_VERSION_CODE = 12;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -554,38 +562,38 @@ function enhance(container){
     const pre = code.parentElement;
     if(pre.parentElement && pre.parentElement.classList.contains("code-wrap")) return;
     const lang = (code.className.match(/language-([\w+-]+)/)||[])[1] || "text";
-    let highlighted = code.innerHTML;
-    try{ if(lang!=="text" && hljs.getLanguage(lang)) highlighted = hljs.highlight(code.textContent,{language:lang,ignoreIllegals:true}).value; }catch(e){}
+    const rawCode = code.textContent || "";
+    const lines = rawCode.replace(/\n$/,"").split("\n").length;
+    let highlighted = esc(rawCode);
+    try{
+      if(lang!=="text" && hljs.getLanguage(lang)) highlighted = hljs.highlight(rawCode,{language:lang,ignoreIllegals:true}).value;
+      else highlighted = hljs.highlightAuto(rawCode).value;
+    }catch(e){}
     code.innerHTML = highlighted;
-    const wrap = el("div","code-wrap");
+    const wrap = el("div","code-wrap collapsed");
     const head = el("div","code-head");
-    head.appendChild(el("span",null,esc(lang)));
-    const btnWrap = el("div");
+    const meta = el("div","code-meta",`<span>&lt;/&gt; ${esc(lang)}</span><span class="code-lines">· ${lines} line${lines===1?"":"s"}</span>`);
+    head.appendChild(meta);
+    const btnWrap = el("div","code-actions");
+    const toggle = el("button","code-toggle","Expand ⌄");
+    toggle.onclick = () => {
+      const collapsed = wrap.classList.toggle("collapsed");
+      toggle.innerHTML = collapsed ? "Expand ⌄" : "Collapse ⌃";
+    };
+    btnWrap.appendChild(toggle);
     if(lang === "html" || lang === "xhtml"){
       const pv = el("button","preview-btn","▶ Preview");
       pv.title = "Preview this HTML";
-      pv.onclick = ()=>openPreview(code.textContent, {live:false});
+      pv.onclick = ()=>openPreview(rawCode, {live:false});
       btnWrap.appendChild(pv);
     }
     const btn = el("button","copy-btn");
-    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Code`;
-    btn.onclick = ()=>copyText(code.textContent, btn, "✓ Copied!");
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
+    btn.onclick = ()=>copyText(rawCode, btn, "✓ Copied!");
     btnWrap.appendChild(btn);
     head.appendChild(btnWrap);
     pre.replaceWith(wrap);
     wrap.appendChild(head); wrap.appendChild(pre);
-    const fade = el("div","code-fade");
-    const lines = (code.textContent || "").split("\n").length;
-    const longCode = lines > 18 || code.textContent.length > 1800;
-    if(longCode){
-      const toggle = el("button","code-toggle", `Show all code (${lines} lines) <span>⌄</span>`);
-      toggle.onclick = () => {
-        const collapsed = wrap.classList.toggle("collapsed");
-        toggle.innerHTML = collapsed ? `Show all code (${lines} lines) <span>⌄</span>` : "Show less <span>⌃</span>";
-      };
-      wrap.classList.add("collapsed");
-      wrap.appendChild(fade); wrap.appendChild(toggle);
-    }
   });
   container.querySelectorAll("a").forEach(a=>{ a.target="_blank"; a.rel="noopener"; });
   container.querySelectorAll("code:not(pre code)").forEach(c=>{ if(!c.classList.contains("inline-code")) c.classList.add("inline-code"); });
