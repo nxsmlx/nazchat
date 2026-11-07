@@ -1,9 +1,9 @@
 {
-  "version": "3.2.0",
-  "versionCode": 20,
+  "version": "3.3.0",
+  "versionCode": 21,
   "name": "Kita Chat",
-  "changelog": "Long-answer fix: default output budget raised to 8192 tokens, throttled streaming render, truncation and tool-call states surfaced with Continue, stall watchdog, and reliable re-preview after follow-up edits.",
+  "changelog": "Real tool calling: web_search and fetch_url now run natively with visible tool traces. Output length is fully automatic (derived from the model, learned from provider errors, retried silently). Edit requests resend only the current document.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
-  "sha256": "77837fb9fbea0df3d2e251fa5416ee70f79108cad103aae083c9938400eff434",
+  "sha256": "9024c0c2e20a3a73f931d76f99cc51eb8b8bef425af661d8956ba3cdebe78342",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }

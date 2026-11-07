@@ -1,3 +1,28 @@
+# Kita Chat 3.3.0 — Real tool calling, zero tuning
+
+### Tools now actually run
+Kita Chat used to stop at "this model tried to call a tool". Now the model can search and read the web, and Kita Chat executes those calls itself:
+
+- `web_search` — live results with sources attached to the answer
+- `fetch_url` — reads a page or API response so answers can follow real documentation
+- Up to 3 tool rounds per message, with each call shown under the answer as "🔧 1 tool call · Search: … 412ms"
+- Providers that reject `tools` are detected and answered without them, silently
+- Tool calling is on by default; no setting to enable
+
+### Output length is no longer yours to manage
+- The max-output slider is gone. Kita Chat asks for the largest budget the model allows (from model metadata, or 60% of the context window)
+- If a provider still rejects that number, the real ceiling is read from the error, saved, and the request is retried automatically
+- If a model genuinely stops early, the answer says so and offers **Continue**
+
+### Asking for changes keeps working
+- "Ubah tajuk jadi merah" on a generated page now sends the current document with your change, not 30 messages of history
+- Smaller requests, fewer cut-offs, and the page cannot drift because it is edited from its real source
+
+### Other fixes
+- Web search no longer runs twice when it is toggled on
+- Streaming stays responsive during long generations
+- Stall watchdog reports provider waits
+
 # Kita Chat 3.2.0 — Long answers fixed
 
 Two symptoms had one root cause: the default output budget was 2048 tokens. A full HTML page is much larger, so the stream was cut off mid-code. The UI showed nothing useful, and any follow-up "change this" reply was cut off too, which is why the second preview never worked.

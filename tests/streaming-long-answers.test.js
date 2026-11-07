@@ -32,7 +32,7 @@ const assert=require('assert');
 
  await p.goto('file:///data/user/0/id.griphub.agent/files/home/workspace/build-a-web-app-116-648/nazchat/index.html');
  await p.evaluate(()=>{localStorage.setItem('nazchat_v1',JSON.stringify({schemaVersion:3,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],conversations:[],projects:[],prompts:[],styles:[],artifacts:[],lastProviderId:'p',lastModelId:'m',onboardingDone:true,theme:'dark',parametersByModel:{},skillSettings:{mode:'auto',selected:[],disabled:[],custom:[]}}));location.reload()});
- await p.waitForTimeout(250);
+ await p.waitForFunction(()=>typeof db!=='undefined'&&typeof currentModel==='function',{timeout:15000});
 
  // 1. Long HTML generation completes, stays responsive, and exposes Preview.
  const t0=Date.now();
@@ -75,13 +75,15 @@ const assert=require('assert');
  assert(trunc.cont,'Continue action missing');
  console.log('PASS truncation surfaced with Continue');
 
- // 4. Tool-call-only responses explain themselves.
+ // 4. A tool-call-only response when tools are disabled explains itself.
  mode='tool';
+ await p.evaluate(()=>{db.providers[0].capabilities={tools:false};save();});
  await p.fill('#promptInput','cari web');await p.click('#sendBtn');
  await p.waitForFunction(()=>!generating,{timeout:20000});
  const tool=await p.evaluate(()=>({flag:conv.messages.at(-1).toolCall,text:conv.messages.at(-1).content}));
  assert(tool.flag,'tool-call response not flagged');
  assert(/tool/i.test(tool.text),'tool-call explanation missing');
+ await p.evaluate(()=>{db.providers[0].capabilities={};save();});
  console.log('PASS tool-call-only response explained');
 
  // 5. Default output budget is large enough for full pages.

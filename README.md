@@ -2,6 +2,13 @@
 
 Kita Chat is a private, local-first Android BYOK AI chat client for OpenAI-compatible providers.
 
+## v3.3.0 — Real tool calling, zero tuning
+
+- `web_search` and `fetch_url` now actually execute: up to 3 tool rounds, sources attached, calls shown under the answer
+- Output budget is automatic — taken from model metadata, learned from provider errors, retried silently; the manual slider is gone
+- "Change this" requests send the current document instead of replaying the whole chat, so edits stay complete and previewable
+- Providers that reject tools fall back to a plain answer
+
 ## v3.2.0 — Long answers fixed
 
 - Default max output tokens raised to 8192; truncation is now reported with a Continue action
