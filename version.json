@@ -1,9 +1,9 @@
 {
-  "version": "3.1.0",
-  "versionCode": 16,
+  "version": "3.1.1",
+  "versionCode": 17,
   "name": "Kita Chat",
-  "changelog": "Production UI polish: refined spacing, typography, hierarchy, composer density, sheets, controls, code blocks, and dark/light visual tokens for a cleaner Kita Chat workspace.",
+  "changelog": "Preview hotfix: render HTML previews through a sandboxed data document so Android WebView displays the preview reliably instead of a blank frame.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
-  "sha256": "b4d2edcc024eb32292c35c679d69fa2f9f5117d1aa12a23925337308d323d8ad",
+  "sha256": "93642e2dcb4fa01b36037a4d5599d62954c666ea4be6cb7e729276d6cad5b5ef",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }

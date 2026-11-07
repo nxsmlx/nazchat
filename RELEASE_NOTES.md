@@ -1,3 +1,9 @@
+# Kita Chat 3.1.1 — HTML Preview hotfix
+
+- Fixes blank HTML Preview frames in Android WebView by rendering the sandboxed preview through a data document instead of relying only on `iframe.srcdoc`.
+- Preserves Preview / Code / Console tabs, live updates, sandboxing and console nonce validation.
+- Adds a browser regression test for the preview renderer.
+
 # Kita Chat 3.1.0 — Production UI polish
 
 - Refined mobile-first spacing with a consistent 4/8 rhythm and calmer vertical pacing.

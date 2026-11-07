@@ -865,8 +865,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "3.1.0";
-const APP_VERSION_CODE = 16;
+const APP_VERSION = "3.1.1";
+const APP_VERSION_CODE = 17;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1193,8 +1193,11 @@ function renderPreview(){
   const runJs = $("#previewJs").checked;
   const frame = $("#previewFrame");
   const doc = buildPreviewDoc(code, runJs);
-  frame.srcdoc = doc;
-  const dock = document.querySelector(".preview-frame-wrap");
+  // Android WebView builds can leave srcdoc blank when the parent page is file://.
+  // Use a data document as the primary renderer; it remains sandboxed and does not receive native bridges.
+  frame.removeAttribute("srcdoc");
+  frame.src = "data:text/html;charset=utf-8," + encodeURIComponent(doc);
+  frame.dataset.previewReady = "true";
   $("#previewEmpty").style.display = "none";
 }
 function openPreview(html, opts){
@@ -1212,7 +1215,8 @@ function openPreview(html, opts){
 }
 function closePreview(){
   const scr = $("#htmlPreview"); scr.classList.remove("open"); scr.setAttribute("aria-hidden","true");
-  $("#previewFrame").srcdoc = "about:blank";
+  $("#previewFrame").removeAttribute("srcdoc");
+  $("#previewFrame").src = "about:blank";
   previewLiveState = null;
 }
 /* Live preview bridge from streaming assistant output */
