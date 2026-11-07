@@ -1,8 +1,8 @@
 {
-  "version": "2.5.1",
-  "versionCode": 7,
+  "version": "2.6.0",
+  "versionCode": 8,
   "name": "NazChat",
-  "changelog": "Compact composer controls, smaller model selector, collapsible provider groups, cleaner minimalist Thinking/Reasoning/Search controls, and improved mobile spacing.",
+  "changelog": "New: live HTML preview with console and viewport controls, plus quieter Settings where providers are a simple utility list instead of a hero card.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }

@@ -246,13 +246,23 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
 .status-line{font-size:13px; color:var(--text2); display:flex; align-items:center; gap:8px;}
 .status-line.ok{color:var(--accent);} .status-line.err{color:var(--danger);}
 
-/* Provider list in settings */
-.prov-card{background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:14px;}
+/* Provider list in settings — quiet utility list (not hero) */
+.prov-card{background:transparent; border:0; border-bottom:1px solid var(--border); border-radius:0; padding:10px 2px;}
 .prov-card .row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
-.prov-card h4{margin:0; font-size:15px;}
-.prov-card .sub{font-size:12.5px; color:var(--text2); margin-top:4px; word-break:break-all;}
-.prov-card .acts{display:flex; gap:6px; margin-top:10px;}
-.prov-card .acts button{flex:1; padding:9px; border-radius:8px; border:1px solid var(--border); background:var(--bg2); color:var(--text2); font-size:12.5px; font-weight:600;}
+.prov-card h4{margin:0; font-size:13.5px; font-weight:700;}
+.prov-card .sub{font-size:11.5px; color:var(--text2); margin-top:3px; word-break:break-all; line-height:1.45;}
+.prov-card .acts{display:flex; gap:6px; margin-top:8px;}
+.prov-card .acts button{flex:0 0 auto; padding:6px 10px; border-radius:8px; border:0; background:none; color:var(--text2); font-size:12px; font-weight:600;}
+.prov-card .acts button:active{background:var(--bg3); color:var(--text);}
+.settings-section-label{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);padding:6px 0 0;}
+.settings-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--border);}
+.settings-row .sr-icon{width:32px;height:32px;border-radius:9px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.settings-row .sr-text{flex:1;min-width:0;}
+.settings-row .sr-text strong{display:block;font-size:13.5px;}
+.settings-row .sr-text small{color:var(--text2);font-size:11.5px;display:block;margin-top:2px;line-height:1.4;}
+.settings-row .mini-btn{border:1px solid var(--border);background:var(--bg2);color:var(--text);border-radius:9px;padding:7px 10px;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0;}
+.add-provider-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px;border-radius:10px;border:1px dashed var(--border);background:none;color:var(--text2);font-size:13px;font-weight:700;margin-top:4px;}
+.add-provider-btn:active{background:var(--bg3);color:var(--text);}
 
 /* Toast */
 #toast{position:fixed; bottom:calc(90px + var(--safe-b)); left:50%; transform:translateX(-50%) translateY(20px); background:#333; color:#fff; padding:11px 20px; border-radius:12px; font-size:14px; opacity:0; transition:.25s; z-index:99; pointer-events:none; max-width:88vw; text-align:center;}
@@ -261,6 +271,48 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
 .toast-mini{position:fixed; top:calc(60px + var(--safe-t)); left:50%; transform:translateX(-50%); background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:999px; font-size:13px; z-index:99; opacity:0; transition:.2s; pointer-events:none;}
 .toast-mini.show{opacity:1;}
 
+/* HTML Preview screen */
+.preview-screen{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;visibility:hidden;transform:translateY(100%);transition:transform .25s ease,visibility .25s;}
+.preview-screen.open{visibility:visible;transform:none;}
+.preview-head{display:flex;align-items:center;gap:6px;padding:calc(8px + var(--safe-t)) 8px 8px;border-bottom:1px solid var(--border);}
+.preview-close,.preview-act{width:40px;height:40px;border:0;background:none;color:var(--text);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.preview-close:active,.preview-act:active{background:var(--bg3);}
+.preview-title{flex:1;min-width:0;display:flex;align-items:center;gap:8px;}
+.preview-title strong{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.live-badge{font-size:11px;font-weight:800;color:var(--accent);background:rgba(16,163,127,.14);border:1px solid rgba(16,163,127,.35);padding:2px 8px;border-radius:99px;animation:pulse 1.6s ease-in-out infinite;}
+.preview-acts{display:flex;gap:2px;}
+.preview-tabs{display:flex;gap:4px;padding:8px 12px 0;}
+.preview-tab{flex:1;padding:9px;border:0;border-bottom:2px solid transparent;background:none;color:var(--text2);font-size:13.5px;font-weight:800;}
+.preview-tab.active{color:var(--text);border-bottom-color:var(--accent);}
+.console-count{font-size:11px;color:var(--text2);background:var(--bg3);border-radius:99px;padding:1px 7px;margin-left:3px;}
+.preview-toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);}
+.vp-seg{display:flex;gap:3px;background:var(--bg3);padding:3px;border-radius:10px;}
+.vp-btn{border:0;background:none;width:36px;height:30px;border-radius:8px;font-size:15px;color:var(--text2);}
+.vp-btn.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.js-toggle{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--text2);cursor:pointer;}
+.js-toggle input{width:17px;height:17px;accent-color:var(--accent);margin:0;}
+.preview-stage{flex:1;position:relative;display:flex;min-height:0;padding-bottom:var(--safe-b);}
+.preview-frame-wrap{flex:1;display:flex;align-items:flex-start;justify-content:center;overflow:auto;background:radial-gradient(circle,var(--bg3) 1px,transparent 1px);background-size:22px 22px;position:relative;}
+#previewFrame{background:#fff;border:0;width:100%;height:100%;box-shadow:0 0 0 1px var(--border);}
+.preview-frame-wrap.vp-mobile #previewFrame{width:390px;max-width:100%;height:calc(100% - 16px);margin:8px 0;border-radius:16px;}
+.preview-frame-wrap.vp-tablet #previewFrame{width:768px;max-width:100%;height:calc(100% - 16px);margin:8px 0;border-radius:12px;}
+.preview-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:13.5px;pointer-events:none;}
+#previewCode{flex:1;display:none;border:0;border-radius:0;background:#0d1117;color:#e6edf3;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55;padding:14px;resize:none;}
+.preview-stage.show-code #previewCode{display:block;}
+.preview-stage.show-code .preview-frame-wrap,.preview-stage.show-console .preview-frame-wrap,.preview-stage.show-code .preview-toolbar,.preview-stage.show-console .preview-toolbar{display:none;}
+.preview-stage.show-console #previewConsole{display:block;}
+.preview-console{flex:1;display:none;overflow-y:auto;background:var(--bg2);padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.65;}
+.console-empty{color:var(--text2);}
+.console-line{padding:4px 0;border-bottom:1px solid color-mix(in srgb,var(--border) 60%,transparent);white-space:pre-wrap;word-break:break-word;}
+.console-line.err{color:var(--danger);}
+.console-line.warn{color:#f0b429;}
+.console-line .src{color:var(--text2);font-size:11px;margin-left:6px;}
+.preview-menu-scrim{position:fixed;inset:0;z-index:81;background:rgba(0,0,0,.4);display:none;}
+.preview-menu{position:fixed;z-index:82;right:10px;top:calc(56px + var(--safe-t));background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:6px;display:none;flex-direction:column;min-width:190px;box-shadow:0 14px 40px rgba(0,0,0,.3);}
+.preview-menu.open{display:flex;}
+.preview-menu button{display:flex;gap:9px;align-items:center;border:0;background:none;color:var(--text);text-align:left;padding:11px 10px;border-radius:9px;font-size:13.5px;}
+.preview-menu button:active{background:var(--bg3);}
+.preview-btn{background:#21262d;color:#3fb950;border:1px solid #238636;border-radius:6px;padding:4px 10px;font-size:12px;margin-right:6px;}
 /* Edit message modal */
 .modal-scrim{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:60; display:none; align-items:center; justify-content:center; padding:16px;}
 .modal-scrim.open{display:flex;}
@@ -334,7 +386,7 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
       <button class="icon-btn" id="settingsBtn" title="Providers"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
       <button class="icon-btn" id="themeBtn" title="Theme">🌙</button>
       <div style="flex:1"></div>
-      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.5.1</span>
+      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.6</span>
     </div>
   </div>
 </div>
@@ -375,6 +427,46 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
   </div>
 </div>
 
+<!-- HTML Preview screen -->
+<div id="htmlPreview" class="preview-screen" aria-hidden="true">
+  <div class="preview-head">
+    <button class="preview-close" id="previewClose" aria-label="Close preview"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div class="preview-title"><strong id="previewTitle">HTML Preview</strong><span id="previewLive" class="live-badge" style="display:none">● Live</span></div>
+    <div class="preview-acts">
+      <button class="preview-act" id="previewRun" title="Run">▶</button>
+      <button class="preview-act" id="previewRefresh" title="Refresh">↻</button>
+      <button class="preview-act" id="previewMore" title="More actions">⋯</button>
+    </div>
+  </div>
+  <div class="preview-tabs" role="tablist">
+    <button class="preview-tab active" data-tab="preview" role="tab">Preview</button>
+    <button class="preview-tab" data-tab="code" role="tab">Code</button>
+    <button class="preview-tab" data-tab="console" role="tab">Console <span id="consoleCount" class="console-count">0</span></button>
+  </div>
+  <div class="preview-toolbar">
+    <div class="vp-seg" role="group" aria-label="Preview width">
+      <button class="vp-btn" data-vp="mobile" title="Mobile width">📱</button>
+      <button class="vp-btn" data-vp="tablet" title="Tablet width">▭</button>
+      <button class="vp-btn active" data-vp="full" title="Full width">▣</button>
+    </div>
+    <label class="js-toggle"><input type="checkbox" id="previewJs" checked><span>Run JS</span></label>
+  </div>
+  <div class="preview-stage">
+    <div class="preview-frame-wrap" id="previewFrameWrap">
+      <iframe id="previewFrame" title="HTML preview" sandbox="allow-scripts allow-modals allow-popups allow-downloads"></iframe>
+      <div class="preview-empty" id="previewEmpty">Run HTML to see the preview</div>
+    </div>
+    <textarea id="previewCode" spellcheck="false" placeholder="HTML code…"></textarea>
+    <div id="previewConsole" class="preview-console"><div class="console-empty">Console output from previewed page…</div></div>
+  </div>
+</div>
+<div class="preview-menu-scrim" id="previewMenuScrim"></div>
+<div class="preview-menu" id="previewMenu">
+  <button id="pmCopy">⧉ Copy HTML</button>
+  <button id="pmDownload">⬇ Download .html</button>
+  <button id="pmReset">↺ Reset to original</button>
+</div>
+
 <div id="toast"></div>
 <div class="toast-mini" id="toastMini"></div>
 <div class="modal-scrim" id="effortScrim"><div class="modal"><h3>Reasoning depth</h3><p style="margin:0;color:var(--text2);font-size:13px">Choose how much internal reasoning the model should use.</p><div id="effortOptions" style="display:grid;gap:8px"></div><button class="btn secondary" id="effortCancel">Cancel</button></div></div>
@@ -398,8 +490,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "2.5.1";
-const APP_VERSION_CODE = 7;
+const APP_VERSION = "2.6.0";
+const APP_VERSION_CODE = 8;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -448,10 +540,18 @@ function enhance(container){
     const wrap = el("div","code-wrap");
     const head = el("div","code-head");
     head.appendChild(el("span",null,esc(lang)));
+    const btnWrap = el("div");
+    if(lang === "html" || lang === "xhtml"){
+      const pv = el("button","preview-btn","▶ Preview");
+      pv.title = "Preview this HTML";
+      pv.onclick = ()=>openPreview(code.textContent, {live:false});
+      btnWrap.appendChild(pv);
+    }
     const btn = el("button","copy-btn");
     btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Code`;
     btn.onclick = ()=>copyText(code.textContent, btn, "✓ Copied!");
-    head.appendChild(btn);
+    btnWrap.appendChild(btn);
+    head.appendChild(btnWrap);
     pre.replaceWith(wrap);
     wrap.appendChild(head); wrap.appendChild(pre);
   });
@@ -555,6 +655,11 @@ function msgEl(msg){
       bubble.appendChild(files);
     }
     if(msg.content) bubble.appendChild(el("div","user-text",esc(msg.content)));
+  if(msg.attachments && msg.attachments.some(a=>/\.html?$/i.test(a.name||"")) && msg.content){
+    const pv = el("button","act-btn","▶ Preview HTML");
+    pv.onclick = ()=>openPreview(msg.content, {live:false});
+    bubble.appendChild(pv);
+  }
     wrap.appendChild(bubble);
     const bar = el("div","action-bar");
     const edit = el("button","act-btn","✏️ Edit");
@@ -588,7 +693,20 @@ function renderAssistant(bubble, msg, live){
   const md = el("div","md");
   const src = (live ? msg.content : (extractThink(msg.content).content || msg.content)) || "";
   md.innerHTML = renderMarkdown(src);
-  if(live && (msg.reasoning || msg.content)) md.innerHTML += '<span class="stream-cursor" aria-hidden="true"></span>';
+  if(live && (msg.reasoning || msg.content)){
+    md.innerHTML += '<span class="stream-cursor" aria-hidden="true"></span>';
+    // If preview is open in live mode, refresh it (debounced) as HTML streams in
+    if(previewLiveState && $("#htmlPreview").classList.contains("open")){
+      const htmlBlock = (msg.content.match(/```html\n?([\s\S]*?)(?:```|$)/i) || [])[1];
+      if(htmlBlock && htmlBlock.length > 40 && htmlBlock.length < 240000){
+        const now = Date.now();
+        clearTimeout(previewLiveState.timer);
+        if(now - previewLiveState.lastRun > 500 || !previewLiveState.timer){
+          previewLiveState.timer = setTimeout(()=>{ $("#previewCode").value = htmlBlock; renderPreview(); previewLiveState.lastRun = Date.now(); }, 250);
+        }
+      }
+    }
+  }
   bubble.appendChild(md);
   enhance(md);
   // sources
@@ -614,6 +732,95 @@ function renderAssistant(bubble, msg, live){
   }
 }
 function scrollBottom(){ const s=$("#chatScroll"); s.scrollTop = s.scrollHeight; }
+
+/* ===================== HTML Preview ===================== */
+let previewOriginal = "", previewLiveState = null;
+function buildPreviewDoc(html, runJs){
+  const isFull = /<html[\s>]/i.test(html) || /^\s*<!doctype/i.test(html);
+  const bridge = `<script>try{const _l=console.log,_w=console.warn,_e=console.error;const send=(t,a)=>{try{parent.postMessage({__naz:'console',type:t,text:[...a].map(String).join(' ')},'*')}catch(e){}};console.log=(...a)=>{_l.apply(console,a);send('log',a)};console.warn=(...a)=>{_w.apply(console,a);send('warn',a)};console.error=(...a)=>{_e.apply(console,a);send('error',a)};window.addEventListener('error',e=>{try{parent.postMessage({__naz:'console',type:'error',text:e.message||String(e.error||'error'),src:(e.filename||'')+':'+(e.lineno||'')},'*')}catch(_){}});}catch(e){}<\/script>`;
+  if(isFull){
+    let doc = html;
+    const security = runJs ? "" : `<script>window.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('script').forEach(s=>s.type='text/blocked')},true)<\/script>`;
+    if(!/<meta[^>]+name=["']viewport/i.test(doc) && /<head/i.test(doc))
+      doc = doc.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width, initial-scale=1">');
+    if(/<\/head>\s*<body/i.test(doc)) doc = doc.replace(/<\/head>\s*<body/i, bridge + "</head><body");
+    else if(/<\/head>/i.test(doc)) doc = doc.replace(/<\/head>/i, bridge + "</head>");
+    return doc;
+  }
+  return `<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>html,body{margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:0}</style>${bridge}</head><body>${html}</body></html>`;
+}
+function showPreviewTab(name){
+  document.querySelectorAll(".preview-tab").forEach(t=>t.classList.toggle("active", t.dataset.tab===name));
+  const stage = document.querySelector(".preview-stage");
+  stage.classList.toggle("show-code", name==="code");
+  stage.classList.toggle("show-console", name==="console");
+}
+function addConsole(type, text, src){
+  const box = $("#previewConsole"); const empty = box.querySelector(".console-empty"); if(empty) empty.remove();
+  const line = el("div","console-line" + (type==="error"?" err": type==="warn"?" warn":""), esc(text));
+  if(src) line.insertAdjacentHTML("beforeend", `<span class="src">${esc(src)}</span>`);
+  box.appendChild(line);
+  const count = box.querySelectorAll(".console-line").length;
+  $("#consoleCount").textContent = count;
+}
+function renderPreview(){
+  const code = $("#previewCode").value;
+  const runJs = $("#previewJs").checked;
+  const frame = $("#previewFrame");
+  const doc = buildPreviewDoc(code, runJs);
+  frame.srcdoc = doc;
+  const dock = document.querySelector(".preview-frame-wrap");
+  $("#previewEmpty").style.display = "none";
+}
+function openPreview(html, opts){
+  opts = opts || {};
+  previewOriginal = html || "";
+  $("#previewCode").value = previewOriginal;
+  $("#consoleCount").textContent = "0";
+  $("#previewConsole").innerHTML = `<div class="console-empty">Console output from previewed page…</div>`;
+  $("#previewLive").style.display = opts.live ? "" : "none";
+  previewLiveState = opts.live ? { lastRun: 0, timer: null, interacted: false } : null;
+  showPreviewTab("preview");
+  renderPreview();
+  const scr = $("#htmlPreview"); scr.classList.add("open"); scr.setAttribute("aria-hidden","false");
+  haptic();
+}
+function closePreview(){
+  const scr = $("#htmlPreview"); scr.classList.remove("open"); scr.setAttribute("aria-hidden","true");
+  $("#previewFrame").srcdoc = "about:blank";
+  previewLiveState = null;
+}
+/* Live preview bridge from streaming assistant output */
+function previewFromCodeBlock(codeText){
+  openPreview(codeText, {live: generating});
+}
+/* Console messages from sandboxed iframe */
+window.addEventListener("message", (e)=>{
+  if(!e.data || e.data.__naz !== "console") return;
+  addConsole(e.data.type||"log", e.data.text||"", e.data.src);
+});
+/* Preview controls wiring */
+document.querySelectorAll(".preview-tab").forEach(t=>t.onclick = ()=>showPreviewTab(t.dataset.tab));
+$("#previewClose").onclick = closePreview;
+$("#previewRun").onclick = ()=>{ renderPreview(); showPreviewTab("preview"); haptic(); };
+$("#previewRefresh").onclick = ()=>{ renderPreview(); haptic(); };
+$("#previewJs").onchange = ()=>renderPreview();
+document.querySelectorAll(".vp-btn").forEach(b=>b.onclick = ()=>{
+  document.querySelectorAll(".vp-btn").forEach(x=>x.classList.toggle("active", x===b));
+  const wrap = $("#previewFrameWrap");
+  wrap.classList.toggle("vp-mobile", b.dataset.vp==="mobile");
+  wrap.classList.toggle("vp-tablet", b.dataset.vp==="tablet");
+});
+$("#previewMore").onclick = ()=>{ $("#previewMenu").classList.add("open"); $("#previewMenuScrim").style.display="block"; };
+$("#previewMenuScrim").onclick = ()=>{ $("#previewMenu").classList.remove("open"); $("#previewMenuScrim").style.display="none"; };
+$("#pmCopy").onclick = ()=>{ copyText($("#previewCode").value); $("#previewMenu").classList.remove("open"); $("#previewMenuScrim").style.display="none"; };
+$("#pmDownload").onclick = ()=>{
+  const blob = new Blob([$("#previewCode").value], {type:"text/html"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "nazchat-preview.html"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+  $("#previewMenu").classList.remove("open"); $("#previewMenuScrim").style.display="none";
+};
+$("#pmReset").onclick = ()=>{ $("#previewCode").value = previewOriginal; renderPreview(); $("#previewMenu").classList.remove("open"); $("#previewMenuScrim").style.display="none"; };
 
 /* ===================== Sheets ===================== */
 function openSheet(id){ $("#"+id+"Scrim").classList.add("open"); $("#"+id).classList.add("open"); }
@@ -683,31 +890,20 @@ function renderModelSheet(){
 /* ===================== Provider management ===================== */
 function renderProvList(){
   const list = $("#provList"); list.innerHTML = "";
-  const intro = el("div","settings-card");
-  intro.innerHTML = `<div class="row"><div><h4>Model providers</h4><p>Connect OpenAI-compatible APIs. Keys stay on this device.</p></div><span style="font-size:20px">🔐</span></div>`;
-  list.appendChild(intro);
-  const update = el("div","settings-card");
-  update.innerHTML = `<div class="row"><div><h4>App updates</h4><p>NazChat ${APP_VERSION} · check GitHub for the latest APK.</p><div id="updateStatus" class="update-badge" style="display:none"></div></div><button class="mini-btn" id="checkUpdateBtn">Check</button></div>`;
-  list.appendChild(update);
-  $("#checkUpdateBtn").onclick = checkForUpdate;
-  const data = el("div","settings-card");
-  data.innerHTML = `<div class="row"><div><h4>Your data</h4><p>Export a backup or restore your conversations and providers.</p></div><span style="font-size:20px">💾</span></div><div style="display:flex;gap:7px;margin-top:10px"><button class="mini-btn" id="exportDataBtn">Export backup</button><button class="mini-btn" id="importDataBtn">Import backup</button></div>`;
-  list.appendChild(data);
-  $("#exportDataBtn").onclick = exportBackup;
-  $("#importDataBtn").onclick = importBackup;
-  const add = el("button","btn","＋ Add Provider");
-  add.onclick = ()=>openProvForm(null);
-  list.appendChild(add);
+  // Quiet settings rows — providers are a utility, not the hero
+  const sectionTop = `Settings`;
+  const provLabel = el("div","settings-section-label","Providers"); list.appendChild(provLabel);
   if(!db.providers.length){
-    list.appendChild(el("div","",`<div style="color:var(--text2);font-size:13.5px;text-align:center;padding:12px 0">Connect any OpenAI-compatible API — OpenRouter, DeepSeek, Groq, your own server…</div>`));
-    return;
+    const empty = el("div","settings-row");
+    empty.innerHTML = `<div class="sr-icon">🔌</div><div class="sr-text"><strong>No provider connected</strong><small>Add an OpenAI-compatible API to start chatting. Keys stay on this device.</small></div>`;
+    list.appendChild(empty);
   }
   db.providers.forEach(p=>{
     const card = el("div","prov-card");
     card.innerHTML = `
       <div class="row"><h4>${esc(p.name)}</h4>
-      <span style="font-size:11px;color:var(--accent);border:1px solid var(--accent);padding:2px 8px;border-radius:99px">${p.apiType==="responses"?"Responses":"Chat"}</span></div>
-      <div class="sub">${esc(p.baseUrl)} · ${p.selectedModels.length} model(s)</div>`;
+      <span style="font-size:10.5px;color:var(--text2)">${p.apiType==="responses"?"Responses":"Chat Completions"} · ${p.selectedModels.length} model(s)</span></div>
+      <div class="sub">${esc(p.baseUrl)}</div>`;
     const acts = el("div","acts");
     const edit = el("button",null,"Edit"); edit.onclick = ()=>openProvForm(p);
     const del = el("button",null,"Delete"); del.onclick = ()=>{ if(confirm("Delete provider \""+p.name+"\"?")){ db.providers=db.providers.filter(x=>x.id!==p.id); if(db.lastProviderId===p.id){db.lastProviderId=null;db.lastModelId=null;} save(); renderProvList(); renderHeader(); } };
@@ -715,6 +911,19 @@ function renderProvList(){
     card.appendChild(acts);
     list.appendChild(card);
   });
+  const add = el("button","add-provider-btn","＋ Add provider");
+  add.onclick = ()=>openProvForm(null);
+  list.appendChild(add);
+  const updateLabel = el("div","settings-section-label","App"); updateLabel.style.marginTop="10px"; list.appendChild(updateLabel);
+  const update = el("div","settings-row");
+  update.innerHTML = `<div class="sr-icon">⬆️</div><div class="sr-text"><strong>App updates</strong><small>NazChat ${APP_VERSION} · GitHub</small><div id="updateStatus" class="update-badge" style="display:none"></div></div><button class="mini-btn" id="checkUpdateBtn">Check</button>`;
+  list.appendChild(update);
+  $("#checkUpdateBtn").onclick = checkForUpdate;
+  const data = el("div","settings-row");
+  data.innerHTML = `<div class="sr-icon">💾</div><div class="sr-text"><strong>Backup</strong><small>Export or restore conversations and providers</small></div><button class="mini-btn" id="exportDataBtn">Export</button><button class="mini-btn" id="importDataBtn">Import</button>`;
+  list.appendChild(data);
+  $("#exportDataBtn").onclick = exportBackup;
+  $("#importDataBtn").onclick = importBackup;
 }
 
 let provFormState = null;
