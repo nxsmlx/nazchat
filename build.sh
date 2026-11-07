@@ -15,7 +15,7 @@ rm -f "$B/base.apk" "$B/NazChat.apk" "$B/compiled.flata"
 "$BT/aapt2" compile --dir "$B/res" -o "$B/compiled.flata"
 "$BT/aapt2" link -o "$B/base.apk" -I "$PLAT" \
   --manifest "$B/AndroidManifest.xml" --min-sdk-version 24 --target-sdk-version 34 \
-  -A "$B/assets" "$B/compiled.flata" --version-code 22 --version-name 3.3.1
+  -A "$B/assets" "$B/compiled.flata" --version-code 24 --version-name 3.5.0
 (cd "$B" && zip -qj base.apk out/classes.dex)
 if [ -f "$B/nazchat.keystore" ]; then
   "$BT/apksigner" sign --ks "$B/nazchat.keystore" --ks-pass pass:nazchat123 --key-pass pass:nazchat123 --out "$B/NazChat.apk" "$B/base.apk"

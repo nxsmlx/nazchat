@@ -163,14 +163,33 @@ header .menu-btn{background:var(--bg3);}
 .tool-trace-title{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);}
 .tool-trace-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--text2);}
 .tool-trace-ms{color:var(--text3);font-variant-numeric:tabular-nums;white-space:nowrap;}
-.code-live{border-color:color-mix(in srgb,var(--border) 80%,var(--accent));background:var(--bg2);}
-.code-live-head{gap:10px;}
-.code-live-meta{margin-left:auto;font-size:11.5px;color:var(--text3);font-weight:500;font-variant-numeric:tabular-nums;}
-.code-live .think-head:before{background:var(--text3);box-shadow:none;animation:pulse 1.2s infinite;}
-.code-live-acts{display:flex;gap:6px;justify-content:flex-end;padding:0 12px 8px;}
-.code-live-body{margin:0;max-height:150px;overflow:auto;padding:10px 12px 12px;border-top:1px solid var(--line);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.5;color:var(--text2);white-space:pre;background:var(--bg3);}
+/* Terminal frame: fixed height (~10 lines), scrolls vertically on its own,
+   and never expands the chat. Feels like an integrated terminal component. */
+.code-live{border-color:color-mix(in srgb,var(--border) 70%,#000);background:#0a0c10;}
+.code-live-head{gap:10px;background:#11151c;border-bottom:1px solid #1c232e;}
+.code-live-head:before{background:#3fb950;box-shadow:0 0 0 4px rgba(63,185,80,.15);animation:pulse 1.2s infinite;}
+.code-live-meta{margin-left:auto;font-size:11px;color:#7d8590;font-weight:500;font-variant-numeric:tabular-nums;}
+.code-live-acts{display:flex;gap:6px;justify-content:flex-end;padding:0 12px 8px;background:#11151c;}
+.code-live-body{margin:0;height:calc(10 * 1.65em);max-height:calc(10 * 1.65em);overflow-y:auto;overflow-x:hidden;padding:12px 14px;border-top:1px solid #1c232e;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.65;color:#adbac7;white-space:pre-wrap;word-break:break-all;background:#0a0c10;scrollbar-width:thin;}
+.code-live-body::-webkit-scrollbar{width:8px;}
+.code-live-body::-webkit-scrollbar-thumb{background:#2a323d;border-radius:4px;}
 .code-live.collapsed-live .code-live-body{display:none;}
+.code-live-body::after{content:"▊";color:#3fb950;animation:pulse 1s infinite;margin-left:2px;}
+.term-dots{display:inline-flex;gap:5px;align-items:center;margin-right:2px;}
+.term-dots i{width:9px;height:9px;border-radius:50%;background:#2a323d;}
+.term-dots i:nth-child(1){background:#ff5f57;}
+.term-dots i:nth-child(2){background:#febc2e;}
+.term-dots i:nth-child(3){background:#28c840;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.phase-box{display:flex;flex-direction:column;gap:8px;margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--bg3);border:1px solid var(--line);}
+.phase-head{display:flex;align-items:center;gap:6px;font-size:12px;}
+.phase-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);color:var(--text3);font-weight:600;font-size:11.5px;}
+.phase-chip.active{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line));background:color-mix(in srgb,var(--accent) 10%,var(--bg2));}
+.phase-chip.done{color:var(--text2);border-color:var(--line);}
+.phase-arrow{color:var(--text3);font-size:11px;}
+.phase-note{font-size:11.5px;color:var(--text3);}
+.phase-bar{height:3px;border-radius:2px;background:var(--line);overflow:hidden;}
+.phase-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease;}
 .md-live-raw{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:var(--text2);max-height:60vh;overflow:hidden;}
 .skill-badges{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 8px;}
 .skill-badge{display:inline-flex;align-items:center;gap:4px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:4px 8px;font-size:10.5px;font-weight:700;}
@@ -373,75 +392,155 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
 .modal{background:var(--bg2); border-radius:16px; width:100%; max-width:520px; padding:18px; display:flex; flex-direction:column; gap:12px; max-height:80dvh;}
 .modal h3{margin:0; font-size:17px;}
 .modal textarea{min-height:120px; resize:vertical; max-height:50dvh;}
-/* ===== Kita Chat visual system v3.2 — quiet technical workspace ===== */
+/* ===== Kita Chat v3.5 — modern agent platform ===== */
 :root{
-  --bg:#0b0e0d; --bg2:#121716; --bg3:#1a211f; --panel:#151b19; --border:#27322f;
-  --text:#edf4f0; --text2:#91a29c; --accent:#5bd6ae; --accent2:#35b98c;
-  --user-bubble:#202b28; --danger:#f07178; --radius:12px;
-  --shadow-soft:0 12px 36px rgba(0,0,0,.18);
+  --bg:#09090b; --bg2:#101013; --bg3:#191920; --panel:#141417; --border:#26262e;
+  --text:#f4f4f5; --text2:#9d9da7; --text3:#63636e; --line:#26262e;
+  --accent:#8b7cf6; --accent2:#6d5cd8; --accent-soft:rgba(139,124,246,.13);
+  --user-bubble:#1d1d24; --danger:#f87171; --radius:14px;
+  --shadow-soft:0 16px 48px rgba(0,0,0,.32);
+  --shadow-pop:0 8px 30px rgba(0,0,0,.24);
 }
 [data-theme="light"]{
-  --bg:#fbfcfb; --bg2:#f2f6f4; --bg3:#e8efec; --panel:#ffffff; --border:#d7e2dd;
-  --text:#17211e; --text2:#64756e; --user-bubble:#e5eee9;
-  --accent:#087f5b; --accent2:#056b4c; --shadow-soft:0 12px 30px rgba(28,55,44,.08);
+  --bg:#fafafa; --bg2:#ffffff; --bg3:#f1f1f4; --panel:#ffffff; --border:#e6e6ea; --line:#e6e6ea;
+  --text:#18181b; --text2:#71717a; --text3:#a1a1aa;
+  --accent:#6d5cd8; --accent2:#5b4bc4; --accent-soft:rgba(109,92,216,.1);
+  --user-bubble:#ededf2; --danger:#dc2626; --shadow-soft:0 16px 40px rgba(24,24,27,.06);
+  --shadow-pop:0 8px 24px rgba(24,24,27,.08);
 }
 html{background:var(--bg);}
-body{font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:15.5px;letter-spacing:-.008em;background:var(--bg);}
+body{font-family:"Manrope",ui-sans-serif,-apple-system,"Segoe UI",sans-serif;font-size:15.5px;letter-spacing:-.005em;background:var(--bg);color:var(--text);}
 button,input,textarea,select{font-family:inherit;}
-button{min-height:40px;}
-button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 78%,transparent);outline-offset:2px;}
-header{height:58px;padding:calc(6px + var(--safe-t)) 12px 6px;border-bottom:1px solid color-mix(in srgb,var(--border) 65%,transparent);background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(18px);}
-.header-brand{font-family:"Space Grotesk",sans-serif;font-size:16px;letter-spacing:-.035em;gap:7px;}
-.header-brand .brand-mark{width:28px;height:28px;border-radius:10px;background:var(--accent);color:#06251b;box-shadow:none;font-family:"Space Grotesk",sans-serif;font-size:14px;}
-.icon-btn{width:40px;height:40px;border-radius:11px;}
+button{min-height:42px;}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+*{-webkit-tap-highlight-color:transparent;}
+::selection{background:color-mix(in srgb,var(--accent) 30%,transparent);}
+
+/* Header — slim glass bar */
+header{height:56px;padding:calc(5px + var(--safe-t)) 10px 5px;border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent);background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);}
+.header-brand{font-family:"Space Grotesk",sans-serif;font-size:15.5px;letter-spacing:-.03em;gap:8px;}
+.header-brand .brand-mark{width:29px;height:29px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#c4b5fd);color:#0f0d1a;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent);font-family:"Space Grotesk",sans-serif;font-size:14.5px;}
+.icon-btn{width:40px;height:40px;border-radius:12px;color:var(--text2);}
 header .menu-btn{background:transparent;}
-header .menu-btn:active,.icon-btn:active{background:var(--bg3);}
-#chatScroll{scroll-behavior:auto;}
-#chatInner{max-width:780px;padding:34px 18px 36px;gap:34px;}
+header .menu-btn:active,.icon-btn:active{background:var(--bg3);color:var(--text);}
+
+/* Chat rhythm */
+#chatScroll{scroll-behavior:auto;-webkit-overflow-scrolling:touch;}
+#chatInner{max-width:760px;padding:30px 18px 34px;gap:30px;}
 .msg{gap:8px;}
-.msg.user .bubble{max-width:min(88%,560px);padding:12px 15px;border:1px solid color-mix(in srgb,var(--border) 72%,transparent);border-radius:18px 18px 5px 18px;background:var(--user-bubble);box-shadow:none;font-size:15px;line-height:1.58;}
-.msg.assistant .bubble{padding:0;max-width:720px;}
-.md{max-width:69ch;font-size:15.5px;line-height:1.7;color:var(--text);}
-.md p{margin:0 0 16px;}.md p:last-child{margin-bottom:0;}
-.md h1,.md h2,.md h3,.md h4{font-family:"Space Grotesk",sans-serif;font-weight:700;color:var(--text);margin:28px 0 11px;letter-spacing:-.035em;}
-.md h1{font-size:1.65em}.md h2{font-size:1.35em}.md h3{font-size:1.12em;}
+.msg.user .bubble{max-width:min(88%,560px);padding:12px 16px;border:1px solid color-mix(in srgb,var(--border) 60%,transparent);border-radius:18px 18px 5px 18px;background:var(--user-bubble);box-shadow:none;font-size:15px;line-height:1.6;}
+.msg.assistant .bubble{padding:0;max-width:700px;}
+.md{max-width:68ch;font-size:15.5px;line-height:1.72;color:var(--text);}
+.md p{margin:0 0 15px;}.md p:last-child{margin-bottom:0;}
+.md h1,.md h2,.md h3,.md h4{font-family:"Space Grotesk",sans-serif;font-weight:700;color:var(--text);margin:26px 0 10px;letter-spacing:-.03em;}
+.md h1{font-size:1.6em}.md h2{font-size:1.32em}.md h3{font-size:1.1em}
 .md strong{font-weight:700;color:var(--text);}
-.md ul,.md ol{padding-left:23px;margin-bottom:16px;}.md li{margin:6px 0;}
-.md blockquote{margin:16px 0;padding:10px 16px;border-left:2px solid var(--accent);background:var(--bg2);border-radius:0 9px 9px 0;}
-.md hr{margin:24px 0;border-top-color:var(--border);}
+.md ul,.md ol{padding-left:23px;margin-bottom:15px;}.md li{margin:5px 0;}
+.md blockquote{margin:15px 0;padding:10px 15px;border-left:2px solid var(--accent);background:var(--bg2);border-radius:0 10px 10px 0;}
+.md hr{margin:22px 0;border-top-color:var(--border);}
+.md a{color:#7ab3ff;}
+.md table{border-radius:12px;}
+
+/* Action bar */
 .action-bar{gap:2px;margin-top:8px;}
-.act-btn{min-height:36px;padding:5px 9px;color:var(--text2);font-size:12px;border-radius:8px;}
+.act-btn{min-height:36px;padding:5px 10px;color:var(--text3);font-size:12px;font-weight:600;border-radius:9px;transition:color .15s,background .15s;}
 .act-btn:active{background:var(--bg3);color:var(--text);}
-.skill-badges{gap:6px;margin:0 0 10px;}.skill-badge{padding:4px 8px;background:transparent;border-color:color-mix(in srgb,var(--accent) 30%,var(--border));font-size:10px;letter-spacing:.01em;}
-#composerWrap{padding:6px 14px calc(14px + var(--safe-b));}
-#composer{max-width:780px;padding:9px 10px 9px;border:1px solid var(--border);border-radius:22px;background:color-mix(in srgb,var(--bg2) 95%,transparent);box-shadow:var(--shadow-soft);}
-#inputRow{min-height:56px;padding:6px 7px 6px 10px;border-radius:16px;background:var(--bg3);border-color:color-mix(in srgb,var(--border) 90%,transparent);box-shadow:none;}
-#inputRow:focus-within{border-color:color-mix(in srgb,var(--accent) 70%,var(--border));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent);}
+.act-btn.copied{color:var(--accent);}
+
+/* Skill chips */
+.skill-badges{gap:6px;margin:0 0 10px;}
+.skill-badge{padding:4px 9px;background:transparent;border-color:color-mix(in srgb,var(--accent) 30%,var(--border));font-size:10px;letter-spacing:.01em;color:var(--text2);}
+.skill-badge:before{color:var(--accent);}
+
+/* Composer — elevated glass card */
+#composerWrap{padding:6px 14px calc(12px + var(--safe-b));}
+#composer{max-width:760px;padding:9px 10px 8px;border:1px solid color-mix(in srgb,var(--border) 90%,transparent);border-radius:24px;background:color-mix(in srgb,var(--bg2) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--shadow-soft);}
+#inputRow{min-height:56px;padding:6px 7px 6px 10px;border-radius:17px;background:var(--bg3);border-color:color-mix(in srgb,var(--border) 85%,transparent);box-shadow:none;}
+#inputRow:focus-within{border-color:color-mix(in srgb,var(--accent) 65%,var(--border));box-shadow:0 0 0 3.5px var(--accent-soft);}
 #promptInput{min-height:42px;padding:5px 3px 7px;font-size:15.5px;line-height:1.48;}
-#attachBtn{width:36px;height:36px;color:var(--text2);}
-#sendBtn{width:38px;height:38px;box-shadow:none;background:var(--accent);color:#06251b;}
+#attachBtn{width:36px;height:36px;color:var(--text3);}
+#sendBtn{width:38px;height:38px;box-shadow:none;background:var(--accent);color:#fff;transition:transform .15s,background .15s;}
+#sendBtn:active{transform:scale(.92);}
 #sendBtn.stop{background:var(--danger);color:#fff;}
 .composer-foot{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:5px 2px 0;}
-.model-chip{max-width:100%;min-width:0;padding:6px 7px 6px 3px;border-radius:10px;font-size:12.5px;}
-.model-chip .model-orb{width:23px;height:23px;border-radius:7px;background:var(--bg3);}
+.model-chip{max-width:100%;min-width:0;padding:6px 8px 6px 4px;border-radius:11px;font-size:12.5px;color:var(--text2);}
+.model-chip:active{background:var(--bg3);}
+.model-chip .model-orb{width:23px;height:23px;border-radius:7px;background:var(--bg3);color:var(--accent);font-size:11px;}
 .model-chip .model-label small{font-size:10px;}
-#composerFootMeta{margin-left:0;}.tool-cluster{gap:2px;}.tool-btn{width:35px;height:35px;border-radius:9px;font-size:16px;color:var(--text2);}.tool-btn.on{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
-#empty{padding:30px 22px 16px;gap:9px;}
-#empty h2{font-family:"Space Grotesk",sans-serif;font-size:34px;line-height:1.05;letter-spacing:-.055em;}
+#composerFootMeta{margin-left:0;}
+.tool-cluster{gap:3px;}
+.tool-btn{width:35px;height:35px;border-radius:10px;font-size:15px;color:var(--text3);transition:background .15s,color .15s;}
+.tool-btn:active{background:var(--bg3);color:var(--text2);}
+.tool-btn.on{background:var(--accent-soft);color:var(--accent);}
+
+/* Empty state — calm hero */
+#empty{padding:34px 22px 16px;gap:10px;}
+#empty h2{font-family:"Space Grotesk",sans-serif;font-size:36px;line-height:1.04;letter-spacing:-.055em;}
 #empty p{max-width:320px;font-size:14px;line-height:1.55;}
-.sugg{gap:8px;width:min(100%,370px);margin-top:20px;}.sugg button{min-height:60px;padding:12px 13px;border-radius:14px;background:var(--bg2);border-color:var(--border);box-shadow:none;font-size:13px;}.sugg button .ico{width:28px;height:28px;border-radius:8px;font-size:14px;}
-.sugg button strong{font-size:13px;}.sugg button small{display:block;margin-top:3px;color:var(--text2);font-size:11px;}
-.sheet{background:var(--bg2);border:1px solid color-mix(in srgb,var(--border) 90%,transparent);border-bottom:0;border-radius:20px 20px 0 0;box-shadow:0 -18px 45px rgba(0,0,0,.22);}
-.sheet-head{padding:15px 18px 9px;border-bottom:1px solid color-mix(in srgb,var(--border) 70%,transparent);}.sheet-head h3{font-family:"Space Grotesk",sans-serif;font-size:18px;letter-spacing:-.025em;}.sheet-body{padding:12px 18px 22px;gap:12px;}
-.grab{height:4px;margin:9px auto 1px;background:color-mix(in srgb,var(--text2) 35%,var(--border));}
-.settings-section-label{font-size:10px;letter-spacing:.09em;padding:9px 0 1px;color:var(--text2);}
-.settings-row{min-height:52px;padding:10px 2px;gap:10px;}.settings-row .sr-icon{width:30px;height:30px;border-radius:8px;font-size:14px;}.settings-row .sr-text strong{font-size:13px;}.settings-row .sr-text small{font-size:11px;line-height:1.35;}.settings-row .mini-btn,.settings-card .mini-btn{min-height:34px;padding:6px 9px;border-radius:8px;font-size:11px;}
-.settings-card{padding:13px;border-radius:12px;background:color-mix(in srgb,var(--bg3) 60%,transparent);}.settings-card h4{font-family:"Space Grotesk",sans-serif;font-size:14px;}.settings-card p{font-size:12px;line-height:1.5;}
-.btn{min-height:44px;padding:11px 14px;border-radius:10px;font-size:14px;}.btn.secondary{background:var(--bg3);}
-input,textarea,select{border-radius:9px;padding:11px 12px;background:var(--bg3);border-color:var(--border);}
-.code-wrap{margin:16px 0;border-radius:11px;box-shadow:none;}.code-head{padding:9px 11px;font-size:11px;}.code-wrap pre{padding:13px;}.code-wrap code{font-size:12.5px;line-height:1.55;}.code-toggle,.copy-btn,.preview-btn{min-height:32px;padding:5px 8px;border-radius:7px;font-size:11px;}
-.think-box{margin-bottom:15px;border-radius:11px;}.think-head{min-height:42px;padding:10px 12px;font-size:12px;}.think-body{padding:2px 12px 11px;font-size:12.5px;}
-.preview-head{padding:calc(7px + var(--safe-t)) 10px 7px;}.preview-title strong{font-family:"Space Grotesk",sans-serif;font-size:15px;}.preview-tabs{padding:7px 12px 0;}.preview-tab{min-height:40px;padding:8px;font-size:12px;}.preview-toolbar{padding:7px 12px;}
+.sugg{gap:8px;width:min(100%,380px);margin-top:22px;}
+.sugg button{min-height:62px;padding:13px 14px;border-radius:15px;background:var(--bg2);border-color:color-mix(in srgb,var(--border) 80%,transparent);box-shadow:var(--shadow-pop);font-size:13px;transition:transform .15s;}
+.sugg button:active{transform:scale(.98);}
+.sugg button .ico{width:29px;height:29px;border-radius:9px;background:var(--accent-soft);color:var(--accent);font-size:14px;}
+.sugg button strong{font-size:13px;}
+.sugg button small{display:block;margin-top:3px;color:var(--text3);font-size:11px;}
+
+/* Sheets — rounded modern panels with spring motion */
+.sheet{background:var(--bg2);border:1px solid color-mix(in srgb,var(--border) 85%,transparent);border-bottom:0;border-radius:24px 24px 0 0;box-shadow:0 -22px 60px rgba(0,0,0,.28);transition:transform .32s cubic-bezier(.32,.72,.25,1),visibility .32s;}
+.sheet-scrim{background:rgba(0,0,0,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
+.sheet-head{padding:14px 18px 10px;border-bottom:1px solid color-mix(in srgb,var(--border) 60%,transparent);}
+.sheet-head h3{font-family:"Space Grotesk",sans-serif;font-size:18px;letter-spacing:-.025em;}
+.sheet-body{padding:12px 18px 24px;gap:12px;}
+.grab{height:4px;width:40px;margin:9px auto 1px;background:color-mix(in srgb,var(--text3) 45%,var(--border));}
+
+/* Settings rows */
+.settings-section-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:10px 0 2px;color:var(--text3);}
+.settings-row{min-height:54px;padding:11px 2px;gap:10px;}
+.settings-row .sr-icon{width:31px;height:31px;border-radius:9px;background:var(--accent-soft);color:var(--accent);font-size:14px;}
+.settings-row .sr-text strong{font-size:13px;}
+.settings-row .sr-text small{font-size:11px;line-height:1.35;}
+.settings-row .mini-btn,.settings-card .mini-btn{min-height:34px;padding:6px 10px;border-radius:9px;font-size:11px;border-color:var(--border);}
+.settings-card{padding:14px;border-radius:13px;background:color-mix(in srgb,var(--bg3) 55%,transparent);border-color:color-mix(in srgb,var(--border) 75%,transparent);}
+.settings-card h4{font-family:"Space Grotesk",sans-serif;font-size:14px;}
+.settings-card p{font-size:12px;line-height:1.5;}
+.btn{min-height:46px;padding:12px 16px;border-radius:13px;font-size:14.5px;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 25%,transparent);}
+.btn:active{transform:scale(.98);}
+.btn.secondary{background:var(--bg3);box-shadow:none;border-color:var(--border);}
+input,textarea,select{border-radius:11px;padding:12px 13px;background:var(--bg3);border-color:var(--border);color:var(--text);}
+
+/* Code + terminal */
+.code-wrap{margin:16px 0;border-radius:13px;box-shadow:none;border-color:#262b36;}
+.code-head{padding:9px 12px;font-size:11px;}
+.code-wrap pre{padding:14px;}
+.code-wrap code{font-size:12.5px;line-height:1.6;}
+.code-toggle,.copy-btn,.preview-btn{min-height:32px;padding:5px 9px;border-radius:8px;font-size:11px;}
+.think-box{margin-bottom:15px;border-radius:13px;border-color:color-mix(in srgb,var(--accent) 22%,var(--border));background:linear-gradient(160deg,var(--accent-soft),var(--bg2));}
+.think-head{min-height:44px;padding:11px 13px;font-size:12.5px;color:var(--text2);}
+.think-head:before{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);}
+.think-body{padding:2px 13px 12px;font-size:12.5px;}
+.tool-trace{border-radius:11px;background:var(--bg3);border-color:color-mix(in srgb,var(--border) 80%,transparent);}
+.stream-status{border-radius:10px;background:var(--bg3);color:var(--text2);}
+.phase-box{border-radius:13px;background:var(--bg2);border-color:color-mix(in srgb,var(--border) 85%,transparent);}
+.phase-chip.active{border-color:color-mix(in srgb,var(--accent) 45%,var(--border));background:var(--accent-soft);}
+
+/* Sidebar */
+#sidebarPanel{background:var(--bg2);border-right:1px solid var(--border);width:min(84vw,318px);box-shadow:24px 0 60px rgba(0,0,0,.3);}
+.conv-item{border-radius:12px;font-size:13.5px;color:var(--text2);}
+.conv-item.active{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent);color:var(--text);}
+.side-foot .icon-btn{background:transparent;color:var(--text2);}
+
+/* Preview */
+.preview-head{padding:calc(7px + var(--safe-t)) 10px 7px;}
+.preview-title strong{font-family:"Space Grotesk",sans-serif;font-size:15px;}
+.preview-tabs{padding:7px 12px 0;}
+.preview-tab{min-height:40px;padding:8px;font-size:12px;}
+.preview-toolbar{padding:7px 12px;}
+#toast{background:#27272f;border-radius:14px;box-shadow:var(--shadow-pop);}
+.toast-mini{background:var(--bg3);border-color:var(--border);}
+
+/* Dialogs */
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-soft);}
+.modal-scrim{background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+
 @media (min-width:700px){#chatInner{padding-left:30px;padding-right:30px;}#composerWrap{padding-left:24px;padding-right:24px;}#empty h2{font-size:42px;}.sugg{display:grid;grid-template-columns:repeat(3,1fr);max-width:760px;width:100%;}.sugg button{min-height:116px;align-items:flex-start;flex-direction:column;gap:8px;}.sugg button .ico{width:32px;height:32px;}}
 @media (max-width:420px){.composer-foot{grid-template-columns:minmax(0,1fr) auto;}#composerFootMeta{max-width:190px;overflow:hidden;}.tool-cluster{overflow-x:auto;scrollbar-width:none;}.tool-cluster::-webkit-scrollbar{display:none;}#empty h2{font-size:31px;}}
 </style>
@@ -488,11 +587,11 @@ input,textarea,select{border-radius:9px;padding:11px 12px;background:var(--bg3);
           <button class="model-chip" id="bottomModelBtn" aria-label="Choose model" title="Choose model"><span class="model-orb">✦</span><span class="model-label" id="modelLabel"><span id="modelName">Select a model</span><small id="providerName">Choose provider</small></span></button>
           <div id="composerFootMeta">
             <div class="tool-cluster" aria-label="Chat tools">
-              <button class="tool-btn" id="skillBtn" aria-label="Choose skills" title="Skills: Auto">✦<span class="tool-label">Skills</span></button>
-              <button class="tool-btn" id="tglThink" aria-label="Toggle thinking" title="Thinking">🧠<span class="tool-label">Thinking</span></button>
-              <button class="tool-btn" id="effortBtn" aria-label="Reasoning depth" title="Reasoning depth">◒<span class="tool-label">High</span></button>
-              <button class="tool-btn" id="tglSearch" aria-label="Toggle web search" title="Web search">⌕<span class="tool-label">Search</span></button>
-              <button class="tool-btn" id="moreToolsBtn" aria-label="More tools" title="More tools">⋯<span class="tool-label">Tools</span></button>
+              <button class="tool-btn" id="skillBtn" aria-label="Choose skills" title="Skills"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10l-4.3 3.7 1.2 5.6L12 16.3l-4.4 3 1.2-5.6L4.5 10l5.6-1.4L12 3z"/></svg><span class="tool-label">Skills</span></button>
+              <button class="tool-btn" id="tglThink" aria-label="Toggle thinking" title="Thinking"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3a4.5 4.5 0 00-3.8 6.9A4.5 4.5 0 002.5 14a4.5 4.5 0 003.9 2.2A4.5 4.5 0 0012 21a4.5 4.5 0 005.6-4.8A4.5 4.5 0 0021.5 10a4.5 4.5 0 00-4.2-2.4A4.5 4.5 0 009.5 3z"/><circle cx="12" cy="10.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg><span class="tool-label">Thinking</span></button>
+              <button class="tool-btn" id="effortBtn" aria-label="Reasoning depth" title="Reasoning depth"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 4a8 8 0 00-8 8 8 8 0 008 8 8 8 0 008-8 8 8 0 00-8-8z"/><path d="M12 4a8 8 0 018 8h-8V4z" fill="currentColor" stroke="none" opacity=".55"/></svg><span class="tool-label">Depth</span></button>
+              <button class="tool-btn" id="tglSearch" aria-label="Toggle web search" title="Web search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg><span class="tool-label">Search</span></button>
+              <button class="tool-btn" id="moreToolsBtn" aria-label="More tools" title="Tools"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg><span class="tool-label">More</span></button>
             </div>
           </div>
         </div>
@@ -784,7 +883,7 @@ const CORE_PROMPT = "You are Kita Chat, a helpful expert assistant. Respond in t
 /* ===================== State & Storage ===================== */
 const LS_KEY = "nazchat_v1";
 const DATA_SCHEMA_VERSION = 3;
-function defaultDb(){ return { schemaVersion:DATA_SCHEMA_VERSION, providers:[], conversations:[], projects:[], prompts:[], styles:[], artifacts:[], activeProjectId:null, lastProviderId:null, lastModelId:null, theme:"dark", thinking:false, search:false, reasoningEffort:"high", onboardingDone:false, parametersByModel:{}, skillSettings:{mode:"auto",selected:[],disabled:[],custom:[]} }; }
+function defaultDb(){ return { schemaVersion:DATA_SCHEMA_VERSION, providers:[], conversations:[], projects:[], prompts:[], styles:[], artifacts:[], activeProjectId:null, lastProviderId:null, lastModelId:null, theme:"dark", thinking:false, search:false, reasoningEffort:"medium", onboardingDone:false, parametersByModel:{}, skillSettings:{mode:"auto",selected:[],disabled:[],custom:[]} }; }
 function migrateDb(raw){
   const d = raw && typeof raw === "object" ? {...defaultDb(),...raw} : defaultDb();
   d.schemaVersion = DATA_SCHEMA_VERSION;
@@ -795,7 +894,8 @@ function migrateDb(raw){
   d.styles = Array.isArray(d.styles) ? d.styles : [];
   d.artifacts = Array.isArray(d.artifacts) ? d.artifacts : [];
   d.parametersByModel = d.parametersByModel && typeof d.parametersByModel === "object" ? d.parametersByModel : {};
-  if(!d.reasoningEffort) d.reasoningEffort="high";
+  if(!d.reasoningEffort) d.reasoningEffort="medium";
+  else if(d.reasoningEffort==="high" && !d._effortTouched) d.reasoningEffort="medium"; // legacy default was burning tokens
   if(!d.skillSettings) d.skillSettings={mode:"auto",selected:[],disabled:[],custom:[]};
   if(!Array.isArray(d.skillSettings.selected)) d.skillSettings.selected=[];
   if(!Array.isArray(d.skillSettings.disabled)) d.skillSettings.disabled=[];
@@ -924,8 +1024,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "3.3.1";
-const APP_VERSION_CODE = 22;
+const APP_VERSION = "3.5.0";
+const APP_VERSION_CODE = 24;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1170,8 +1270,9 @@ function renderLiveCode(bubble, code){
   const lines=code.body.replace(/\n$/,"").split("\n").length;
   const kb=(code.body.length/1024).toFixed(1);
   const box=el("div","think-box code-live");
+  // header: terminal traffic dots + title + live stats
   const head=el("div","think-head code-live-head");
-  head.innerHTML=`<span>⌨ Writing ${esc(code.lang)}…</span><span class="code-live-meta">${lines} line${lines===1?"":"s"} · ${kb} KB</span>`;
+  head.innerHTML=`<span class="term-dots"><i></i><i></i><i></i></span><span>Terminal · ${esc(code.lang)}</span><span class="code-live-meta">${lines} ln · ${kb} KB</span>`;
   box.appendChild(head);
   const acts=el("div","code-live-acts");
   if(/^(html|htm|xhtml)$/.test(code.lang)){
@@ -1179,7 +1280,7 @@ function renderLiveCode(bubble, code){
     pv.onclick=()=>openPreview(code.body,{live:true});
     acts.appendChild(pv);
   }
-  const toggle=el("button","code-toggle","Expand ⌄");
+  const toggle=el("button","code-toggle","Collapse ⌃");
   const body=el("pre","code-live-body");
   body.textContent=code.body;
   toggle.onclick=()=>{ const c=box.classList.toggle("collapsed-live"); toggle.innerHTML=c?"Expand ⌄":"Collapse ⌃"; if(!c) body.scrollTop=body.scrollHeight; };
@@ -1217,6 +1318,32 @@ function renderAssistant(bubble, msg, live){
     head.onclick = ()=>box.classList.toggle("collapsed");
     const body = el("div","think-body", esc(reasoning));
     box.appendChild(head); box.appendChild(body);
+    bubble.appendChild(box);
+  }
+  // two-phase progress: ONE thinking phase, then ONE coding phase
+  if(msg.phases && msg.phases.state!=="done"){
+    const ph=msg.phases;
+    const box=el("div","phase-box");
+    const steps=[
+      {label:"Thinking", done:ph.state==="code"||ph.state==="done", active:ph.state==="think"},
+      {label:"Coding", done:ph.state==="done", active:ph.state==="code"}
+    ];
+    const head=el("div","phase-head");
+    steps.forEach((s,i)=>{
+      const chip=el("span","phase-chip"+(s.done?" done":"")+(s.active?" active":""),
+        (s.done?"✓ ":s.active?"◌ ":"· ")+s.label);
+      head.appendChild(chip);
+      if(i<steps.length-1) head.appendChild(el("span","phase-arrow","→"));
+    });
+    box.appendChild(head);
+    if(ph.parts && ph.parts.length){
+      const bar=el("div","phase-bar");
+      const fill=el("div","phase-fill");
+      fill.style.width = ph.state==="think"?"12%":ph.state==="code"?"60%":"100%";
+      bar.appendChild(fill); box.appendChild(bar);
+    }
+    if(ph.state=="think") box.appendChild(el("div","phase-note","Planning the structure before writing code…"));
+    if(ph.state=="paused") box.appendChild(el("div","phase-note","Stopped before finishing."));
     bubble.appendChild(box);
   }
   // content
@@ -2028,7 +2155,11 @@ function nativeSSE(sid){
   })();
 }
 
-/* Wait for the Java side to report the HTTP status of a stream */
+/* Wait for the Java side to report the HTTP status of a stream.
+   Some routers (e.g. 9router) take 60-130s before the first byte on heavy models,
+   so the backstop must be generous: Java's connect timeout (15s) surfaces real
+   connection failures long before this fires. */
+const STREAM_STATUS_TIMEOUT_MS = 150000;
 function waitStreamStatus(sid){
   return new Promise((resolve)=>{
     let settled = false;
@@ -2036,11 +2167,82 @@ function waitStreamStatus(sid){
     const prevDone = window.nazStreamOnDone;
     window.nazStreamOnStatus = (id, code)=>{ if(id===sid && !settled){ settled = true; resolve(code); } if(prevStatus) prevStatus(id,code); };
     window.nazStreamOnDone = (id, error)=>{ if(id===sid && !settled){ settled = true; resolve(0); } if(prevDone) prevDone(id,error); };
-    setTimeout(()=>{ if(!settled){ settled=true; resolve(0); } }, 20000);
+    setTimeout(()=>{ if(!settled){ settled=true; resolve(0); } }, window.__streamStatusTimeoutMs || STREAM_STATUS_TIMEOUT_MS);
   });
 }
 
+/* ===================== Phased building (long artifacts in small calls) ===================== */
+const PHASE_BUILD = {
+  enabled: true,
+  minParts: 3,
+  maxParts: 7,
+  segmentBudget: 4096,   // tokens per build call — one part never nears the output limit
+  planBudget: 1024,      // the plan call is deliberately tiny
+};
+/* Requests that look like a full artifact build get split into parts. */
+function isLongBuildRequest(text){
+  const t=String(text||"");
+  if(t.length>180) return true;
+  return /\b(landing page|web app|website|laman|halaman web|aplikasi web|dashboard|portfolio|portofolio|single[- ]page|html (page|page lengkap|lengkap)|full (page|site|html|report|article)|siap(?:kan)? (page|laman|laporan|artikel)|buat.*(page|laman|web|aplikasi|dashboard|laporan|artikel panjang)|write a (long|full|complete)|multi[- ]section)\b/i.test(t)
+    && /\b(page|laman|web|site|app|aplikasi|dashboard|report|laporan|article|artikel|website)\b/i.test(t);
+}
+const PHASE_KINDS = {
+  html:  {label:"html",  hint:"Return ONLY the part asked for as one ```html code block. No preamble, no full document, no repeats of other parts."},
+  text:  {label:"text",  hint:"Return ONLY the section asked for in clean Markdown. No preamble, no repeats of other sections."},
+};
+function detectBuildKind(text){
+  return /\b(html|css|web|page|laman|site|website|dashboard|landing)\b/i.test(String(text||"")) ? "html" : "text";
+}
+/* Turn a plan reply into a validated part list. */
+function parsePlanParts(planText, kind){
+  const src=String(planText||"");
+  const items=[];
+  for(const line of src.split(/\n/)){
+    if(items.length>=PHASE_BUILD.maxParts) break;
+    const raw=line.trim();
+    if(!raw || /^```/.test(raw)) continue;
+    const clean=raw.replace(/^\s*(?:\d+[.)\]]|[-*•])\s*/,"").replace(/\*\*/g,"").replace(/^(?:part|bahagian)\s*\d*\s*[:-]?\s*/i,"").replace(/[\s:.]+$/," ").trim();
+    if(clean && clean.length>=1 && clean.length<=80 && !/^(plan|pelan|parts|bahagian|here|ini|sure|certainly)\b/i.test(clean) && !/^\d+$/.test(clean)) items.push(clean);
+  }
+  return items;
+}
+function planPrompt(text, kind){
+  return "Break this task into "+PHASE_BUILD.minParts+" to "+PHASE_BUILD.maxParts+" self-contained parts that will each be generated separately and then assembled: \""+String(text).slice(0,500)+"\"\n\nReply with ONLY a numbered list of part titles (one line each, no prose, no code). Each part must be small enough to write in about 60-100 lines. For HTML, include head+styles, hero, each content section, footer and scripts as separate parts. Reply in the user's language.";
+}
+function segmentPrompt(kind, part, i, n, text, plan){
+  const K=PHASE_KINDS[kind]||PHASE_KINDS.text;
+  return "Task: "+String(text).slice(0,400)+"\n\nFull part plan (for context only, do not write other parts):\n"+plan.map((p,x)=>(x+1)+". "+p).join("\n")+"\n\nNow write ONLY part "+(i+1)+" of "+n+": "+part+"\n\n"+K.hint;
+}
+/* Mechanical HTML assembly: stitch parts into one document without another model call. */
+function assembleHtml(parts){
+  const blocks=parts.map(p=>String(p||"")).map(x=>{ const b=extractHtmlBlock(x); return b||x.replace(/^```[\w+-]*\n?|```$/g,"").trim(); });
+  let head=null, body=[], scripts=[];
+  for(const b of blocks){
+    if(/<head[\s>]/i.test(b) && /<\/?style|<title|<meta/i.test(b)){
+      const styles=(b.match(/<style[\s\S]*?<\/style>/gi)||[]).join("\n");
+      const title=(b.match(/<title>[\s\S]*?<\/title>/i)||[])[0]||"";
+      head={styles,title};
+      const bodyB=b.replace(/<style[\s\S]*?<\/style>/gi,"").replace(/<title>[\s\S]*?<\/title>/i,"");
+      const inner=bodyB.replace(/^[\s\S]*?<body[^>]*>/i,"").replace(/<\/body>[\s\S]*$/i,"");
+      if(inner.trim() && inner!==bodyB) body.push(inner.trim());
+      else body.push(bodyB.replace(/^(?:<!doctype[^>]*>|<html[^>]*>|<head[\s\S]*?<\/head>|<\/html>)\s*/gi,"").trim());
+      continue;
+    }
+    const scriptsIn=(b.match(/<script[\s\S]*?<\/script>/gi)||[]);
+    let rest=b;
+    scriptsIn.forEach(s=>{ rest=rest.replace(s,""); });
+    scripts.push(...scriptsIn);
+    const inner=rest.replace(/^[\s\S]*?<body[^>]*>/i,"").replace(/<\/body>[\s\S]*$/i,"");
+    if(inner.trim() && inner!==rest) body.push(inner.trim());
+    else body.push(rest.trim());
+  }
+  const title=head?.title||"";
+  return "<!doctype html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"+(title||"<title>Kita Chat</title>")+"\n"+(head?.styles||"")+"\n</head>\n<body>\n"+body.filter(Boolean).join("\n")+"\n"+scripts.join("\n")+"\n</body>\n</html>";
+}
+
 /* ===================== Native tools (Kita runs these itself) ===================== */
+/* Reasoning guardrails: thinking pays for itself only when it stays short. */
+const REASONING_CHAR_CAP = 16000; // ~4k tokens; beyond this the answer budget is what matters
 const KITA_TOOLS = [
   {type:"function", function:{name:"web_search", description:"Search the public web for current facts, docs, prices or news. Returns titles, URLs and snippets.", parameters:{type:"object",properties:{query:{type:"string",description:"Search query"}},required:["query"]}}},
   {type:"function", function:{name:"fetch_url", description:"Download one public web page or API endpoint and return its text, so you can read real documentation or source.", parameters:{type:"object",properties:{url:{type:"string",description:"Absolute http(s) URL"}},required:["url"]}}}
@@ -2092,6 +2294,71 @@ function toolSystemNote(tools){
   return "\n\nTools: you may call "+tools.map(t=>t.function.name).join(" and ")+" when the answer needs live information. Kita Chat executes them and returns the result to you. Prefer answering directly when the question is about the code or page already in this conversation, and do not call a tool just to restate what you were told.";
 }
 
+
+/* Single streaming round used by the phased builder: returns the full text and finish reason. */
+async function collectStream(model, url, body, hooks){
+  const p = model.provider;
+  const h = hooks||{};
+  let out = "", finish = null;
+  let SSE_ITER = null, sid = null;
+  try{
+    if(HAS_NATIVE){
+      prepareProviderSecret(p);
+      sid = NazStream.openSecret ? NazStream.openSecret(url, JSON.stringify(buildHeaders(p)), JSON.stringify(body), p.secretRef) : NazStream.open(url, JSON.stringify(buildHeaders(p)), JSON.stringify(body));
+      SSE_ITER = nativeSSE(sid);
+      const st = await waitStreamStatus(sid);
+      if(st >= 400){
+        let err = "";
+        try{ for await (const l of SSE_ITER){ err += l + "\n"; if(err.length>1500) break; } }catch(e){ err += e.message; }
+        NazStream.close(sid);
+        throw new Error("HTTP "+st+" "+err.slice(0,300));
+      } else if(st === 0){
+        NazStream.close(sid); throw new Error("Connection failed (check URL / internet)"); }
+    } else {
+      const res = await fetch(url, { method:"POST", headers:buildHeaders(p), body:JSON.stringify(body), signal:abortCtl?abortCtl.signal:undefined });
+      if(!res.ok){
+        const errTxt = await res.text().catch(()=>"");
+        throw new Error("HTTP "+res.status+" "+errTxt.slice(0,300));
+      }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      SSE_ITER = (async function* (){
+        while(true){
+          const {done, value} = await reader.read();
+          if(done) break;
+          buf += dec.decode(value, {stream:true});
+          const lines = buf.split("\n");
+          buf = lines.pop();
+          for(const line of lines) yield line;
+        }
+      })();
+    }
+    for await (const rawLine of SSE_ITER){
+      const t = (rawLine||"").trim();
+      if(!t.startsWith("data:")) continue;
+      const payload = t.slice(5).trim();
+      if(payload === "[DONE]") continue;
+      let j; try{ j = JSON.parse(payload); }catch(e){ continue; }
+      const choice = j.choices?.[0];
+      if(choice?.finish_reason) finish = choice.finish_reason;
+      const d = choice?.delta;
+      if(d && d.content){
+        if(typeof d.content === "string") out += d.content;
+        else if(Array.isArray(d.content)) d.content.forEach(c=>{ if(c.text) out += c.text; });
+        if(h.onDelta) h.onDelta(out);
+      }
+      if(j.type === "response.output_text.delta" && j.delta){ out += j.delta; if(h.onDelta) h.onDelta(out); }
+      if(j.type === "response.completed" && j.response?.status === "incomplete") finish = j.response?.incomplete_details?.reason || "length";
+    }
+    if(HAS_NATIVE && sid !== null){ try{ NazStream.close(sid); }catch(e){} }
+  }catch(e){
+    if(HAS_NATIVE && sid !== null){ try{ NazStream.close(sid); }catch(_){} }
+    throw e;
+  }
+  if(h.onFinish) h.onFinish(finish);
+  return out;
+}
 
 /* ===================== Chat send / streaming ===================== */
 function ensureConv(){
@@ -2189,11 +2456,11 @@ async function send(text, opts){
   let toolsOn = toolsOnDefault && kitaTools().length>0;
   const activeTools = kitaTools();
   if(toolsOn) history = history.map(h=>h.role==="system"?{...h, content:h.content+toolSystemNote(activeTools)}:h);
-  let finishReason = null, pendingToolCalls = [], toolTrace = [], rounds = 0, retries = 0;
+  let finishReason = null, pendingToolCalls = [], toolTrace = [], rounds = 0, retries = 0, reasoningRescued = false;
   const MAX_TOOL_ROUNDS = 3;
 
   // live render target — throttled so long HTML answers cannot freeze the WebView
-  let bubble, thinkStart = null, lastPaint = 0, paintTimer = null, lastDataAt = Date.now(), watchdog = null;
+  let bubble, thinkStart = null, lastPaint = 0, paintTimer = null, lastDataAt = Date.now(), watchdog = null, firstByteSeen = false;
   function paint(){
     const lastMsgEl = $("#chatInner").lastChild;
     if(!lastMsgEl) return;
@@ -2206,6 +2473,7 @@ async function send(text, opts){
     scrollIfNear();
   }
   function liveRender(force){
+    firstByteSeen = true;
     lastDataAt = Date.now();
     const now = Date.now();
     if(force || now - lastPaint > 140){
@@ -2239,10 +2507,73 @@ async function send(text, opts){
       const host = streamHost(); if(!host) return;
       const el0 = host.querySelector(".stream-status");
       if(idle > 12000){
-        if(!el0){ const s = el("div","stream-status"); s.textContent = `Waiting for the provider… ${Math.round(idle/1000)}s. Tap Stop to cancel.`; host.appendChild(s); }
-        else if(!el0.querySelector(".spin")) el0.textContent = `Waiting for the provider… ${Math.round(idle/1000)}s. Tap Stop to cancel.`;
+        const connecting = !firstByteSeen;
+        if(!el0){ const s = el("div","stream-status"); s.textContent = connecting ? `Connecting to the provider… ${Math.round(idle/1000)}s (slow providers can take a minute). Tap Stop to cancel.` : `Waiting for the provider… ${Math.round(idle/1000)}s. Tap Stop to cancel.`; host.appendChild(s); }
+        else if(!el0.querySelector(".spin")) el0.textContent = connecting ? `Connecting to the provider… ${Math.round(idle/1000)}s (slow providers can take a minute). Tap Stop to cancel.` : `Waiting for the provider… ${Math.round(idle/1000)}s. Tap Stop to cancel.`;
       } else if(el0 && !el0.querySelector(".spin")) el0.remove();
     }, 1000);
+  }
+
+  // ---- Two-phase workflow: ONE thinking phase, then ONE coding phase. ----
+  // Long builds get a tiny planning (thinking) call, then a single coding call that
+  // streams into the fixed terminal frame. No multi-stage thinking/coding splits.
+  const wantsPhased = !opts.review && !opts.editing && !editingPage && PHASE_BUILD.enabled && isLongBuildRequest(text);
+  let phaseMode = null; // null | "think" | "code"
+  if(wantsPhased){
+    const kind = detectBuildKind(text);
+    aiMsg.phases = { kind, state:"think", parts:[], segments:[], done:0 };
+    paint();
+    // Phase 1 — THINK: a small planning call (the only thinking stage).
+    setStreamNote("Thinking through the structure…");
+    const planBody = { model: model.modelId, messages: [
+        {role:"system", content:"You are a build planner. Reply with ONLY the numbered list requested. No prose, no code, no explanations."},
+        {role:"user", content: planPrompt(text, kind)}
+      ], stream:true, temperature:.3, top_p:1, max_tokens: PHASE_BUILD.planBudget };
+    let planText = "";
+    try{
+      planText = await collectStream(model, url, planBody, { onDelta:(t)=>{ planText=t; } });
+    }catch(e){ if(e.name==="AbortError"){ cleanupStream(); finalizeAbort(); return; } }
+    const parts = parsePlanParts(planText, kind);
+    if(parts.length < PHASE_BUILD.minParts){ aiMsg.phases=null; /* simple request: normal single answer */ }
+    else {
+      aiMsg.phases.parts = parts;
+      aiMsg.phases.state = "code";
+      aiMsg.reasoning = "Build plan:\n"+parts.map((x,i)=>(i+1)+". "+x).join("\n");
+      aiMsg._thinkShown = true;
+      thinkStart = Date.now();
+      paint();
+      // Phase 2 — CODE: one single call that writes the whole artifact into the terminal frame.
+      setStreamNote("Writing code…");
+      aiMsg.content = ""; aiMsg._thinkShown=true;
+      const codeBody = { model: model.modelId, messages: [
+          {role:"system", content:skillSystemMessage(usedSkills)+"\n\nWrite the COMPLETE artifact now, following the plan. One single "+(kind==="html"?"```html":"code")+" block containing the entire "+(kind==="html"?"document":"solution")+" — all parts in order, nothing omitted, no preamble or explanation."},
+          {role:"user", content: text+"\n\nApproved plan (follow this order, include every part in one block):\n"+parts.map((x,i)=>(i+1)+". "+x).join("\n")}
+        ], stream:true, temperature:.6, top_p:1, max_tokens: modelParameters(model).max_tokens };
+      let codeText="", codeFinish=null;
+      try{
+        codeText = await collectStream(model, url, codeBody, { onDelta:(t)=>{ codeText=t; aiMsg.content=t; paint(); }, onFinish:(fr)=>{ codeFinish=fr; } });
+      }catch(e){ if(e.name==="AbortError"){ cleanupStream(); finalizeAbort(); return; } }
+      if(!generating){ cleanupStream(); finalizeAbort(); return; }
+      if(codeFinish==="length" && codeText.trim()){
+        // the single coding call was cut off: continue it once, still one coding phase
+        let more="";
+        try{ more = await collectStream(model, url, {...codeBody, messages:[...codeBody.messages, {role:"assistant", content:codeText.slice(-6000)}, {role:"user", content:"Continue exactly where you stopped. No repeats."}]}, { onDelta:t=>{ more=t; aiMsg.content=codeText+"\n"+t; paint(); } }); }catch(e){ if(e.name==="AbortError"){ cleanupStream(); finalizeAbort(); return; } }
+        codeText = codeText + "\n" + more;
+      }
+      if(codeText.trim()){
+        aiMsg.content = codeText;
+        aiMsg.phases.state = "done";
+        aiMsg.thinkSecs = Math.round((Date.now()-thinkStart)/1000);
+        aiMsg.usage = aiMsg.usage||{prompt_tokens:0,completion_tokens:estimateTokens(codeText)};
+        aiMsg.estimatedCost = estimateCost(model, 0, Number(aiMsg.usage.completion_tokens||0));
+        conv_.updatedAt = Date.now();
+        cleanupStream();
+        save(); setSendMode(false); abortCtl=null;
+        renderAll();
+        return;
+      }
+      aiMsg.phases = null; // coding call produced nothing: fall through to the normal single-answer path
+    }
   }
 
   while(true){
@@ -2308,9 +2639,15 @@ async function send(text, opts){
         const d = choice?.delta;
         if(choice?.finish_reason) finishReason = choice.finish_reason;
         if(d){
-          if(d.reasoning_content) aiMsg.reasoning += d.reasoning_content;
-          else if(d.thinking) aiMsg.reasoning += d.thinking;
-          else if(d.reasoning) aiMsg.reasoning += d.reasoning;
+          // Reasoning cap: thinking is useful, but it must not eat the answer's budget.
+          if(aiMsg.reasoning.length < REASONING_CHAR_CAP){
+            if(d.reasoning_content) aiMsg.reasoning += d.reasoning_content;
+            else if(d.thinking) aiMsg.reasoning += d.thinking;
+            else if(d.reasoning) aiMsg.reasoning += d.reasoning;
+          } else if(!aiMsg._reasoningCapped){
+            aiMsg._reasoningCapped = true;
+            aiMsg.reasoning += "\n…";
+          }
           if(d.tool_calls) d.tool_calls.forEach(tc=>{
             const i = Number(tc.index)||0;
             const slot = pendingToolCalls[i] = pendingToolCalls[i] || {id:"", name:"", args:""};
@@ -2405,14 +2742,35 @@ async function send(text, opts){
     aiMsg.content = "This model tried to call a tool instead of answering, and tools are disabled for this provider.\n\nTurn tools back on for the provider in Settings, or ask again in plain language.";
     aiMsg.toolCall = true;
   }
+  // Reasoning ate the whole budget and the stream ended with no answer: ask once for the answer directly.
+  if(finishReason === "length" && !aiMsg.content.trim() && aiMsg.reasoning.trim() && !reasoningRescued){
+    reasoningRescued = true;
+    history = history.concat({role:"assistant", content:""}, {role:"user", content:"Stop reasoning now and give the final answer directly. Keep it complete but do not repeat any thinking."});
+    aiMsg.reasoning += "\n\n⚠️ Reasoning hit the output limit, so the answer is being requested directly.";
+    continue;
+  }
   break;
   }
 
   // finalize
   cleanupStream();
+  function finalizeAbort(){
+    // aborted mid-phase: keep whatever was assembled and mark it resumable
+    if(aiMsg.phases && aiMsg.phases.state!=="done"){
+      aiMsg.phases.state = "paused";
+      if(aiMsg.phases.segments && aiMsg.phases.segments.length && !extractHtmlBlock(aiMsg.content||"")){
+        aiMsg.content = "Built "+aiMsg.phases.segments.length+"/"+aiMsg.phases.parts.length+" parts before stopping.\n\nAsk to continue and the remaining parts will be built.";
+      }
+    }
+    aiMsg.thinkSecs = aiMsg.thinkSecs || (thinkStart ? Math.round((Date.now()-thinkStart)/1000) : null);
+    aiMsg.usage=aiMsg.usage||{prompt_tokens:aiMsg.context?.used||0,completion_tokens:estimateTokens(aiMsg.content)};
+    conv_.updatedAt = Date.now();
+    save(); setSendMode(false); abortCtl=null;
+    renderAll();
+  }
   const p2 = extractThink(aiMsg.content);
   if(p2.think && !aiMsg.reasoning){ aiMsg.reasoning = p2.think; aiMsg.content = p2.content; }
-  if(finishReason === "length" && !aiMsg.truncated){
+  if(finishReason === "length" && !aiMsg.truncated && aiMsg.content.trim()){
     aiMsg.truncated = true;
     aiMsg.content += "\n\n⚠️ **Response reached the model's output limit** and was cut off. Tap **Continue** to keep going from here.";
   }
@@ -2528,7 +2886,7 @@ $("#tglThink").onclick = ()=>{ db.thinking=!db.thinking; save(); syncToggles(); 
 $("#tglSearch").onclick = ()=>{ db.search=!db.search; save(); syncToggles(); };
 $("#effortBtn").onclick = ()=>{
   const options=["low","high","max"]; const box=$("#effortOptions"); box.innerHTML="";
-  options.forEach(v=>{ const b=el("button","btn secondary",v[0].toUpperCase()+v.slice(1)+ (v===db.reasoningEffort?"  ✓":"")); b.onclick=()=>{db.reasoningEffort=v;save();syncToggles();$("#effortScrim").classList.remove("open");haptic("success");}; box.appendChild(b); });
+  options.forEach(v=>{ const b=el("button","btn secondary",v[0].toUpperCase()+v.slice(1)+ (v===db.reasoningEffort?"  ✓":"")); b.onclick=()=>{db.reasoningEffort=v;db._effortTouched=true;save();syncToggles();$("#effortScrim").classList.remove("open");haptic("success");}; box.appendChild(b); });
   $("#effortScrim").classList.add("open");
 };
 $("#effortCancel").onclick=()=>$("#effortScrim").classList.remove("open");

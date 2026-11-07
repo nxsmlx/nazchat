@@ -14,6 +14,25 @@ const assert=require('assert');
  await p.route('https://api.test/v1/chat/completions',async route=>{
    const body=JSON.parse(route.request().postData());requests.push(body);
    const deltas=[];
+   const lastMsg=(body.messages||[]).filter(m=>m.role==='user').at(-1)?.content||'';
+   if((mode==='big'||mode==='truncated')&&/Break this task into/.test(lastMsg)){
+     // phased builder: keep the single big-stream path under test by returning a plan the parser rejects
+     await route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:'data: '+JSON.stringify({choices:[{delta:{content:'Sure, here is my thinking about the whole thing in prose form so this does not look like a plan list.'}}]})+'\n\ndata: [DONE]\n\n'});
+     return;
+   }
+   if(mode==='truncated'&&/Now write ONLY part/.test(lastMsg)){
+     await route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:'data: '+JSON.stringify({choices:[{delta:{content:'```html\n<!doctype html><html><body><h1>Half'}}]})+'\n\ndata: '+JSON.stringify({choices:[{delta:{},finish_reason:'length'}]})+'\n\ndata: [DONE]\n\n'});
+     return;
+   }
+   if(mode==='big'&&/Now write ONLY part/.test(lastMsg)){
+     const html=bigHtml('First Version');
+     const text='Here is the page:\n\n```html\n'+html+'\n```\n';
+     const deltas=[];
+     for(let i=0;i<text.length;i+=700) deltas.push({choices:[{delta:{content:text.slice(i,i+700)}}]});
+     deltas.push({choices:[{delta:{},finish_reason:'stop'}]});
+     await route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:deltas.map(d=>'data: '+JSON.stringify(d)).join('\n\n')+'\n\ndata: [DONE]\n\n'});
+     return;
+   }
    if(mode==='big'||mode==='edit'){
      const html=bigHtml(mode==='big'?'First Version':'Edited Version');
      const text='Here is the page:\n\n```html\n'+html+'\n```\n';
@@ -104,10 +123,10 @@ const assert=require('assert');
    return {hasFrame:!!frame,label:frame?frame.querySelector('.think-head').innerText:'',mdText:md?md.innerText:'',bodyText:frame?frame.querySelector('.code-live-body').textContent:'',height:frame?frame.querySelector('.code-live-body').getBoundingClientRect().height:0,preview:frame?!!frame.querySelector('.preview-btn'):false};
  });
  assert(liveFrame.hasFrame,'streaming code frame missing');
- assert(/Writing html/.test(liveFrame.label),'frame label wrong: '+liveFrame.label);
+ assert(/Terminal/.test(liveFrame.label)&&/html/.test(liveFrame.label),'frame label wrong: '+liveFrame.label);
  assert(liveFrame.bodyText.includes('Frame Check'),'code not inside frame');
  assert(!/kod halaman/.test(liveFrame.mdText),'code spilled into chat text');
- assert(liveFrame.height>0&&liveFrame.height<=160,'frame height wrong: '+liveFrame.height);
+ assert(liveFrame.height>100&&liveFrame.height<=260,'terminal frame height wrong: '+liveFrame.height);
  assert(liveFrame.preview,'HTML preview button missing while streaming');
  console.log('PASS streaming code confined to its own frame');
 

@@ -7,7 +7,16 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
  let requests=[];
  await p.route('https://api.test/v1/chat/completions',async route=>{
    const body=JSON.parse(route.request().postData());requests.push(body);
-   const prompt=body.messages.filter(m=>m.role==='user').at(-1).content;
+   const lastMsg=body.messages.filter(m=>m.role==='user').at(-1).content;
+   if(/Break this task into/.test(lastMsg)){
+     await route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:`data: ${JSON.stringify({choices:[{delta:{content:'1. Head and styles\n2. Hero\n3. Sections\n4. Footer'}}]})}\n\ndata: [DONE]\n\n`});
+     return;
+   }
+   if(/Now write ONLY part/.test(lastMsg)){
+     await route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:`data: ${JSON.stringify({choices:[{delta:{content:'```html\n<section>part</section>\n```'}}]})}\n\ndata: [DONE]\n\n`});
+     return;
+   }
+   const prompt=lastMsg;
    const response=prompt.includes('Review and improve')?'Improved:\n```html\n<!doctype html><title>Improved</title><button id="ok">OK</button>\n```':prompt.includes('REST API')?'```js\nconst express = require("express");\nconst app = express();\n```':'```html\n<!doctype html><html><body><h1>NazChat</h1><button>Start</button></body></html>\n```';
    await route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:`data: ${JSON.stringify({choices:[{delta:{reasoning:'Checking the requirements',content:response}}]})}\n\ndata: [DONE]\n\n`});
  });
@@ -25,11 +34,18 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
    const actual=await p.evaluate(()=>conv.messages.at(-1).usedSkills);
    expected.forEach(x=>assert(actual.includes(x),text+' missing '+x));console.log('PASS routing',text,actual);
  }
- assert.strictEqual(requests.length,4);
- const systems=requests.map(r=>r.messages[0]);
+ // "buat landing page" is a long-build request: one thinking call + one coding call
+ const planCalls=requests.filter(r=>(r.messages||[]).some(m=>/Break this task into/.test(m.content||"")));
+ const codeCalls=requests.filter(r=>(r.messages||[]).some(m=>/Approved plan/.test(String(m.content||""))));
+ const plainCalls=requests.filter(r=>!planCalls.includes(r)&&!codeCalls.includes(r));
+ assert(planCalls.length===1,'expected exactly one thinking call, got '+planCalls.length);
+ assert(codeCalls.length===1,'expected exactly one coding call, got '+codeCalls.length);
+ assert.strictEqual(plainCalls.length,3,'expected 3 plain routing calls, got '+plainCalls.length);
+ const systems=plainCalls.map(r=>r.messages[0]);
  assert(systems.every(x=>x.role==='system'&&x.content.includes('You are Kita Chat')));
- assert(systems[3].content.includes('Active expert guidance')&&!systems[3].content.includes('[Skill:'));
- assert(systems[0].content.includes('design lead'));
+ assert(systems[2].content.includes('Active expert guidance')&&!systems[2].content.includes('[Skill:'));
+ // the coding call carries the routed skills
+ assert(codeCalls[0].messages[0].content.includes('design lead'),'landing page skills missing in coding call system prompt');
  assert(requests.every(r=>JSON.stringify(r).length<100000));
  console.log('PASS system prompts and budget');
  await p.evaluate(()=>{db.skillSettings.mode='manual';db.skillSettings.selected=['security'];save();syncToggles();});

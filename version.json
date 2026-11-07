@@ -1,9 +1,9 @@
 {
-  "version": "3.3.1",
-  "versionCode": 22,
+  "version": "3.5.0",
+  "versionCode": 24,
   "name": "Kita Chat",
-  "changelog": "Code being written now stays inside its own collapsible frame instead of spilling into the chat. Prose before and after the block still streams normally, and HTML can be previewed live while it is still being generated.",
+  "changelog": "Two-phase workflow restored (one thinking phase, then one coding phase) and a complete modern redesign: code streams into a fixed 10-line scrollable terminal that never spills into chat, consistent SVG icons, new color system, glass header and composer, spring-animated sheets, and unified spacing and typography.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
-  "sha256": "bfcde8df378c0494bba8ecdf2b46c68846b57988f679f5b24d1a9ae19ce5a79e",
+  "sha256": "1119afe4f58f7e0e4cbfb40366d597f93cf413b2d6fad7006e3155d2a3fcbc20",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }

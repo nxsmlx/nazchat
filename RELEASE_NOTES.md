@@ -1,3 +1,32 @@
+# Kita Chat 3.5.0 — Two-phase workflow + modern redesign
+
+### Workflow restored: Thinking, then Coding — once each
+Long builds now run exactly **one thinking phase followed by one coding phase**, never a chain of thinking/coding stages:
+
+- **Phase 1 (Think):** a small planning call whose output is recorded in the Thinking panel
+- **Phase 2 (Code):** a single call that writes the entire artifact with the full model budget; if it is cut off it is continued once, still one phase
+- The chat shows clear `Thinking → Coding` step chips while it runs
+
+### Terminal frame — code never spills into chat
+Coding output now streams into a real terminal component:
+
+- Fixed height of about 10 lines; vertical scrolling happens **inside the frame only**
+- Traffic-light dots, live line/size counter and a blinking cursor
+- Collapse/Expand and ▶ Preview (for HTML) available while it is still writing
+- No matter how much code is generated, the main chat stays clean and conversational
+
+### Complete visual redesign (v3.5 "modern agent platform")
+- New cohesive dark/light system: deep neutral surfaces, violet accent, softer borders
+- Glass header and composer with backdrop blur; spring-animated bottom sheets
+- All tool buttons now use consistent inline SVG icons (skills, thinking, depth, search, more) — no more emoji
+- Unified spacing rhythm, consistent radii, button heights, focus rings and pressed states
+- Markdown, tables, blockquotes, skill chips, tool traces and dialogs restyled to match
+
+### Also in this release (from 3.4.0)
+- Thinking is capped at ~4k tokens and defaults to Medium effort; a stream that dies inside reasoning is rescued automatically
+- Slow providers (first byte after 60–130s) no longer fail: the status wait is now 150s and the watchdog explains the wait
+- Automatic output budget, native web_search/fetch_url tools, edit-focused requests, model selection fixes
+
 # Kita Chat 3.3.1 — Code stays in its own frame
 
 While an answer is being written, code used to pour straight into the message text. It now behaves like the thinking panel:
