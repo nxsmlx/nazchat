@@ -636,6 +636,67 @@ input:focus,textarea:focus{border-color:var(--signal);}
 .modal{border-radius:14px;border-color:var(--border);}
 @media (min-width:700px){#chatInner{padding-left:32px;padding-right:32px;}#composerWrap{padding-left:24px;padding-right:24px;}#empty h2{font-size:46px;}}
 @media (max-width:420px){#empty h2{font-size:34px;}}
+
+/* ===== Kita Chat v3.7 — quiet minimalist override ===== */
+:root{
+  --bg:#0f1012; --bg2:#17191d; --bg3:#202329; --panel:#1b1d22;
+  --border:#2d3138; --line:#292d34; --text:#f1f2f3; --text2:#a0a5ad; --text3:#707781;
+  --accent:#8490a3; --accent2:#6f7b8e; --signal:#8490a3; --cobalt:#8490a3; --lime:#9aa38e;
+  --accent-soft:rgba(132,144,163,.12); --user-bubble:#1c1f24; --danger:#d77b7b;
+  --shadow-soft:0 12px 38px rgba(0,0,0,.22); --shadow-pop:0 8px 28px rgba(0,0,0,.2);
+}
+[data-theme="light"]{
+  --bg:#f7f7f6; --bg2:#ffffff; --bg3:#f0f1f2; --panel:#ffffff;
+  --border:#dedfe2; --line:#e7e8ea; --text:#202124; --text2:#73777f; --text3:#9b9fa6;
+  --accent:#596577; --accent2:#687588; --signal:#596577; --cobalt:#596577; --lime:#6e7867;
+  --accent-soft:rgba(89,101,119,.1); --user-bubble:#eceef0; --danger:#b85e5e;
+  --shadow-soft:0 12px 30px rgba(30,34,40,.07); --shadow-pop:0 8px 24px rgba(30,34,40,.06);
+}
+body{letter-spacing:0;}
+header{background:color-mix(in srgb,var(--bg) 94%,transparent);border-bottom-color:var(--line);}
+header:after{display:none;}
+.header-brand .brand-mark{background:var(--text);color:var(--bg);box-shadow:none;border-radius:8px;}
+#chatInner{gap:28px;}
+.msg.user .bubble{border-left:1px solid var(--border);border-radius:12px;background:var(--user-bubble);}
+.md h1,.md h2,.md h3,.md h4{letter-spacing:-.025em;}
+.md blockquote{border-left:2px solid var(--border);background:var(--bg2);}
+.action-bar{border-top-color:var(--line);}
+.skill-badge{background:transparent;border-color:var(--border);}.skill-badge:before{color:var(--text3);}
+#composer{border-radius:14px;background:var(--bg2);box-shadow:var(--shadow-soft);}
+#inputRow{background:var(--bg);border-color:var(--line);}
+#inputRow:focus-within{border-color:var(--text3);box-shadow:0 0 0 3px color-mix(in srgb,var(--text3) 13%,transparent);}
+#sendBtn{background:var(--text);color:var(--bg);box-shadow:none;border-radius:9px;}
+#sendBtn:active{box-shadow:none;transform:scale(.96);}
+#sendBtn.stop{background:var(--danger);color:#fff;}
+.model-chip .model-orb{background:var(--bg3);color:var(--text2);}
+.tool-btn{color:var(--text3);}.tool-btn.on{background:var(--bg3);color:var(--text);}
+#skillBtn svg,#tglThink svg,#effortBtn svg,#tglSearch svg{color:currentColor;}
+#empty h2{color:var(--text);text-shadow:none;}
+.sugg button,.sugg button:nth-child(2),.sugg button:nth-child(3){border-left:1px solid var(--border);box-shadow:none;background:var(--bg2);}
+.sugg button .ico,.sugg button:nth-child(2) .ico,.sugg button:nth-child(3) .ico{background:var(--bg3);color:var(--text2);}
+.sugg button:active{transform:scale(.985);}
+.sheet{border-radius:16px 16px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.2);}
+.sheet-scrim{background:rgba(10,11,13,.38);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
+.sheet-head{border-bottom-color:var(--line);}.grab{background:var(--text3);opacity:.55;}
+.settings-card{background:var(--bg3);border-color:var(--border);}.settings-row .sr-icon{background:var(--bg3);color:var(--text2);}
+.btn{background:var(--text);color:var(--bg);box-shadow:none;}.btn.secondary{background:var(--bg3);color:var(--text);border-color:var(--border);}
+.btn:active{transform:scale(.985);}
+input,textarea,select{background:var(--bg);}
+.think-box{border-left:1px solid var(--border);background:var(--bg2);}
+.think-head:before{background:var(--text3);box-shadow:none;}
+.think-box.thinking{animation:none;border-color:var(--border);}
+.phase-box{border-left:1px solid var(--border);background:var(--bg2);}.phase-chip.active{background:var(--bg3);border-color:var(--border);color:var(--text);}.phase-chip:first-child.done{color:var(--text2);}.phase-fill{background:var(--text2);}
+.tool-trace{border-left:1px solid var(--border);}.tool-trace-title{color:var(--text2);}
+.code-live{border-color:var(--border);}.code-live-head,.code-live-acts{background:#15171b;border-color:#292d34;}.code-live-head:before{background:#777d86;box-shadow:none;animation:none;}.code-live-body{color:#b6bbc4;}.code-live-body::after{color:#9aa1ab;}.term-dots i,.term-dots i:nth-child(1),.term-dots i:nth-child(2),.term-dots i:nth-child(3){background:#606772;}
+.preview-btn{color:var(--text2);border-color:var(--border);background:var(--bg3);}
+#toast{border-left:1px solid var(--border);background:var(--bg3);}
+.onboarding-mark{background:var(--text);color:var(--bg);box-shadow:none;}
+.modal-scrim{background:rgba(10,11,13,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
+.modal{border-radius:14px;background:var(--bg2);border:1px solid var(--border);box-shadow:0 18px 50px rgba(0,0,0,.2);padding:20px;gap:14px;}
+.modal h3{font-family:"Space Grotesk",sans-serif;font-size:18px;letter-spacing:-.025em;}
+.modal p{color:var(--text2);line-height:1.55;}
+.modal .settings-card{background:var(--bg3);}
+.modal .btn{box-shadow:none;}
 </style>
 </head>
 <body>
@@ -1117,8 +1178,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "3.5.0";
-const APP_VERSION_CODE = 24;
+const APP_VERSION = "3.6.0"
+const APP_VERSION_CODE = 25;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2972,13 +3033,13 @@ function syncToggles(){
   $("#skillBtn").title="Skills: "+skillSummary();
   $("#tglSearch").classList.toggle("on", db.search);
   const effort=db.reasoningEffort[0].toUpperCase()+db.reasoningEffort.slice(1);
-  $("#effortBtn").innerHTML = `◒<span class="tool-label">${effort}</span>`;
+  $("#effortBtn").innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 4a8 8 0 00-8 8 8 8 0 008 8 8 8 0 008-8 8-8 0 00-8-8z"/><path d="M12 4a8 8 0 018 8h-8V4z" fill="currentColor" stroke="none" opacity=".55"/></svg><span class="tool-label">${effort}</span>`;
   $("#effortBtn").title = "Reasoning depth: "+effort;
 }
 $("#tglThink").onclick = ()=>{ db.thinking=!db.thinking; save(); syncToggles(); };
 $("#tglSearch").onclick = ()=>{ db.search=!db.search; save(); syncToggles(); };
 $("#effortBtn").onclick = ()=>{
-  const options=["low","high","max"]; const box=$("#effortOptions"); box.innerHTML="";
+  const options=["low","medium","high","max"]; const box=$("#effortOptions"); box.innerHTML="";
   options.forEach(v=>{ const b=el("button","btn secondary",v[0].toUpperCase()+v.slice(1)+ (v===db.reasoningEffort?"  ✓":"")); b.onclick=()=>{db.reasoningEffort=v;db._effortTouched=true;save();syncToggles();$("#effortScrim").classList.remove("open");haptic("success");}; box.appendChild(b); });
   $("#effortScrim").classList.add("open");
 };

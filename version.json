@@ -1,9 +1,9 @@
 {
-  "version": "3.5.0",
-  "versionCode": 24,
+  "version": "3.6.0",
+  "versionCode": 25,
   "name": "Kita Chat",
-  "changelog": "Two-phase workflow restored (one thinking phase, then one coding phase) and a complete modern redesign: code streams into a fixed 10-line scrollable terminal that never spills into chat, consistent SVG icons, new color system, glass header and composer, spring-animated sheets, and unified spacing and typography.",
+  "changelog": "Minimalist visual refinement: removed loud signal colors, simplified dialogs and sheets, restored quiet graphite surfaces with one muted accent, and kept the terminal/workflow controls compact and professional.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
-  "sha256": "1119afe4f58f7e0e4cbfb40366d597f93cf413b2d6fad7006e3155d2a3fcbc20",
+  "sha256": "a326ebde9f3f13da3a5f43c7a9f23f883147fc507bb34a465a32bc0805e7ff8e",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }

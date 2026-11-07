@@ -1,3 +1,17 @@
+# Kita Chat 3.6.0 — Minimalist visual refinement
+
+The previous bold color direction was too loud. This pass keeps the professional hierarchy but removes the neon/signal treatment:
+
+- Quiet graphite surfaces in dark mode and restrained off-white surfaces in light mode
+- One muted slate accent instead of orange/cobalt/lime combinations
+- Dialogs use a clean 14px surface, thin border and restrained shadow — no gradients or Android-style visual noise
+- Sheets, cards, buttons and composer use one consistent radius/spacing system
+- Tool icons remain a consistent SVG family, with no emoji or saturated color coding
+- Thinking, phase progress and terminal remain visually distinct but calm
+- Added mobile/desktop layout checks for overflow, dialog styling and fixed terminal height
+
+Local build only — not published yet.
+
 # Kita Chat 3.5.0 — Two-phase workflow + modern redesign
 
 ### Workflow restored: Thinking, then Coding — once each
