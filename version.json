@@ -1,9 +1,9 @@
 {
-  "version": "3.1.2",
-  "versionCode": 18,
+  "version": "3.1.3",
+  "versionCode": 19,
   "name": "Kita Chat",
-  "changelog": "Preview rebuild: native fullscreen HTML renderer via loadDataWithBaseURL, layered blob/data/srcdoc fallback, non-collapsing layout, broader HTML detection, and a copyable diagnostics panel when a preview cannot render.",
+  "changelog": "Model selection fix: choosing a model now sticks across multiple providers, updates the composer label, marks the selected row, and is pinned per conversation.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
-  "sha256": "8d623ff51debb39828b9303d55acb7e09272a007561435db607fff382baecdda",
+  "sha256": "332b91a770c6ee65664099f5e6a26796e0c39526a884a08a0207132261d3f399",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }

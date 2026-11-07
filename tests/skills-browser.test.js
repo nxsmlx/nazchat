@@ -77,6 +77,13 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
  assert.strictEqual(await p.locator('#previewDiag.show').count(),0,'diagnostics panel should be hidden on success');
  await p.screenshot({path:'/tmp/kita-preview-render.png'});
  await p.click('#previewClose');console.log('PASS HTML preview renders real content (pixel/frame check)');
+ await p.evaluate(()=>{db.providers=[{id:'p1',name:'One',baseUrl:'https://a/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['a1'],modelMeta:{}},{id:'p2',name:'Two',baseUrl:'https://b/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['b1','b2'],modelMeta:{}}];db.lastProviderId='p1';db.lastModelId='a1';conv=null;save();renderAll();});
+ await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.remove('open'));document.querySelectorAll('.sheet-scrim.open').forEach(s=>s.classList.remove('open'));});
+ await p.click('#bottomModelBtn');await p.waitForTimeout(150);await p.locator('.model-item').nth(2).click();await p.waitForTimeout(150);
+ const picked=await p.evaluate(()=>({last:db.lastProviderId+'/'+db.lastModelId,cur:currentModel().provider.name+'/'+currentModel().modelId}));
+ assert.strictEqual(picked.last,'p2/b2','model pick did not persist');assert.strictEqual(picked.cur,'Two/b2','currentModel snapped back to the first provider');
+ await p.click('#bottomModelBtn');await p.waitForTimeout(150);assert((await p.locator('.model-item.sel').innerText()).includes('b2'),'selected model not marked in picker');await p.click('[data-close="modelSheet"]');
+ console.log('PASS model selection across multiple providers');
  assert.deepStrictEqual(errors,[]);console.log('PASS no page errors');
  await b.close();
 })().catch(e=>{console.error(e);process.exit(1)});

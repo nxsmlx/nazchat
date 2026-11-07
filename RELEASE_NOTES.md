@@ -1,3 +1,19 @@
+# Kita Chat 3.1.3 — Model selection fix
+
+Choosing a model with more than one provider configured appeared to do nothing: the picker closed but the composer kept showing the first provider's model.
+
+- `currentModel()` now resolves the selected provider by ID instead of falling back to the first provider that has models
+- The active conversation's provider/model take priority, so each chat keeps its own model
+- The picker re-renders after a pick, so the check mark and selected row are correct
+- Clearer empty state when a provider has no models selected yet
+- Regression test covers selecting a model from the second provider
+
+# Kita Chat 3.1.2 — Preview rebuilt
+
+- APK previews generated HTML in a dedicated `PreviewActivity` via `loadDataWithBaseURL`, with Blob/data/srcdoc fallback in the browser build
+- Preview frame can no longer collapse, and `data:`/`blob:`/`about:` navigations are no longer hijacked
+- Broader HTML detection plus a copyable diagnostics panel when rendering fails
+
 # Kita Chat 3.1.1 — HTML Preview hotfix
 
 - Fixes blank HTML Preview frames in Android WebView by rendering the sandboxed preview through a data document instead of relying only on `iframe.srcdoc`.
