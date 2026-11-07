@@ -3,7 +3,7 @@
   "versionCode": 25,
   "name": "Kita Chat",
   "changelog": "Minimalist visual refinement: removed loud signal colors, simplified dialogs and sheets, restored quiet graphite surfaces with one muted accent, and kept the terminal/workflow controls compact and professional.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v3.6.0/NazChat.apk",
   "sha256": "a326ebde9f3f13da3a5f43c7a9f23f883147fc507bb34a465a32bc0805e7ff8e",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v3.6.0"
 }
