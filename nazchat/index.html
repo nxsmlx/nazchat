@@ -96,7 +96,7 @@ header .menu-btn{background:var(--bg3);}
 .md strong{font-weight:800;color:color-mix(in srgb,var(--text) 96%,var(--accent));}
 .md ul,.md ol{margin:0 0 12px; padding-left:24px;}
 .md li{margin:4px 0;}
-.md blockquote{margin:10px 0; padding:6px 14px; border-left:3px solid var(--accent); color:var(--text2); background:var(--bg2); border-radius:0 8px 8px 0;}
+.md blockquote{margin:10px 0; padding:6px 14px; border:1px solid var(--border); color:var(--text2); background:var(--bg2); border-radius:0 8px 8px 0;}
 .md table{border-collapse:separate;border-spacing:0;margin:16px 0;display:block;overflow-x:auto;max-width:100%;border:1px solid var(--border);border-radius:12px;white-space:nowrap;}
 .md th,.md td{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:10px 13px;text-align:left;font-size:13.5px;min-width:105px;}
 .md th{background:var(--bg3);font-weight:800;position:sticky;top:0;z-index:1;}
@@ -193,7 +193,7 @@ header .menu-btn{background:var(--bg3);}
 .md-live-raw{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:var(--text2);max-height:60vh;overflow:hidden;}
 .skill-badges{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 8px;}
 .skill-badge{display:inline-flex;align-items:center;gap:4px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:4px 8px;font-size:10.5px;font-weight:700;}
-.skill-badge:before{content:"✦";color:var(--accent);}
+.skill-badge:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);}
 
 /* Typing dots */
 .typing{display:inline-flex; gap:4px; padding:6px 0;}
@@ -448,7 +448,7 @@ header .menu-btn:active,.icon-btn:active{background:var(--bg3);color:var(--text)
 .md h1{font-size:1.6em}.md h2{font-size:1.32em}.md h3{font-size:1.1em}
 .md strong{font-weight:700;color:var(--text);}
 .md ul,.md ol{padding-left:23px;margin-bottom:15px;}.md li{margin:5px 0;}
-.md blockquote{margin:15px 0;padding:10px 15px;border-left:2px solid var(--accent);background:var(--bg2);border-radius:0 10px 10px 0;}
+.md blockquote{margin:15px 0;padding:10px 15px;border:1px solid var(--border);background:var(--bg2);border-radius:0 10px 10px 0;}
 .md hr{margin:22px 0;border-top-color:var(--border);}
 .md a{color:#7ab3ff;}
 .md table{border-radius:12px;}
@@ -589,7 +589,7 @@ header .menu-btn:active,.icon-btn:active{background:var(--bg3);color:var(--text)
 .md h1,.md h2,.md h3,.md h4{font-family:"Space Grotesk",sans-serif;letter-spacing:-.04em;}
 .md h1{font-size:1.68em;}.md h2{font-size:1.38em;}
 .md strong{color:var(--text);}
-.md blockquote{border-left:3px solid var(--cobalt);background:var(--bg2);border-radius:0 7px 7px 0;}
+.md blockquote{border:1px solid var(--border);background:var(--bg2);border-radius:0 7px 7px 0;}
 .action-bar{border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent);padding-top:5px;margin-top:11px;}
 .act-btn{min-height:34px;border-radius:7px;}
 .skill-badge{border-radius:6px;border-color:color-mix(in srgb,var(--cobalt) 48%,var(--border));background:color-mix(in srgb,var(--cobalt) 8%,transparent);}
@@ -632,7 +632,7 @@ input:focus,textarea:focus{border-color:var(--signal);}
 .think-box{border-radius:9px;border:1px solid var(--border);background:var(--bg2);}
 .think-head{min-height:42px;padding:10px 12px;}.think-head:before{background:var(--cobalt);box-shadow:0 0 0 4px rgba(71,125,255,.15);}
 .think-box.thinking{animation:thinkPulse 1.6s ease-in-out infinite;}
-@keyframes thinkPulse{0%,100%{border-left-color:var(--cobalt)}50%{border-left-color:var(--signal)}}
+@keyframes thinkPulse{0%,100%{border-color:var(--border)}50%{border-color:var(--text3)}}
 .phase-box{border-radius:9px;background:var(--bg2);border:1px solid var(--border);}
 .phase-chip{border-radius:6px;}.phase-chip.active{background:var(--accent-soft);border-color:var(--signal);color:var(--signal);}.phase-chip:first-child.done{color:var(--cobalt);}.phase-chip:nth-child(3).active{color:var(--signal);}
 .phase-fill{background:linear-gradient(90deg,var(--cobalt),var(--signal));}
@@ -669,9 +669,9 @@ header{background:color-mix(in srgb,var(--bg) 94%,transparent);border-bottom-col
 header:after{display:none;}
 .header-brand .brand-mark{background:var(--text);color:var(--bg);box-shadow:none;border-radius:8px;}
 #chatInner{gap:28px;}
-.msg.user .bubble{border-left:0;border:1px solid var(--border);border-radius:12px;background:var(--user-bubble);}
+.msg.user .bubble{border:1px solid var(--border);border-radius:12px;background:var(--user-bubble);}
 .md h1,.md h2,.md h3,.md h4{letter-spacing:-.025em;}
-.md blockquote{border-left:2px solid var(--border);background:var(--bg2);}
+.md blockquote{border:1px solid var(--border);background:var(--bg2);}
 .action-bar{border-top-color:var(--line);}
 .skill-badge{background:transparent;border-color:var(--border);}.skill-badge:before{color:var(--text3);}
 #composer{border-radius:14px;background:var(--bg2);box-shadow:var(--shadow-soft);}
@@ -684,7 +684,7 @@ header:after{display:none;}
 .tool-btn{color:var(--text3);}.tool-btn.on{background:var(--bg3);color:var(--text);}
 #skillBtn svg,#tglThink svg,#effortBtn svg,#tglSearch svg{color:currentColor;}
 #empty h2{color:var(--text);text-shadow:none;}
-.sugg button,.sugg button:nth-child(2),.sugg button:nth-child(3){border-left:0;border:1px solid var(--border);box-shadow:none;background:var(--bg2);}
+.sugg button,.sugg button:nth-child(2),.sugg button:nth-child(3){border:1px solid var(--border);box-shadow:none;background:var(--bg2);}
 .sugg button .ico,.sugg button:nth-child(2) .ico,.sugg button:nth-child(3) .ico{background:var(--bg3);color:var(--text2);}
 .sugg button:active{transform:scale(.985);}
 .sheet{border-radius:16px 16px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.2);}
@@ -694,18 +694,18 @@ header:after{display:none;}
 .btn{background:var(--text);color:var(--bg);box-shadow:none;}.btn.secondary{background:var(--bg3);color:var(--text);border-color:var(--border);}
 .btn:active{transform:scale(.985);}
 input,textarea,select{background:var(--bg);}
-.think-box{border-left:0;border:1px solid var(--border);background:var(--bg2);}
+.think-box{border:1px solid var(--border);background:var(--bg2);}
 .think-head:before{background:var(--text3);box-shadow:none;}
 .think-box.thinking{animation:none;border-color:var(--border);}
-.phase-box{border-left:0;border:1px solid var(--border);background:var(--bg2);}.phase-chip.active{background:var(--bg3);border-color:var(--border);color:var(--text);}.phase-chip:first-child.done{color:var(--text2);}.phase-fill{background:var(--text2);}
-.tool-trace{border-left:0;border:1px solid var(--border);}.tool-trace-title{color:var(--text2);}
+.phase-box{border:1px solid var(--border);background:var(--bg2);}.phase-chip.active{background:var(--bg3);border-color:var(--border);color:var(--text);}.phase-chip:first-child.done{color:var(--text2);}.phase-fill{background:var(--text2);}
+.tool-trace{border:1px solid var(--border);}.tool-trace-title{color:var(--text2);}
 .code-live{border-color:var(--border);}.code-live-head,.code-live-acts{background:#15171b;border-color:#292d34;}.code-live-head:before{background:#777d86;box-shadow:none;animation:none;}.code-live-body{color:#b6bbc4;}.code-live-body::after{color:#9aa1ab;}.term-dots i,.term-dots i:nth-child(1),.term-dots i:nth-child(2),.term-dots i:nth-child(3){background:#606772;}
 .preview-btn{color:var(--text2);border-color:var(--border);background:var(--bg3);}
-#toast{border-left:0;background:var(--bg3);box-shadow:0 4px 12px rgba(0,0,0,.3);}
+#toast{background:var(--bg3);box-shadow:0 4px 12px rgba(0,0,0,.3);}
 .conv-item{padding:10px 14px;gap:6px;border:1px solid transparent;}
 .conv-item.active{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);box-shadow:none;color:#fafafa;}
-.msg.user .bubble,.sugg button,.think-box,.phase-box,.tool-trace{border-left:0;border:1px solid rgba(255,255,255,.08);}
-.sugg button,.sugg button:nth-child(2),.sugg button:nth-child(3){border-left:0;}
+.msg.user .bubble,.sugg button,.think-box,.phase-box,.tool-trace{border:1px solid rgba(255,255,255,.08);}
+.sugg button,.sugg button:nth-child(2),.sugg button:nth-child(3){}
 .think-box,.phase-box,.tool-trace{box-shadow:0 4px 12px rgba(0,0,0,.3);}
 .onboarding-mark{background:var(--text);color:var(--bg);box-shadow:none;}
 .modal-scrim{background:rgba(10,11,13,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
@@ -728,6 +728,7 @@ input,textarea,select{background:var(--bg);}
 .settings-empty{padding:18px 16px;color:#a1a1aa;font-size:12.5px;}.skill-search{position:sticky;top:0;z-index:2;background:var(--bg2)!important;}
 .switch{position:relative;width:44px;height:24px;min-height:24px;padding:0;border:0;border-radius:999px;background:#3f3f46;flex:none;transition:background .18s;}.switch:after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#d4d4d8;transition:transform .18s;box-shadow:0 1px 2px rgba(0,0,0,.28);}.switch.on{background:#71717a;}.switch.on:after{transform:translateX(20px);background:#fafafa;}
 .provider-card+.provider-card,.skill-row+.skill-row{border-top:0;}
+.model-filters{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;padding:2px 0 9px;background:var(--bg2);scrollbar-width:none;}.model-filters::-webkit-scrollbar{display:none;}.model-filter{flex:none;min-height:32px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg3);color:var(--text2);font-size:11.5px;font-weight:700;white-space:nowrap;}.model-filter.active{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);color:#fafafa;}.model-filter span{color:var(--text3);margin-left:3px;}.model-section-label{padding:10px 12px 5px;color:var(--text3);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}.model-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid transparent;}.model-item.sel{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 12px rgba(0,0,0,.3);}.model-item .nm{min-width:0;flex:1;}.model-item .nm strong{display:block;font-size:15px;font-weight:600;color:#f4f4f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.model-item .nm small{display:block;margin-top:3px;font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.model-meta-pill{flex:none;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.06);color:#a1a1aa;font-size:10.5px;white-space:nowrap;}.model-search input,.skill-search,#convSearch{background-color:#141417;background-position:14px center;background-repeat:no-repeat;background-size:17px 17px;padding-left:38px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%2371717a' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='8' cy='8' r='5.5'/%3E%3Cpath d='M12 12l4 4'/%3E%3C/svg%3E");}.conv-search:before{display:none;}.skill-search{width:100%;position:sticky;top:0;z-index:2;}.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:12px;border-radius:12px;}.settings-row .sr-text{min-width:0;flex:1;}.settings-row .sr-text strong{display:block;font-size:15px;font-weight:600;color:#f4f4f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.settings-row .sr-text small{display:block;margin-top:3px;font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.settings-hub-group>.settings-row{border-bottom:1px solid rgba(255,255,255,.04);}.settings-hub-group>.settings-row:last-child{border-bottom:0;}
 </style>
 </head>
 <body>
@@ -750,9 +751,9 @@ input,textarea,select{background:var(--bg);}
       <h2>Kita Chat</h2>
       <p>Your models. Your keys. Your conversations.</p>
       <div class="sugg">
-        <button data-p="Explain quantum computing in simple terms"><span class="ico">✦</span><span><strong>Explain a concept</strong><small>Science, code, or ideas</small></span></button>
+        <button data-p="Explain quantum computing in simple terms"><span class="ico">Ask</span><span><strong>Explain a concept</strong><small>Science, code, or ideas</small></span></button>
         <button data-p="Write a Python web scraper with requests and BeautifulSoup"><span class="ico">&lt;/&gt;</span><span><strong>Write code</strong><small>Scripts and small apps</small></span></button>
-        <button data-p="Buat saya resipi nasi goreng yang sedap"><span class="ico">🍳</span><span><strong>Cooking idea</strong><small>Resipi dan menu harian</small></span></button>
+        <button data-p="Buat saya resipi nasi goreng yang sedap"><span class="ico">Idea</span><span><strong>Cooking idea</strong><small>Resipi dan menu harian</small></span></button>
       </div>
     </div>
     <div id="composerWrap">
@@ -769,7 +770,7 @@ input,textarea,select{background:var(--bg);}
           </button>
         </div>
         <div class="composer-foot">
-          <button class="model-chip" id="bottomModelBtn" aria-label="Choose model" title="Choose model"><span class="model-orb">✦</span><span class="model-label" id="modelLabel"><span id="modelName">Select a model</span><small id="providerName">Choose provider</small></span></button>
+          <button class="model-chip" id="bottomModelBtn" aria-label="Choose model" title="Choose model"><span class="model-orb">K</span><span class="model-label" id="modelLabel"><span id="modelName">Select a model</span><small id="providerName">Choose provider</small></span></button>
           <div id="composerFootMeta">
             <div class="tool-cluster" aria-label="Chat tools">
               <button class="tool-btn" id="skillBtn" aria-label="Choose skills" title="Skills"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10l-4.3 3.7 1.2 5.6L12 16.3l-4.4 3 1.2-5.6L4.5 10l5.6-1.4L12 3z"/></svg><span class="tool-label">Skills</span></button>
@@ -790,10 +791,10 @@ input,textarea,select{background:var(--bg);}
   <div id="scrim"></div>
   <div id="sidebarPanel">
     <div class="side-head">
-      <strong style="font-size:17px">✦ Kita Chat</strong>
+      <strong style="font-size:17px">Kita Chat</strong>
       <button class="icon-btn" id="closeSide"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
-    <button class="btn" style="margin:0 14px 10px; width:calc(100% - 28px)" id="sideNew">＋ New Chat</button>
+    <button class="btn" style="margin:0 14px 10px; width:calc(100% - 28px)" id="sideNew">New Chat</button>
     <div class="conv-search"><input id="convSearch" type="search" placeholder="Search conversations…" autocomplete="off"></div>
     <div class="side-title">Conversations</div>
     <div id="convList"></div>
@@ -865,8 +866,8 @@ input,textarea,select{background:var(--bg);}
     <button class="preview-close" id="previewClose" aria-label="Close preview"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="preview-title"><strong id="previewTitle">HTML Preview</strong><span id="previewLive" class="live-badge" style="display:none">● Live</span></div>
     <div class="preview-acts">
-      <button class="preview-act" id="previewRun" title="Run">▶</button>
-      <button class="preview-act" id="previewRefresh" title="Refresh">↻</button>
+      <button class="preview-act" id="previewRun" title="Run" aria-label="Run"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="preview-act" id="previewRefresh" title="Refresh" aria-label="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 11a8 8 0 00-14.9-4M4 5v4h4M4 13a8 8 0 0014.9 4M20 19v-4h-4"/></svg></button>
       <button class="preview-act" id="previewMore" title="More actions">⋯</button>
     </div>
   </div>
@@ -879,7 +880,7 @@ input,textarea,select{background:var(--bg);}
     <div class="vp-seg" role="group" aria-label="Preview width">
       <button class="vp-btn" data-vp="mobile" title="Mobile width">📱</button>
       <button class="vp-btn" data-vp="tablet" title="Tablet width">▭</button>
-      <button class="vp-btn active" data-vp="full" title="Full width">▣</button>
+      <button class="vp-btn active" data-vp="full" title="Full width" aria-label="Full width"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="14" rx="1"/></svg></button>
     </div>
     <label class="js-toggle"><input type="checkbox" id="previewJs" checked><span>Run JS</span></label>
   </div>
@@ -1221,8 +1222,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "3.8.0"
-const APP_VERSION_CODE = 27;
+const APP_VERSION = "3.9.0"
+const APP_VERSION_CODE = 28;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1321,7 +1322,7 @@ function enhance(container, opts){
     };
     btnWrap.appendChild(toggle);
     if(lang === "html" || lang === "xhtml" || lang === "htm"){
-      const pv = el("button","preview-btn","▶ Preview");
+      const pv = el("button","preview-btn","Preview");
       pv.title = "Preview this HTML";
       pv.onclick = ()=>openPreview(rawCode, {live:false});
       btnWrap.appendChild(pv);
@@ -1381,7 +1382,7 @@ function renderSidebar(){
     const group=conversationDay(c.updatedAt);
     if(group!==previousGroup){list.appendChild(el("div","conv-group-label",group));previousGroup=group;}
     const item=el("div","conv-item"+(conv&&c.id===conv.id?" active":"")+(c.pinned?" pinned":""));
-    item.innerHTML=`<span class="pin">●</span><div class="t">${esc(c.title||"New chat")}</div><div class="conv-actions"><button class="pin-btn" title="${c.pinned?"Unpin":"Pin"}">${c.pinned?"★":"☆"}</button><button class="del" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2-2H7a2 2 0 01-2-2V6"/></svg></button></div>`;
+    item.innerHTML=`<span class="pin">●</span><div class="t">${esc(c.title||"New chat")}</div><div class="conv-actions"><button class="pin-btn" title="${c.pinned?"Unpin":"Pin"}">${c.pinned?"Pinned":"Pin"}</button><button class="del" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2-2H7a2 2 0 01-2-2V6"/></svg></button></div>`;
     item.querySelector(".pin-btn").onclick=e=>{e.stopPropagation();c.pinned=!c.pinned;save();renderSidebar();haptic();};
     item.querySelector(".del").onclick=async e=>{e.stopPropagation();if(await confirmDialog("Delete this conversation?",{title:"Delete conversation",danger:true,confirmText:"Delete"})){db.conversations=db.conversations.filter(x=>x.id!==c.id);if(conv&&conv.id===c.id)conv=null;save();renderAll();haptic();}};
     item.ondblclick=()=>renameConversation(c);
@@ -1442,14 +1443,14 @@ function msgEl(msg){
       const files = el("div","user-files");
       msg.attachments.forEach(a=>{
         const f = el("div","user-file");
-        f.innerHTML = `<span>📄 ${esc(a.name)}</span>`;
+        f.innerHTML = `<span>Document · ${esc(a.name)}</span>`;
         files.appendChild(f);
       });
       bubble.appendChild(files);
     }
     if(msg.content){ const msgContent = el("div"); msgContent.innerHTML = esc(msg.content); bubble.appendChild(msgContent); }
   if(msg.attachments && msg.attachments.some(a=>/\.html?$/i.test(a.name||"")) && msg.content){
-    const pv = el("button","act-btn","▶ Preview HTML");
+    const pv = el("button","act-btn","Preview HTML");
     pv.onclick = ()=>openPreview(msg.content, {live:false});
     bubble.appendChild(pv);
   }
@@ -1507,7 +1508,7 @@ function renderLiveCode(bubble, code){
   box.appendChild(head);
   const acts=el("div","code-live-acts");
   if(/^(html|htm|xhtml)$/.test(code.lang)){
-    const pv=el("button","preview-btn","▶ Preview");
+    const pv=el("button","preview-btn","Preview");
     pv.onclick=()=>openPreview(code.body,{live:true});
     acts.appendChild(pv);
   }
@@ -1647,19 +1648,19 @@ function renderAssistant(bubble, msg, live){
     const cp = el("button","act-btn");
     cp.innerHTML = `⧉ Copy`;
     cp.onclick = ()=>copyText(msg.content, cp, "✓ Copied!");
-    const rg = el("button","act-btn","↻ Regenerate");
+    const rg = el("button","act-btn","Regenerate");
     rg.onclick = ()=>regenerate(msg);
     bar.appendChild(cp); bar.appendChild(rg);
-    if(msg.comparisons?.length){const compare=el("button","act-btn","⇄ Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
-    else if(db.providers.reduce((n,p)=>n+p.selectedModels.length,0)>1){const compare=el("button","act-btn","⇄ Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
-    if(msg.truncated){const cont=el("button","act-btn","▶ Continue");cont.onclick=()=>{if(generating)return;send("Continue exactly where you stopped. Do not repeat text that was already written.",{skipTitle:true});};bar.appendChild(cont);}
+    if(msg.comparisons?.length){const compare=el("button","act-btn","Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
+    else if(db.providers.reduce((n,p)=>n+p.selectedModels.length,0)>1){const compare=el("button","act-btn","Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
+    if(msg.truncated){const cont=el("button","act-btn","Continue");cont.onclick=()=>{if(generating)return;send("Continue exactly where you stopped. Do not repeat text that was already written.",{skipTitle:true});};bar.appendChild(cont);}
     if(/```[\w+-]*\n[\s\S]+/.test(msg.content||"") || extractHtmlBlock(msg.content)){
       const htmlCandidate=extractHtmlBlock(msg.content);
-      if(htmlCandidate){const pv=el("button","act-btn","▶ Preview");pv.onclick=()=>openPreview(htmlCandidate,{live:false});bar.appendChild(pv);}
-      const review=el("button","act-btn","✦ Review & Improve");
+      if(htmlCandidate){const pv=el("button","act-btn","Preview");pv.onclick=()=>openPreview(htmlCandidate,{live:false});bar.appendChild(pv);}
+      const review=el("button","act-btn","Review & Improve");
       review.onclick=()=>reviewAndImprove(msg);
       bar.appendChild(review);
-      const artifact=el("button","act-btn","▣ Save artifact");artifact.onclick=()=>saveArtifactFromMessage(msg);bar.appendChild(artifact);
+      const artifact=el("button","act-btn","Save artifact");artifact.onclick=()=>saveArtifactFromMessage(msg);bar.appendChild(artifact);
     }
     bubble.appendChild(bar);
   }
@@ -1847,7 +1848,7 @@ function renderModelSheetLegacy(){
   const cur = currentModel();
   if(!db.providers.length){
     list.appendChild(el("div","",`<div style="color:var(--text2);text-align:center;padding:24px 0">No providers yet.<br>Add one in Settings</div>`));
-    const add = el("button","btn","＋ Add Provider");
+    const add = el("button","btn","Add Provider");
     add.onclick = ()=>{ closeSheet("modelSheet"); openProvForm(null); };
     list.appendChild(add);
     return;
@@ -1870,47 +1871,23 @@ function renderModelSheetLegacy(){
   });
 }
 
+let modelProviderFilter="all";
 function renderModelSheet(){
-  const list=$("#modelList"); list.innerHTML="";
-  const cur=currentModel();
-  if(!db.providers.length){list.appendChild(el("div","",`<div style="color:var(--text2);text-align:center;padding:28px 0">No models yet.<br>Add a provider in Settings.</div>`));const add=el("button","btn","＋ Add Provider");add.onclick=()=>{closeSheet("modelSheet");openProvForm(null);};list.appendChild(add);return;}
+  const list=$("#modelList"); list.innerHTML=""; const cur=currentModel();
+  if(!db.providers.length){list.appendChild(el("div","",`<div style="color:var(--text2);text-align:center;padding:28px 0">No models yet.<br>Add a provider in Settings.</div>`));const add=el("button","btn","Add Provider");add.onclick=()=>{closeSheet("modelSheet");openProvForm(null);};list.appendChild(add);return;}
   const searchWrap=el("div","model-search");const search=el("input");search.placeholder="Search models…";searchWrap.appendChild(search);list.appendChild(searchWrap);
-  const collapsed={};
+  const filters=el("div","model-filters");const all=[{id:"all",name:"All",count:db.providers.reduce((n,p)=>n+p.selectedModels.length,0)},...db.providers.map(p=>({id:p.id,name:p.name,count:p.selectedModels.length}))];
+  all.forEach(f=>{const b=el("button","model-filter"+(modelProviderFilter===f.id?" active":""),`${f.name} <span>${f.count}</span>`);b.onclick=()=>{modelProviderFilter=f.id;renderModelSheet();};filters.appendChild(b);});list.appendChild(filters);
   const draw=()=>{
-    list.querySelectorAll(".model-group,.model-item,.model-empty").forEach(x=>x.remove());
-    const q=search.value.trim().toLowerCase(); let visible=0;
-    db.providers.forEach(p=>{
-      const models=p.selectedModels.filter(id=>!q||id.toLowerCase().includes(q)||prettyModel(id).toLowerCase().includes(q));
-      if(!models.length)return;
-      const group=el("button","model-group"+(collapsed[p.id]&&!q?" closed":""));
-      group.innerHTML=`<span>${esc(p.name)} <small style="font-weight:500;letter-spacing:0">${models.length}</small></span><span class="group-chevron">⌄</span>`;
-      group.onclick=()=>{collapsed[p.id]=!collapsed[p.id];draw();}; list.appendChild(group);
-      if(collapsed[p.id]&&!q)return;
-      models.forEach(mid=>{
-        visible++;
-        const it=el("div","model-item"+(cur&&cur.provider.id===p.id&&cur.modelId===mid?" sel":""));
-        const context=p.modelMeta?.[mid]?.context_length||p.modelMeta?.[mid]?.contextLength;
-        it.innerHTML=`<span class="nm"><strong>${esc(prettyModel(mid))}</strong><small>${esc(mid)}${context?` · ${Math.round(context/1000)}k context`:""}</small></span>`;
-        if(cur&&cur.provider.id===p.id&&cur.modelId===mid)it.innerHTML+=`<svg class="check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;
-        it.onclick=()=>{
-          db.lastProviderId=p.id;db.lastModelId=mid;
-          if(conv){conv.providerId=p.id;conv.modelId=mid;}
-          save();
-          renderHeader();
-          renderModelSheet();
-          closeSheet("modelSheet");
-          if(conv) renderAll();
-          haptic("success");
-        };list.appendChild(it);
-      });
+    list.querySelectorAll(".model-item,.model-empty,.model-section-label").forEach(x=>x.remove());
+    const q=search.value.trim().toLowerCase();let visible=0;
+    db.providers.filter(p=>modelProviderFilter==="all"||p.id===modelProviderFilter).forEach(p=>{
+      const models=p.selectedModels.filter(id=>!q||id.toLowerCase().includes(q)||prettyModel(id).toLowerCase().includes(q));if(!models.length)return;
+      list.appendChild(el("div","model-section-label",p.name));
+      models.forEach(mid=>{visible++;const it=el("div","model-item"+(cur&&cur.provider.id===p.id&&cur.modelId===mid?" sel":""));const context=p.modelMeta?.[mid]?.context_length||p.modelMeta?.[mid]?.contextLength;it.innerHTML=`<span class="nm"><strong>${esc(prettyModel(mid))}</strong><small>${esc(mid)}${context?` · ${Math.round(context/1000)}k context`:""}</small></span><span class="model-meta-pill">${context?Math.round(context/1000)+"k":"Model"}</span>`;if(cur&&cur.provider.id===p.id&&cur.modelId===mid)it.innerHTML+=`<svg class="check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;it.onclick=()=>{db.lastProviderId=p.id;db.lastModelId=mid;if(conv){conv.providerId=p.id;conv.modelId=mid;}save();renderHeader();renderModelSheet();closeSheet("modelSheet");if(conv)renderAll();haptic("success");};list.appendChild(it);});
     });
-    if(!visible){
-      const anyModels=db.providers.some(p=>Array.isArray(p.selectedModels)&&p.selectedModels.length);
-      const msg=anyModels?"No matching models":"No models selected yet. Open Settings → provider → Edit and choose models.";
-      list.appendChild(el("div","model-empty",`<div style="color:var(--text2);font-size:13px;padding:15px 3px;line-height:1.5">${esc(msg)}</div>`));
-    }
-  };
-  search.oninput=draw; draw();
+    if(!visible){const anyModels=db.providers.some(p=>Array.isArray(p.selectedModels)&&p.selectedModels.length);const msg=anyModels?"No matching models":"No models selected yet. Open Settings → provider → Edit and choose models.";list.appendChild(el("div","model-empty",`<div style="color:var(--text2);font-size:13px;padding:15px 3px;line-height:1.5">${esc(msg)}</div>`));}
+  };search.oninput=draw;draw();
 }
 
 /* ===================== Skills UI & pack management ===================== */
@@ -1962,12 +1939,12 @@ function showSkillDetails(s){
 function renderSkillLibrary(list){
   const label=el("div","settings-section-label","Skills");label.style.marginTop="10px";list.appendChild(label);
   const row=el("div","settings-row");
-  row.innerHTML=`<div class="sr-icon">✦</div><div class="sr-text"><strong>Skill Library</strong><small>${activeSkills().length} active · Pack v${skillPack.packVersion} · ${esc(skillSummary())}</small></div><button class="mini-btn" id="manageSkillsBtn">Manage</button>`;
+  row.innerHTML=`<div class="sr-icon">${settingsIcon("skills")}</div><div class="sr-text"><strong>Skill Library</strong><small>${activeSkills().length} active · Pack v${skillPack.packVersion} · ${esc(skillSummary())}</small></div><button class="mini-btn" id="manageSkillsBtn">Manage</button>`;
   list.appendChild(row);$("#manageSkillsBtn").onclick=()=>{skillLibraryOpen=true;renderSkillSheet();closeSheet("setSheet");openSheet("skillSheet");};
   const actions=el("div","toolbar-row");
-  const create=el("button",null,"＋ Custom skill");create.onclick=openCustomSkillForm;
+  const create=el("button",null,"Add Skill");create.onclick=openCustomSkillForm;
   const imp=el("button",null,"Import SKILL.md / URL");imp.onclick=openSkillImport;
-  const update=el("button",null,"↻ Update pack");update.onclick=()=>refreshSkillPack(false);
+  const update=el("button",null,"Update pack");update.onclick=()=>refreshSkillPack(false);
   actions.appendChild(create);actions.appendChild(imp);actions.appendChild(update);list.appendChild(actions);
   const all=el("div");
   skillPack.skills.forEach(s=>{
@@ -2029,13 +2006,13 @@ function renderToolsSheet(){
   const voice=el("div","settings-card");voice.innerHTML=`<div class="row"><div><h4>Voice</h4><p id="voiceStatus">Dictate a prompt or read the latest answer aloud.</p></div><button class="mini-btn" id="voiceInputBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0014 0M12 18v3M9 21h6"/></svg> Dictate</button></div><button class="mini-btn" id="speakLastBtn" style="margin-top:8px;width:100%"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4H4z"/><path d="M17 9a5 5 0 010 6M19.5 6.5a9 9 0 010 11"/></svg> Read latest answer</button>`;body.appendChild(voice);
   $("#voiceInputBtn").onclick=()=>startVoiceInput();$("#speakLastBtn").onclick=()=>{const last=conv?.messages?.slice().reverse().find(x=>x.role==="assistant"&&x.content);if(last)speakText(last.content);else toast("No answer to read yet");};
   const project= currentProject();
-  const projectBox=el("div","settings-card");projectBox.innerHTML=`<div class="row"><div><h4>Project</h4><p>${project?esc(project.name):"No project selected"}</p></div><button class="mini-btn" id="newProjectTool">＋ New</button></div>`;body.appendChild(projectBox);
+  const projectBox=el("div","settings-card");projectBox.innerHTML=`<div class="row"><div><h4>Project</h4><p>${project?esc(project.name):"No project selected"}</p></div><button class="mini-btn" id="newProjectTool">New</button></div>`;body.appendChild(projectBox);
   const projects=el("select");projects.innerHTML=`<option value="">No project</option>`+db.projects.map(p=>`<option value="${esc(p.id)}" ${p.id===db.activeProjectId?"selected":""}>${esc(p.name)}</option>`).join("");projects.onchange=()=>{db.activeProjectId=projects.value||null;save();renderAll();renderToolsSheet();};body.appendChild(projects);$("#newProjectTool").onclick=createProject;
   if(project){const inst=el("textarea");inst.placeholder="Project instructions…";inst.value=project.instructions||"";inst.onchange=()=>{project.instructions=inst.value.slice(0,6000);project.updatedAt=Date.now();save();};body.appendChild(inst);}
-  const styleBox=el("div","settings-card");styleBox.innerHTML=`<div class="row"><div><h4>Response style</h4><p>${currentStyle()?esc(currentStyle().name):"Default"}</p></div><button class="mini-btn" id="newStyleTool">＋ New</button></div>`;body.appendChild(styleBox);
+  const styleBox=el("div","settings-card");styleBox.innerHTML=`<div class="row"><div><h4>Response style</h4><p>${currentStyle()?esc(currentStyle().name):"Default"}</p></div><button class="mini-btn" id="newStyleTool">New</button></div>`;body.appendChild(styleBox);
   const styles=el("select");styles.innerHTML=`<option value="">Default</option>`+db.styles.map(s=>`<option value="${esc(s.id)}" ${s.id===db.activeStyleId?"selected":""}>${esc(s.name)}</option>`).join("");styles.onchange=()=>{db.activeStyleId=styles.value||null;save();renderToolsSheet();};body.appendChild(styles);$("#newStyleTool").onclick=createStyle;
   const promptLabel=el("div","settings-section-label","Prompt library");body.appendChild(promptLabel);
-  const promptActions=el("div","toolbar-row");const saveP=el("button",null,"＋ Save prompt");saveP.onclick=createPrompt;promptActions.appendChild(saveP);body.appendChild(promptActions);
+  const promptActions=el("div","toolbar-row");const saveP=el("button",null,"Save prompt");saveP.onclick=createPrompt;promptActions.appendChild(saveP);body.appendChild(promptActions);
   db.prompts.slice().reverse().slice(0,12).forEach(p=>{const r=el("div","settings-row");r.innerHTML=`<div class="sr-text"><strong>${esc(p.name)}</strong><small>${esc(p.content.slice(0,100))}</small></div>`;const use=el("button","mini-btn","Use");use.onclick=()=>usePrompt(p);r.appendChild(use);body.appendChild(r);});
   const artifactLabel=el("div","settings-section-label","Artifacts");body.appendChild(artifactLabel);
   if(!db.artifacts.length) body.appendChild(el("div","hint","Save HTML and code outputs from a response to keep them in your local library."));
@@ -2094,7 +2071,7 @@ function renderSettingsAbout(){
   renderSettingsPage("About",null,null,list=>{const card=el("div","settings-card");card.innerHTML=`<h4>Kita Chat ${APP_VERSION}</h4><p>Private, local-first Android BYOK chat for OpenAI-compatible providers.</p><p style="margin-top:10px">API keys stay in Android Keystore storage. Conversations and workspaces remain on this device.</p>`;list.appendChild(card);const update=el("button","btn secondary","Check for updates");update.onclick=checkForUpdate;list.appendChild(update);});
 }
 function renderProvidersSubView(){
-  renderSettingsPage("Providers","＋ Add",()=>openProvForm(null),list=>{
+  renderSettingsPage("Providers","Add",()=>openProvForm(null),list=>{
     const hint=el("div","hint","Connect OpenAI-compatible providers. Tap a card to edit.");list.appendChild(hint);
     const group=el("div","settings-hub-group");
     if(!db.providers.length) group.appendChild(el("div","settings-empty","No providers connected yet."));
@@ -2172,7 +2149,7 @@ function renderProvForm(){
     const row = el("div",""); row.style.cssText="display:flex;gap:6px;margin-top:6px";
     const k = el("input"); k.placeholder="Header"; k.value=h.key; k.style.flex="1";
     const v = el("input"); v.placeholder="Value"; v.value=h.value; v.style.flex="1";
-    const x = el("button","icon-btn","✕"); x.style.cssText="flex-shrink:0";
+    const x = el("button","icon-btn",`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`); x.style.cssText="flex-shrink:0";
     k.oninput=()=>h.key=k.value; v.oninput=()=>h.value=v.value;
     x.onclick=()=>{ f.headers.splice(i,1); renderProvForm(); };
     row.appendChild(k); row.appendChild(v); row.appendChild(x); hd.appendChild(row);
@@ -2180,11 +2157,11 @@ function renderProvForm(){
   addH.onclick = ()=>{ f.headers.push({key:"",value:""}); renderProvForm(); };
   form.appendChild(hd);
 
-  const test = el("button","btn secondary","🔌 Test Connection & Fetch Models");
+  const test = el("button","btn secondary","Test Connection & Fetch Models");
   const status = el("div","status-line");
   test.onclick = async ()=>{
     prepareProviderSecret(f);
-    if(!f.baseUrl || (!f.apiKey && !hasProviderSecret(f))){ status.className="status-line err"; status.textContent="✕ Enter URL and API key first"; return; }
+    if(!f.baseUrl || (!f.apiKey && !hasProviderSecret(f))){ status.className="status-line err"; status.textContent="Enter URL and API key first"; return; }
     status.className="status-line"; status.innerHTML = `<span class="spin" style="width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:rot .8s linear infinite"></span> Testing…`;
     try{
       const modelsUrl = f.endpointMode==="base" ? f.baseUrl.replace(/\/+$/,"") + "/models" : f.baseUrl.replace(/\/(chat\/completions|responses|models)$/,"") + "/models";
@@ -2198,7 +2175,7 @@ function renderProvForm(){
       status.className="status-line ok"; status.textContent = `✓ Connected — ${f.fetchedModels.length} models found`;
       renderModelPick();
     }catch(e){
-      status.className="status-line err"; status.textContent = "✕ "+e.message+" (check URL/key/CORS)";
+      status.className="status-line err"; status.textContent = e.message+" (check URL/key/CORS)";
     }
   };
   form.appendChild(test); form.appendChild(status);
@@ -3071,8 +3048,8 @@ function renderAttachments(){
   const box = $("#attachmentInline"); box.innerHTML = "";
   pendingAttachments.forEach((a,i)=>{
     const chip = el("div","attachment-chip");
-    chip.innerHTML = `<span style="font-size:20px">📄</span><span class="name">${esc(a.name)}</span>`;
-    const x = el("button",null,"×"); x.onclick=()=>{ pendingAttachments.splice(i,1); renderAttachments(); };
+    chip.innerHTML = `<span class="attachment-type">DOC</span><span class="name">${esc(a.name)}</span>`;
+    const x = el("button",null,`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`); x.onclick=()=>{ pendingAttachments.splice(i,1); renderAttachments(); };
     chip.appendChild(x); box.appendChild(chip);
   });
   $("#attachmentInline").style.display = pendingAttachments.length ? "flex" : "none";

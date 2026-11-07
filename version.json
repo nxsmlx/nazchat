@@ -1,9 +1,9 @@
 {
-  "version": "3.8.0",
-  "versionCode": 27,
+  "version": "3.9.0",
+  "versionCode": 28,
   "name": "Kita Chat",
-  "changelog": "Settings Hub-and-Spoke navigation: Settings now shows grouped summary rows, Providers and Skill Library have dedicated drill-down views, provider cards and skill switches are compact and searchable, and long lists no longer flood the main settings page.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v3.8.0/NazChat.apk",
-  "sha256": "163080315dd9e20104cd276e28e686b24038094c73b01b9310fb841a057b1388",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v3.8.0"
+  "changelog": "Global UI/UX audit: removed all left accent bars, added two-line list rows and model provider filter pills, standardized search inputs, switches, badges and SVG iconography, and retained custom dialogs with no native browser prompts.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v3.9.0/NazChat.apk",
+  "sha256": "6a9424fd0623f49c741b952a4f261b645a1541bf42f00ed3a7d98e3d101c9e24",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v3.9.0"
 }

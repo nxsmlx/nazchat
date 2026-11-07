@@ -1,3 +1,15 @@
+# Kita Chat 3.9.0 — Global UI/UX audit
+
+- Removed every `border-left` treatment from the UI; active states use subtle full borders, surface fills and soft elevation
+- Standardized model, provider, skill and conversation rows into clear two-line layouts with ellipsis and right-side metadata
+- Model picker now has sticky provider filter pills with counts, plus search and model metadata pills
+- Search inputs share one leading SVG magnifier treatment and consistent spacing
+- Skill toggles, provider key status, model counts and settings summaries use consistent badges/switches
+- Removed remaining text/emoji icons from controls in favor of inline SVG line iconography
+- Custom modal/Toast system remains the only dialog path; no native browser prompts remain
+
+Local build is now ready for publish.
+
 # Kita Chat 3.8.0 — Settings Hub-and-Spoke navigation
 
 Local build — not published yet.

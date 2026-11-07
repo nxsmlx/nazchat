@@ -73,7 +73,7 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
  await p.fill('#promptInput','buat landing page');await p.click('#sendBtn');await p.waitForFunction(()=>!generating);
  assert(await p.locator('.code-wrap.collapsed').count());assert(await p.locator('.skill-badge').count());
  await p.click('.code-toggle');assert(await p.locator('.code-wrap:not(.collapsed)').count());
- await p.click('text=✦ Review & Improve');await p.waitForFunction(()=>!generating);
+ await p.click('text=Review & Improve');await p.waitForFunction(()=>!generating);
  assert(requests.at(-1).messages[0].content.includes('Review against the stated requirements'));
  assert(await p.evaluate(()=>conv.messages.at(-1).usedSkills.includes('code-review')));
  console.log('PASS code collapse, skill badges, and Review & Improve');
