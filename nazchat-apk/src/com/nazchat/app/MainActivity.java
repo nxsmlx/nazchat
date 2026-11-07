@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends Activity {
-    private WebView web;
+    static WebView web;
     private ValueCallback<Uri[]> fileCallback;
     private static final int FILE_PICKER = 7401;
 
@@ -34,8 +34,10 @@ public class MainActivity extends Activity {
 
         web = new WebView(this);
         setContentView(web);
+        MainActivity.web = web;
         NazApp.activity = this;
         NazApp.webView = web;
+        NazUpdater.activity = this;
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -59,6 +61,7 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NazBridge(), "NazBridge");
         web.addJavascriptInterface(new NazStream(), "NazStream");
         web.addJavascriptInterface(new NazHaptics(this), "NazHaptics");
+        web.addJavascriptInterface(new NazUpdater(), "NazUpdater");
 
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -128,6 +131,11 @@ public class MainActivity extends Activity {
     protected void onPause() { if (web != null) web.onPause(); super.onPause(); }
     @Override
     protected void onResume() { if (web != null) web.onResume(); super.onResume(); }
+    @Override
+    protected void onDestroy() {
+        if (web != null) web.destroy();
+        super.onDestroy();
+    }
     @Override
     public void onBackPressed() {
         if (web != null && web.canGoBack()) web.goBack();

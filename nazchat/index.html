@@ -386,7 +386,7 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
       <button class="icon-btn" id="settingsBtn" title="Providers"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
       <button class="icon-btn" id="themeBtn" title="Theme">🌙</button>
       <div style="flex:1"></div>
-      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.6</span>
+      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.6.1</span>
     </div>
   </div>
 </div>
@@ -490,8 +490,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "2.6.0";
-const APP_VERSION_CODE = 8;
+const APP_VERSION = "2.6.1";
+const APP_VERSION_CODE = 9;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1080,11 +1080,32 @@ async function checkForUpdate(){
     const res = await fetch(`https://raw.githubusercontent.com/${UPDATE_REPO}/main/version.json?ts=${Date.now()}`);
     if(!res.ok) throw new Error("Could not reach GitHub");
     const info = await res.json();
-    if(Number(info.versionCode||0) > APP_VERSION_CODE){
-      status.style.display="inline-flex"; status.textContent=`Update ${info.version||"available"}`;
-      btn.textContent="Download APK"; btn.onclick=()=>{ window.open(info.apkUrl || `https://github.com/${UPDATE_REPO}/releases/latest`, "_blank"); };
+    const remote = Number(info.versionCode||0);
+    const nativeVer = (typeof window.NazUpdater === "object") ? window.NazUpdater.getVersion() : APP_VERSION_CODE;
+    const local = Math.max(nativeVer||0, APP_VERSION_CODE);
+    if(remote > local){
+      status.style.display="inline-flex"; status.style.color="var(--accent)"; status.textContent=`Update ${info.version||"available"}`;
+      btn.textContent="Install update";
+      btn.onclick=()=>{
+        const apkUrl = info.apkUrl || `https://github.com/${UPDATE_REPO}/releases/latest/download/NazChat.apk`;
+        status.textContent = "";
+        btn.textContent="Preparing…"; btn.disabled=true;
+        window.nazUpdateStatus = (state)=>{
+          if(state==="downloading"){ btn.textContent="Preparing…"; }
+          else if(state==="ready"){ btn.textContent="Installing…"; btn.disabled=false; }
+          else if(state && state.startsWith("error:")){ status.style.display="inline-flex"; status.style.color="var(--danger)"; status.textContent="Update failed — try again"; btn.textContent="Install update"; btn.disabled=false; }
+        };
+        if(typeof window.NazUpdater === "object" && window.NazUpdater.downloadAndInstall){
+          window.NazUpdater.downloadAndInstall(apkUrl);
+        } else {
+          // Browser fallback (no native updater): silent-ish, still opens download
+          window.open(apkUrl, "_blank");
+          btn.textContent="Download opened"; btn.disabled=false;
+        }
+        haptic("success");
+      };
       toast("A new NazChat update is available");
-    } else { status.style.display="inline-flex"; status.textContent="✓ You’re up to date"; btn.textContent="Check again"; btn.onclick=checkForUpdate; }
+    } else { status.style.display="inline-flex"; status.style.color="var(--accent)"; status.textContent="✓ You’re up to date"; btn.textContent="Check again"; btn.onclick=checkForUpdate; }
   }catch(e){ status.style.display="inline-flex"; status.style.color="var(--text2)"; status.textContent="Update check unavailable"; btn.textContent="Retry"; btn.onclick=checkForUpdate; }
   btn.disabled=false;
 }

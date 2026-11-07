@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.nazchat.app"
-    android:versionCode="8"
-    android:versionName="2.6.0">
+    android:versionCode="9"
+    android:versionName="2.6.1">
 
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:label="NazChat"
@@ -27,5 +28,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <provider
+            android:name=".NazFileProvider"
+            android:authorities="com.nazchat.app.updateprovider"
+            android:exported="false"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>
