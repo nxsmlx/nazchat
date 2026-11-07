@@ -2,6 +2,21 @@
 
 Kita Chat is a private, local-first Android BYOK AI chat client for OpenAI-compatible providers.
 
+## v3.8.0 — Settings Hub-and-Spoke navigation (local draft)
+
+- Settings is a grouped hub with Providers, Workspace, Skill Library, Appearance and About
+- Providers and Skill Library open in dedicated drill-down views
+- Provider cards show key status, model counts and truncated URLs without inline action clutter
+- Skill Library has search and animated 44×24 toggle switches
+- Long lists no longer flood the main Settings page
+
+## v3.7.0 — Custom dialogs and quiet controls (local draft)
+
+- Removed native browser dialogs and added an asynchronous custom modal/Toast system
+- Added input/textarea modal modes for rename, project, prompt, style, comparison and encrypted backup flows
+- Removed active-state color bars and standardized subtle borders, fills, spacing and elevation
+- Replaced remaining emoji controls with consistent SVG line icons
+
 ## v3.6.0 — Minimalist visual refinement (local draft)
 
 - Replaced the loud orange/cobalt/lime direction with quiet graphite surfaces and one muted slate accent

@@ -1,3 +1,26 @@
+# Kita Chat 3.8.0 — Settings Hub-and-Spoke navigation
+
+Local build — not published yet.
+
+- Settings is now a grouped hub: Providers, Workspace, Skill Library, Appearance and About
+- No provider or skill list is dumped into the main Settings view
+- Providers open in a dedicated drill-down with sticky Back/+ Add controls, compact cards, truncated URLs, key status dots and model-count pills
+- Skill Library opens in its own searchable view with a single header flow and animated 44×24 toggle switches
+- Related rows are grouped inside elevated containers with internal dividers; long lists stay in dedicated views
+- Settings sub-pages use progressive disclosure instead of one infinite scroll
+
+# Kita Chat 3.7.0 — Custom dialogs and quiet controls
+
+Local build — not published yet.
+
+- Removed all native `window.alert`, `window.confirm` and `window.prompt` usage from the app
+- Added a reusable asynchronous custom dialog with backdrop blur, elevated dark surface, Cancel/Continue actions and destructive Delete styling
+- Added input and textarea modes for rename, project, prompt, style, model comparison and encrypted backup flows
+- Removed active conversation/card color bars; selected states now use subtle full borders and background fills
+- Standardized sidebar items to 16px padding, 10px/14px conversation rows and 6px list gaps
+- Replaced remaining moon, pencil, microphone, speaker and trash emoji controls with consistent SVG line icons
+- Added regression checks for no native dialogs, modal styling and fixed terminal layout
+
 # Kita Chat 3.6.0 — Minimalist visual refinement
 
 The previous bold color direction was too loud. This pass keeps the professional hierarchy but removes the neon/signal treatment:

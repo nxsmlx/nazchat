@@ -331,6 +331,18 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
 
 /* Toast */
 #toast{position:fixed; bottom:calc(90px + var(--safe-b)); left:50%; transform:translateX(-50%) translateY(20px); background:#333; color:#fff; padding:11px 20px; border-radius:12px; font-size:14px; opacity:0; transition:.25s; z-index:99; pointer-events:none; max-width:88vw; text-align:center;}
+#customDialogScrim{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .18s ease,visibility .18s ease;}
+#customDialogScrim.open{opacity:1;visibility:visible;}
+.custom-dialog{width:min(100%,390px);background:#18181b;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px;box-shadow:0 12px 32px rgba(0,0,0,.5);transform:scale(.96) translateY(6px);transition:transform .18s ease;color:#fafafa;}
+#customDialogScrim.open .custom-dialog{transform:none;}
+.custom-dialog h3{margin:0;font-family:"Space Grotesk",sans-serif;font-size:18px;letter-spacing:-.025em;}
+.custom-dialog p{margin:8px 0 16px;color:#a1a1aa;font-size:13.5px;line-height:1.55;white-space:pre-wrap;}
+.custom-dialog input,.custom-dialog textarea{display:none;width:100%;margin:0 0 14px;background:#202023;border-color:rgba(255,255,255,.1);color:#fafafa;}
+.custom-dialog.has-input input,.custom-dialog.has-input textarea{display:block;}
+.custom-dialog-actions{display:flex;justify-content:flex-end;gap:8px;}
+.custom-dialog-actions button{min-height:40px;padding:9px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:#242428;color:#d4d4d8;font-size:13px;font-weight:700;}
+.custom-dialog-actions button.primary{background:#f4f4f5;color:#18181b;border-color:#f4f4f5;}
+.custom-dialog-actions button.danger{background:#ef4444;color:#fff;border-color:#ef4444;}
 #toast.show{opacity:1; transform:translateX(-50%);}
 
 .toast-mini{position:fixed; top:calc(60px + var(--safe-t)); left:50%; transform:translateX(-50%); background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:999px; font-size:13px; z-index:99; opacity:0; transition:.2s; pointer-events:none;}
@@ -571,7 +583,7 @@ header:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
 .icon-btn{border-radius:9px;color:var(--text2);}
 header .menu-btn:active,.icon-btn:active{background:var(--bg3);color:var(--text);}
 #chatInner{max-width:780px;padding:32px 18px 36px;gap:32px;}
-.msg.user .bubble{max-width:min(88%,560px);border-radius:12px 12px 3px 12px;background:var(--user-bubble);border:1px solid var(--border);border-left:3px solid var(--signal);padding:12px 15px;}
+.msg.user .bubble{max-width:min(88%,560px);border-radius:12px 12px 3px 12px;background:var(--user-bubble);border:1px solid var(--border);padding:12px 15px;}
 .msg.assistant .bubble{max-width:720px;}
 .md{max-width:70ch;font-size:15.5px;line-height:1.7;}
 .md h1,.md h2,.md h3,.md h4{font-family:"Space Grotesk",sans-serif;letter-spacing:-.04em;}
@@ -601,8 +613,8 @@ header .menu-btn:active,.icon-btn:active{background:var(--bg3);color:var(--text)
 #empty h2{font-family:"Space Grotesk",sans-serif;font-size:38px;letter-spacing:-.065em;color:var(--text);text-shadow:3px 3px 0 color-mix(in srgb,var(--signal) 28%,transparent);}
 #empty p{color:var(--text2);}
 .sugg{gap:7px;max-width:380px;}
-.sugg button{min-height:58px;padding:12px 14px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--signal);box-shadow:none;}
-.sugg button:nth-child(2){border-left-color:var(--cobalt);}.sugg button:nth-child(3){border-left-color:var(--lime);}
+.sugg button{min-height:58px;padding:12px 14px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);box-shadow:none;}
+.sugg button:nth-child(2),.sugg button:nth-child(3){border-color:var(--border);}
 .sugg button .ico{border-radius:7px;background:var(--bg3);color:var(--signal);}
 .sugg button:nth-child(2) .ico{color:var(--cobalt);}.sugg button:nth-child(3) .ico{color:var(--lime);}
 .sugg button:active{transform:translateX(2px);}
@@ -617,14 +629,14 @@ input,textarea,select{border-radius:8px;background:var(--bg);}
 input:focus,textarea:focus{border-color:var(--signal);}
 .code-wrap{border-radius:9px;border-color:#303744;}
 .code-head{background:#171b24;padding:9px 11px;}.code-wrap pre{background:#0d1016;}.code-toggle,.copy-btn,.preview-btn{border-radius:6px;}
-.think-box{border-radius:9px;border-left:3px solid var(--cobalt);background:linear-gradient(90deg,rgba(71,125,255,.1),var(--bg2) 45%);}
+.think-box{border-radius:9px;border:1px solid var(--border);background:var(--bg2);}
 .think-head{min-height:42px;padding:10px 12px;}.think-head:before{background:var(--cobalt);box-shadow:0 0 0 4px rgba(71,125,255,.15);}
 .think-box.thinking{animation:thinkPulse 1.6s ease-in-out infinite;}
 @keyframes thinkPulse{0%,100%{border-left-color:var(--cobalt)}50%{border-left-color:var(--signal)}}
-.phase-box{border-radius:9px;background:var(--bg2);border-left:3px solid var(--signal);}
+.phase-box{border-radius:9px;background:var(--bg2);border:1px solid var(--border);}
 .phase-chip{border-radius:6px;}.phase-chip.active{background:var(--accent-soft);border-color:var(--signal);color:var(--signal);}.phase-chip:first-child.done{color:var(--cobalt);}.phase-chip:nth-child(3).active{color:var(--signal);}
 .phase-fill{background:linear-gradient(90deg,var(--cobalt),var(--signal));}
-.tool-trace{border-radius:8px;border-left:3px solid var(--cobalt);background:var(--bg3);}
+.tool-trace{border-radius:8px;border:1px solid var(--border);background:var(--bg3);}
 .tool-trace-title{color:var(--cobalt);}
 .stream-status{border-radius:7px;background:var(--bg3);}
 .code-live{border-radius:9px;border-color:#394252;background:#090c12;}
@@ -632,7 +644,7 @@ input:focus,textarea:focus{border-color:var(--signal);}
 .code-live-body{height:calc(10 * 1.65em);max-height:calc(10 * 1.65em);background:#090c12;color:#c2cad5;}
 .code-live-body::-webkit-scrollbar-thumb{background:#394252;}
 .preview-btn{color:var(--lime);border-color:color-mix(in srgb,var(--lime) 55%,#26301d);}
-#toast{border-left:3px solid var(--signal);border-radius:8px;}
+#toast{border:1px solid var(--border);border-radius:8px;}
 .modal{border-radius:14px;border-color:var(--border);}
 @media (min-width:700px){#chatInner{padding-left:32px;padding-right:32px;}#composerWrap{padding-left:24px;padding-right:24px;}#empty h2{font-size:46px;}}
 @media (max-width:420px){#empty h2{font-size:34px;}}
@@ -657,7 +669,7 @@ header{background:color-mix(in srgb,var(--bg) 94%,transparent);border-bottom-col
 header:after{display:none;}
 .header-brand .brand-mark{background:var(--text);color:var(--bg);box-shadow:none;border-radius:8px;}
 #chatInner{gap:28px;}
-.msg.user .bubble{border-left:1px solid var(--border);border-radius:12px;background:var(--user-bubble);}
+.msg.user .bubble{border-left:0;border:1px solid var(--border);border-radius:12px;background:var(--user-bubble);}
 .md h1,.md h2,.md h3,.md h4{letter-spacing:-.025em;}
 .md blockquote{border-left:2px solid var(--border);background:var(--bg2);}
 .action-bar{border-top-color:var(--line);}
@@ -672,7 +684,7 @@ header:after{display:none;}
 .tool-btn{color:var(--text3);}.tool-btn.on{background:var(--bg3);color:var(--text);}
 #skillBtn svg,#tglThink svg,#effortBtn svg,#tglSearch svg{color:currentColor;}
 #empty h2{color:var(--text);text-shadow:none;}
-.sugg button,.sugg button:nth-child(2),.sugg button:nth-child(3){border-left:1px solid var(--border);box-shadow:none;background:var(--bg2);}
+.sugg button,.sugg button:nth-child(2),.sugg button:nth-child(3){border-left:0;border:1px solid var(--border);box-shadow:none;background:var(--bg2);}
 .sugg button .ico,.sugg button:nth-child(2) .ico,.sugg button:nth-child(3) .ico{background:var(--bg3);color:var(--text2);}
 .sugg button:active{transform:scale(.985);}
 .sheet{border-radius:16px 16px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.2);}
@@ -682,14 +694,19 @@ header:after{display:none;}
 .btn{background:var(--text);color:var(--bg);box-shadow:none;}.btn.secondary{background:var(--bg3);color:var(--text);border-color:var(--border);}
 .btn:active{transform:scale(.985);}
 input,textarea,select{background:var(--bg);}
-.think-box{border-left:1px solid var(--border);background:var(--bg2);}
+.think-box{border-left:0;border:1px solid var(--border);background:var(--bg2);}
 .think-head:before{background:var(--text3);box-shadow:none;}
 .think-box.thinking{animation:none;border-color:var(--border);}
-.phase-box{border-left:1px solid var(--border);background:var(--bg2);}.phase-chip.active{background:var(--bg3);border-color:var(--border);color:var(--text);}.phase-chip:first-child.done{color:var(--text2);}.phase-fill{background:var(--text2);}
-.tool-trace{border-left:1px solid var(--border);}.tool-trace-title{color:var(--text2);}
+.phase-box{border-left:0;border:1px solid var(--border);background:var(--bg2);}.phase-chip.active{background:var(--bg3);border-color:var(--border);color:var(--text);}.phase-chip:first-child.done{color:var(--text2);}.phase-fill{background:var(--text2);}
+.tool-trace{border-left:0;border:1px solid var(--border);}.tool-trace-title{color:var(--text2);}
 .code-live{border-color:var(--border);}.code-live-head,.code-live-acts{background:#15171b;border-color:#292d34;}.code-live-head:before{background:#777d86;box-shadow:none;animation:none;}.code-live-body{color:#b6bbc4;}.code-live-body::after{color:#9aa1ab;}.term-dots i,.term-dots i:nth-child(1),.term-dots i:nth-child(2),.term-dots i:nth-child(3){background:#606772;}
 .preview-btn{color:var(--text2);border-color:var(--border);background:var(--bg3);}
-#toast{border-left:1px solid var(--border);background:var(--bg3);}
+#toast{border-left:0;background:var(--bg3);box-shadow:0 4px 12px rgba(0,0,0,.3);}
+.conv-item{padding:10px 14px;gap:6px;border:1px solid transparent;}
+.conv-item.active{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);box-shadow:none;color:#fafafa;}
+.msg.user .bubble,.sugg button,.think-box,.phase-box,.tool-trace{border-left:0;border:1px solid rgba(255,255,255,.08);}
+.sugg button,.sugg button:nth-child(2),.sugg button:nth-child(3){border-left:0;}
+.think-box,.phase-box,.tool-trace{box-shadow:0 4px 12px rgba(0,0,0,.3);}
 .onboarding-mark{background:var(--text);color:var(--bg);box-shadow:none;}
 .modal-scrim{background:rgba(10,11,13,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
 .modal{border-radius:14px;background:var(--bg2);border:1px solid var(--border);box-shadow:0 18px 50px rgba(0,0,0,.2);padding:20px;gap:14px;}
@@ -697,6 +714,20 @@ input,textarea,select{background:var(--bg);}
 .modal p{color:var(--text2);line-height:1.55;}
 .modal .settings-card{background:var(--bg3);}
 .modal .btn{box-shadow:none;}
+.settings-hub-intro{font-size:12px;color:var(--text2);padding:2px 2px 6px;}
+.settings-hub-group{background:#141417;border:1px solid rgba(255,255,255,.06);border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.3);}
+.settings-hub-row{width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;min-height:70px;border:0;border-bottom:1px solid rgba(255,255,255,.04);background:transparent;color:var(--text);text-align:left;cursor:pointer;}
+.settings-hub-row:last-child{border-bottom:0;}.settings-hub-row:active{background:rgba(255,255,255,.05);}
+.settings-hub-icon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;flex:none;border-radius:9px;background:rgba(255,255,255,.06);color:#d4d4d8;}
+.settings-hub-copy{min-width:0;flex:1;}.settings-hub-copy strong{display:block;font-size:13.5px;font-weight:700;}.settings-hub-copy small{display:block;margin-top:3px;color:#a1a1aa;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.settings-chevron{flex:none;color:#71717a;}.settings-hub-note{padding:4px 2px;color:var(--text3);font-size:11px;line-height:1.45;}
+.settings-subnav{position:sticky;top:-12px;z-index:3;display:flex;justify-content:space-between;align-items:center;padding:8px 0 12px;background:var(--bg2);border-bottom:1px solid var(--line);margin-bottom:4px;}
+.settings-back{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--text2);font-size:12.5px;font-weight:700;padding:5px 0;min-height:34px;}.settings-back:active{color:var(--text);}
+.provider-card{width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border:0;border-bottom:1px solid rgba(255,255,255,.04);background:transparent;color:var(--text);text-align:left;min-height:72px;cursor:pointer;}.provider-card:last-child{border-bottom:0;}.provider-card:active{background:rgba(255,255,255,.05);}
+.provider-main{min-width:0;flex:1;}.provider-title{display:flex;align-items:center;gap:8px;min-width:0;}.provider-title strong{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.provider-main small{display:block;margin-top:5px;color:#a1a1aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px;max-width:100%;}.key-status{display:inline-flex;align-items:center;gap:4px;color:#a1a1aa;font-size:10px;white-space:nowrap;}.key-status i{width:6px;height:6px;border-radius:50%;background:#71717a;}.key-status.stored i{background:#8f9a8d;}.key-status.missing{color:#b08b8b;}.key-status.missing i{background:#b08b8b;}.model-count{padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.06);color:#a1a1aa;font-size:10.5px;white-space:nowrap;}
+.settings-empty{padding:18px 16px;color:#a1a1aa;font-size:12.5px;}.skill-search{position:sticky;top:0;z-index:2;background:var(--bg2)!important;}
+.switch{position:relative;width:44px;height:24px;min-height:24px;padding:0;border:0;border-radius:999px;background:#3f3f46;flex:none;transition:background .18s;}.switch:after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#d4d4d8;transition:transform .18s;box-shadow:0 1px 2px rgba(0,0,0,.28);}.switch.on{background:#71717a;}.switch.on:after{transform:translateX(20px);background:#fafafa;}
+.provider-card+.provider-card,.skill-row+.skill-row{border-top:0;}
 </style>
 </head>
 <body>
@@ -768,7 +799,7 @@ input,textarea,select{background:var(--bg);}
     <div id="convList"></div>
     <div class="side-foot">
       <button class="icon-btn" id="settingsBtn" title="Providers"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
-      <button class="icon-btn" id="themeBtn" title="Theme">🌙</button>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 15.2A8.5 8.5 0 018.8 3.5 8.5 8.5 0 1020.5 15.2z"/></svg></button>
       <div style="flex:1"></div>
       <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">Kita Chat</span>
     </div>
@@ -787,7 +818,7 @@ input,textarea,select{background:var(--bg);}
 <div class="sheet-scrim" id="setSheetScrim"></div>
 <div class="sheet" id="setSheet" style="max-height:92dvh">
   <div class="grab"></div>
-  <div class="sheet-head"><h3>Settings</h3><button class="icon-btn" data-close="setSheet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-head"><h3 id="setSheetTitle">Settings</h3><button class="icon-btn" data-close="setSheet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
   <div class="sheet-body" id="provList"></div>
 </div>
 
@@ -869,8 +900,20 @@ input,textarea,select{background:var(--bg);}
   <button id="pmReset">↺ Reset to original</button>
 </div>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 <div class="toast-mini" id="toastMini"></div>
+<div id="customDialogScrim" aria-hidden="true">
+  <div class="custom-dialog" role="dialog" aria-modal="true" aria-labelledby="customDialogTitle">
+    <h3 id="customDialogTitle">Confirm</h3>
+    <p id="customDialogMessage"></p>
+    <input id="customDialogInput" autocomplete="off">
+    <textarea id="customDialogTextarea" rows="4"></textarea>
+    <div class="custom-dialog-actions">
+      <button id="customDialogCancel" type="button">Cancel</button>
+      <button id="customDialogConfirm" type="button" class="primary">Continue</button>
+    </div>
+  </div>
+</div>
 <div class="modal-scrim" id="effortScrim"><div class="modal"><h3>Reasoning depth</h3><p style="margin:0;color:var(--text2);font-size:13px">Choose how much internal reasoning the model should use.</p><div id="effortOptions" style="display:grid;gap:8px"></div><button class="btn secondary" id="effortCancel">Cancel</button></div></div>
 <div class="modal-scrim" id="onboardingScrim"><div class="modal onboarding-modal"><div class="onboarding-mark">K</div><h3>Welcome to Kita Chat</h3><p>Your models, your keys, your conversations. Connect a provider to start chatting directly with your chosen AI service.</p><div class="settings-card"><p><strong>Private by design</strong><br>Keys stay in protected app storage on Android. Kita Chat does not operate a proxy or add a markup.</p></div><button class="btn" id="onboardingConnect">Connect a provider</button><button class="btn secondary" id="onboardingSkip">Explore first</button></div></div>
 
@@ -1178,8 +1221,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "3.6.0"
-const APP_VERSION_CODE = 25;
+const APP_VERSION = "3.8.0"
+const APP_VERSION_CODE = 27;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1187,6 +1230,40 @@ const $ = s => document.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if(cls) e.className = cls; if(html!=null) e.innerHTML = html; return e; };
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),2200); }
 function miniToast(msg){ const t=$("#toastMini"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),1600); }
+let customDialogResolve=null;
+function closeCustomDialog(value=null){
+  const scrim=$("#customDialogScrim");
+  scrim.classList.remove("open"); scrim.setAttribute("aria-hidden","true");
+  const resolve=customDialogResolve; customDialogResolve=null;
+  if(resolve) resolve(value);
+}
+function customDialog(opts={}){
+  const scrim=$("#customDialogScrim"), box=scrim.querySelector(".custom-dialog"), title=$("#customDialogTitle"), message=$("#customDialogMessage"), input=$("#customDialogInput"), area=$("#customDialogTextarea"), confirm=$("#customDialogConfirm"), cancel=$("#customDialogCancel");
+  if(customDialogResolve) closeCustomDialog(null);
+  const mode=opts.mode||"confirm";
+  title.textContent=opts.title||"Confirm"; message.textContent=opts.message||"";
+  box.classList.toggle("has-input",mode==="input"||mode==="textarea"); box.dataset.dialogMode=mode;
+  input.style.display=mode==="input"?"block":""; area.style.display=mode==="textarea"?"block":"";
+  input.value=mode==="input"?(opts.value||""):""; area.value=mode==="textarea"?(opts.value||""):"";
+  (mode==="input"?input:area).placeholder=opts.placeholder||"";
+  confirm.textContent=opts.confirmText||(opts.danger?"Delete":mode==="confirm"?"Continue":"Save");
+  confirm.className=opts.danger?"danger":"primary";
+  cancel.textContent=opts.cancelText||"Cancel";
+  scrim.classList.add("open"); scrim.setAttribute("aria-hidden","false");
+  const focusTarget=mode==="input"?input:mode==="textarea"?area:confirm;
+  setTimeout(()=>focusTarget.focus(),30);
+  return new Promise(resolve=>{ customDialogResolve=resolve; });
+}
+$("#customDialogCancel").onclick=()=>closeCustomDialog(null);
+$("#customDialogConfirm").onclick=()=>{
+  const scrim=$("#customDialogScrim"), input=$("#customDialogInput"), area=$("#customDialogTextarea");
+  const box=scrim.querySelector(".custom-dialog"), mode=box.dataset.dialogMode||"confirm";
+  closeCustomDialog(mode==="input"?input.value:mode==="textarea"?area.value:true);
+};
+$("#customDialogScrim").onclick=e=>{if(e.target.id==="customDialogScrim")closeCustomDialog(null);};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#customDialogScrim").classList.contains("open"))closeCustomDialog(null);});
+const confirmDialog=(message,opts={})=>customDialog({title:opts.title||"Confirm",message,confirmText:opts.confirmText||"Continue",danger:!!opts.danger});
+const promptDialog=(message,value="",opts={})=>customDialog({title:opts.title||"Edit",message,mode:opts.mode||"input",value,placeholder:opts.placeholder||"",confirmText:opts.confirmText||"Save"});
 function haptic(kind="light"){
   try{ if(window.NazHaptics?.vibrate) window.NazHaptics.vibrate(kind==="success"?18:kind==="heavy"?32:10); else if(navigator.vibrate) navigator.vibrate(kind==="success"?18:kind==="heavy"?32:10); }catch(e){}
 }
@@ -1273,7 +1350,7 @@ function renderSidebarLegacy(){
   sorted.forEach(c=>{
     const item = el("div","conv-item"+(conv && c.id===conv.id?" active":""));
     item.innerHTML = `<div class="t">${esc(c.title||"New chat")}</div>`;
-    const del = el("button","del","🗑");
+    const del = el("button","del");
     del.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>`;
     del.onclick = (e)=>{ e.stopPropagation(); db.conversations = db.conversations.filter(x=>x.id!==c.id); if(conv&&conv.id===c.id){ conv=null; } save(); renderAll(); };
     item.appendChild(del);
@@ -1288,8 +1365,8 @@ function conversationDay(ts){
   const days=Math.round((a-b)/86400000);
   if(days<=0) return "Today"; if(days===1) return "Yesterday"; if(days<7) return "Previous 7 days"; return "Older";
 }
-function renameConversation(c){
-  const next=prompt("Rename conversation",c.title||"New chat");
+async function renameConversation(c){
+  const next=await promptDialog("Choose a new name",c.title||"New chat",{title:"Rename conversation"});
   if(next && next.trim()){ c.title=next.trim().slice(0,80); c.updatedAt=Date.now(); save(); renderAll(); haptic(); }
 }
 function renderSidebar(){
@@ -1306,7 +1383,7 @@ function renderSidebar(){
     const item=el("div","conv-item"+(conv&&c.id===conv.id?" active":"")+(c.pinned?" pinned":""));
     item.innerHTML=`<span class="pin">●</span><div class="t">${esc(c.title||"New chat")}</div><div class="conv-actions"><button class="pin-btn" title="${c.pinned?"Unpin":"Pin"}">${c.pinned?"★":"☆"}</button><button class="del" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2-2H7a2 2 0 01-2-2V6"/></svg></button></div>`;
     item.querySelector(".pin-btn").onclick=e=>{e.stopPropagation();c.pinned=!c.pinned;save();renderSidebar();haptic();};
-    item.querySelector(".del").onclick=e=>{e.stopPropagation();if(confirm("Delete this conversation?")){db.conversations=db.conversations.filter(x=>x.id!==c.id);if(conv&&conv.id===c.id)conv=null;save();renderAll();haptic();}};
+    item.querySelector(".del").onclick=async e=>{e.stopPropagation();if(await confirmDialog("Delete this conversation?",{title:"Delete conversation",danger:true,confirmText:"Delete"})){db.conversations=db.conversations.filter(x=>x.id!==c.id);if(conv&&conv.id===c.id)conv=null;save();renderAll();haptic();}};
     item.ondblclick=()=>renameConversation(c);
     item.onclick=()=>{conv=c;if(c.projectId)db.activeProjectId=c.projectId;closeSidebar();renderAll();haptic();};
     list.appendChild(item);
@@ -1378,7 +1455,7 @@ function msgEl(msg){
   }
     wrap.appendChild(bubble);
     const bar = el("div","action-bar");
-    const edit = el("button","act-btn","✏️ Edit");
+    const edit = el("button","act-btn",`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit`);
     edit.onclick = ()=>openEdit(msg);
     bar.appendChild(edit);
     wrap.appendChild(bar);
@@ -1399,7 +1476,7 @@ async function compareLastAnswer(msg){
   if(generating||!conv)return;
   const options=[];db.providers.forEach(p=>p.selectedModels.forEach(mid=>options.push({provider:p,modelId:mid,label:p.name+" / "+prettyModel(mid)})));
   if(options.length<2){toast("Add at least two selected models to compare");return;}
-  const picked=prompt("Compare model numbers:\n"+options.map((x,i)=>(i+1)+". "+x.label).join("\n"),"1,2");if(!picked)return;
+  const picked=await promptDialog("Choose model numbers separated by commas:\n"+options.map((x,i)=>(i+1)+". "+x.label).join("\n"),"1,2",{title:"Compare models"});if(!picked)return;
   const selected=picked.split(",").map(x=>options[Number(x.trim())-1]).filter(Boolean).slice(0,4);if(!selected.length)return;
   const idx=conv.messages.findIndex(x=>x.id===msg.id),user=idx>0?conv.messages[idx-1]:null;const promptText=user?.content||"";msg.comparisons=[];renderAll();
   for(const model of selected){const started=Date.now();try{const content=await requestOnce(model,promptText);msg.comparisons.push({label:model.label,content,ms:Date.now()-started});}catch(e){msg.comparisons.push({label:model.label,content:"⚠️ "+e.message,ms:Date.now()-started,error:true});}renderAll();}
@@ -1769,7 +1846,7 @@ function renderModelSheetLegacy(){
   const list = $("#modelList"); list.innerHTML = "";
   const cur = currentModel();
   if(!db.providers.length){
-    list.appendChild(el("div","",`<div style="color:var(--text2);text-align:center;padding:24px 0">No providers yet.<br>Add one in Settings ⚙️</div>`));
+    list.appendChild(el("div","",`<div style="color:var(--text2);text-align:center;padding:24px 0">No providers yet.<br>Add one in Settings</div>`));
     const add = el("button","btn","＋ Add Provider");
     add.onclick = ()=>{ closeSheet("modelSheet"); openProvForm(null); };
     list.appendChild(add);
@@ -1847,22 +1924,29 @@ function openSkillPicker(){skillLibraryOpen=false;renderSkillSheet();closeSheet(
 function renderSkillSheet(){
   $("#skillSheetTitle").textContent=skillLibraryOpen?"Skill Library":"Skills for this chat";
   const body=$("#skillSheetBody");body.innerHTML="";
-  const intro=el("div","hint",skillLibraryOpen?"Enable expert guidance or add your own SKILL.md. Updates arrive in the background; bundled skills work offline.":"Auto chooses up to 3 relevant skills for each request. Manual uses only the skills you select. No skills are added to casual conversation unless relevant.");
+  const intro=el("div","hint",skillLibraryOpen?"Manage expert guidance on this device. Search the library or add your own SKILL.md.":"Auto chooses up to 3 relevant skills for each request. Manual uses only the skills you select.");
   body.appendChild(intro);
   const modes=el("div","radio-row");
-  [["auto","✦ Auto"],["manual","Manual"]].forEach(([mode,label])=>{const b=el("button",db.skillSettings.mode===mode?"sel":"",label);b.onclick=()=>{db.skillSettings.mode=mode;save();syncToggles();renderSkillSheet();};modes.appendChild(b);});body.appendChild(modes);
-  const list=el("div");
-  activeSkills().forEach(s=>{
-    const row=el("div","settings-row");row.style.alignItems="flex-start";
-    const selected=db.skillSettings.selected.includes(s.id);
-    row.innerHTML=`<div class="sr-icon">✦</div><div class="sr-text"><strong>${esc(s.name)}</strong><small>${esc(s.description)}</small></div>`;
-    const view=el("button","mini-btn","Details");view.onclick=()=>showSkillDetails(s);
-    const select=el("button","mini-btn",selected?"✓":"＋");select.style.color=selected?"var(--accent)":"";select.setAttribute("aria-label",(selected?"Deselect ":"Select ")+s.name);
-    select.onclick=()=>{db.skillSettings.mode="manual";db.skillSettings.selected=selected?db.skillSettings.selected.filter(x=>x!==s.id):[...db.skillSettings.selected,s.id];save();syncToggles();renderSkillSheet();};
-    row.appendChild(view);row.appendChild(select);list.appendChild(row);
-  });
-  body.appendChild(list);
-  if(!skillLibraryOpen){const manage=el("button","btn secondary","Manage Skill Library");manage.onclick=()=>{skillLibraryOpen=true;renderSkillSheet();};body.appendChild(manage);}
+  [["auto","Auto"],["manual","Manual"]].forEach(([mode,label])=>{const b=el("button",db.skillSettings.mode===mode?"sel":"",label);b.onclick=()=>{db.skillSettings.mode=mode;save();syncToggles();renderSkillSheet();};modes.appendChild(b);});body.appendChild(modes);
+  const search=skillLibraryOpen?el("input"):null;
+  if(search){search.placeholder="Search skills…";search.className="skill-search";body.appendChild(search);}
+  const list=el("div","settings-hub-group");
+  const allSkills=skillLibraryOpen?[...skillPack.skills,...(db.skillSettings.custom||[]).map(x=>({...x,id:"custom-"+x.id}))]:activeSkills();
+  const drawSkills=()=>{
+    list.innerHTML="";const q=(search?.value||"").toLowerCase().trim();const visible=allSkills.filter(s=>!q||String(s.name||s.shortName).toLowerCase().includes(q)||String(s.description||"").toLowerCase().includes(q));
+    visible.forEach(s=>{
+      const row=el("div","settings-row skill-row");row.style.alignItems="center";
+      const selected=db.skillSettings.selected.includes(s.id);const enabled=skillLibraryOpen?!db.skillSettings.disabled.includes(s.id):selected;
+      row.innerHTML=`<div class="sr-icon">${settingsIcon("skills")}</div><div class="sr-text"><strong>${esc(s.name||s.shortName)}</strong><small>${esc(s.description||s.license||"Local skill")}</small></div>`;
+      const view=el("button","mini-btn","Details");view.onclick=()=>showSkillDetails(s);
+      const toggle=el("button","switch"+(enabled?" on":""));toggle.setAttribute("role","switch");toggle.setAttribute("aria-checked",String(enabled));toggle.setAttribute("aria-label",(enabled?(skillLibraryOpen?"Disable ":"Deselect "):(skillLibraryOpen?"Enable ":"Select "))+(s.name||s.shortName));
+      toggle.onclick=()=>{if(!skillLibraryOpen){db.skillSettings.mode="manual";db.skillSettings.selected=enabled?db.skillSettings.selected.filter(x=>x!==s.id):[...db.skillSettings.selected,s.id];}else{db.skillSettings.disabled=enabled?[...db.skillSettings.disabled,s.id]:db.skillSettings.disabled.filter(x=>x!==s.id);}save();syncToggles();drawSkills();};
+      row.appendChild(view);row.appendChild(toggle);list.appendChild(row);
+    });
+    if(!visible.length)list.appendChild(el("div","settings-empty","No matching skills."));
+  };
+  if(search)search.oninput=drawSkills;body.appendChild(list);drawSkills();
+  if(!skillLibraryOpen){const manage=el("button","btn secondary","Open Skill Library");manage.onclick=()=>{skillLibraryOpen=true;renderSkillSheet();};body.appendChild(manage);}
 }
 function showSkillDetails(s){
   const body=$("#skillSheetBody");body.innerHTML="";$("#skillSheetTitle").textContent=s.name;
@@ -1871,7 +1955,7 @@ function showSkillDetails(s){
   body.appendChild(el("div","hint","Source: "+s.source+" · "+s.license));
   if(s.sourceUrl){const a=el("a","btn secondary","View source on GitHub");a.href=s.sourceUrl;a.target="_blank";a.rel="noopener";a.style.textAlign="center";a.style.textDecoration="none";body.appendChild(a);}
   if(String(s.id).startsWith("custom-")){
-    const del=el("button","btn danger","Delete custom skill");del.onclick=()=>{if(confirm("Delete this custom skill?")){const rawId=s.id.slice(7);db.skillSettings.custom=db.skillSettings.custom.filter(x=>x.id!==rawId);db.skillSettings.selected=db.skillSettings.selected.filter(x=>x!==s.id);save();renderSkillSheet();}};body.appendChild(del);
+    const del=el("button","btn danger","Delete custom skill");del.onclick=async()=>{if(await confirmDialog("Delete this custom skill?",{title:"Delete custom skill",danger:true,confirmText:"Delete"})){const rawId=s.id.slice(7);db.skillSettings.custom=db.skillSettings.custom.filter(x=>x.id!==rawId);db.skillSettings.selected=db.skillSettings.selected.filter(x=>x!==s.id);save();renderSkillSheet();}};body.appendChild(del);
   }
   const back=el("button","btn secondary","← Back to Skills");back.onclick=renderSkillSheet;body.appendChild(back);
 }
@@ -1920,19 +2004,19 @@ function openSkillImport(){
 $("#skillFileInput").onchange=async e=>{const f=e.target.files?.[0];e.target.value="";if(!f)return;try{if(f.size>100000)throw new Error("File is too large");importSkillText(await f.text());}catch(err){toast("Import failed: "+err.message);}};
 
 /* ===================== Provider management ===================== */
-function createProject(){
-  const name=prompt("Project name", "New project"); if(!name||!name.trim())return;
+async function createProject(){
+  const name=await promptDialog("Give this project a name", "New project", {title:"New project"}); if(!name||!name.trim())return;
   const p={id:uid(),name:name.trim().slice(0,80),instructions:"",sourceIds:[],createdAt:Date.now(),updatedAt:Date.now()};db.projects.push(p);db.activeProjectId=p.id;save();renderAll();renderToolsSheet();toast("Project created");
 }
-function createPrompt(){
-  const name=prompt("Prompt name", "New prompt"); if(!name||!name.trim())return;
-  const content=input.value.trim()||prompt("Prompt text", ""); if(!content||!content.trim())return;
+async function createPrompt(){
+  const name=await promptDialog("Give this saved prompt a name", "New prompt", {title:"Save prompt"}); if(!name||!name.trim())return;
+  const content=input.value.trim()||await promptDialog("Write the prompt text", "", {title:"Prompt text",mode:"textarea"}); if(!content||!content.trim())return;
   db.prompts.push({id:uid(),name:name.trim().slice(0,80),content:content.trim(),tags:[],createdAt:Date.now(),updatedAt:Date.now()});save();renderToolsSheet();toast("Prompt saved");
 }
 function usePrompt(p){input.value=p.content;input.dispatchEvent(new Event("input"));closeSheet("toolsSheet");input.focus();}
-function createStyle(){
-  const name=prompt("Style name", "Concise");if(!name||!name.trim())return;
-  const instructions=prompt("Style instructions", "Answer clearly and concisely.");if(!instructions||!instructions.trim())return;
+async function createStyle(){
+  const name=await promptDialog("Give this response style a name", "Concise", {title:"New response style"});if(!name||!name.trim())return;
+  const instructions=await promptDialog("Describe how the assistant should respond", "Answer clearly and concisely.", {title:"Style instructions",mode:"textarea"});if(!instructions||!instructions.trim())return;
   const s={id:uid(),name:name.trim().slice(0,60),instructions:instructions.trim().slice(0,1000),createdAt:Date.now()};db.styles.push(s);db.activeStyleId=s.id;save();renderToolsSheet();toast("Style saved");
 }
 function saveArtifactFromMessage(msg){
@@ -1942,7 +2026,7 @@ function saveArtifactFromMessage(msg){
 }
 function renderToolsSheet(){
   const body=$("#toolsSheetBody");body.innerHTML="";
-  const voice=el("div","settings-card");voice.innerHTML=`<div class="row"><div><h4>Voice</h4><p id="voiceStatus">Dictate a prompt or read the latest answer aloud.</p></div><button class="mini-btn" id="voiceInputBtn">🎙 Dictate</button></div><button class="mini-btn" id="speakLastBtn" style="margin-top:8px;width:100%">🔊 Read latest answer</button>`;body.appendChild(voice);
+  const voice=el("div","settings-card");voice.innerHTML=`<div class="row"><div><h4>Voice</h4><p id="voiceStatus">Dictate a prompt or read the latest answer aloud.</p></div><button class="mini-btn" id="voiceInputBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0014 0M12 18v3M9 21h6"/></svg> Dictate</button></div><button class="mini-btn" id="speakLastBtn" style="margin-top:8px;width:100%"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4H4z"/><path d="M17 9a5 5 0 010 6M19.5 6.5a9 9 0 010 11"/></svg> Read latest answer</button>`;body.appendChild(voice);
   $("#voiceInputBtn").onclick=()=>startVoiceInput();$("#speakLastBtn").onclick=()=>{const last=conv?.messages?.slice().reverse().find(x=>x.role==="assistant"&&x.content);if(last)speakText(last.content);else toast("No answer to read yet");};
   const project= currentProject();
   const projectBox=el("div","settings-card");projectBox.innerHTML=`<div class="row"><div><h4>Project</h4><p>${project?esc(project.name):"No project selected"}</p></div><button class="mini-btn" id="newProjectTool">＋ New</button></div>`;body.appendChild(projectBox);
@@ -1967,48 +2051,63 @@ function startVoiceInput(){
 }
 function openToolsSheet(){renderToolsSheet();openSheet("toolsSheet");}
 
-function renderProvList(){
-  const list = $("#provList"); list.innerHTML = "";
-  // Quiet settings rows — providers are a utility, not the hero
-  const sectionTop = `Settings`;
-  const provLabel = el("div","settings-section-label","Providers"); list.appendChild(provLabel);
-  if(!db.providers.length){
-    const empty = el("div","settings-row");
-    empty.innerHTML = `<div class="sr-icon">🔌</div><div class="sr-text"><strong>No provider connected</strong><small>Add an OpenAI-compatible API to start chatting. Keys stay on this device.</small></div>`;
-    list.appendChild(empty);
-  }
-  db.providers.forEach(p=>{
-    const card = el("div","prov-card");
-    card.innerHTML = `
-      <div class="row"><h4>${esc(p.name)}</h4>
-      <span style="font-size:10.5px;color:var(--text2)">${p.apiType==="responses"?"Responses":"Chat Completions"} · ${p.selectedModels.length} model(s)</span></div>
-      <div class="sub">${esc(p.baseUrl)}</div>`;
-    const acts = el("div","acts");
-    const edit = el("button",null,"Edit"); edit.onclick = ()=>openProvForm(p);
-    const key = el("button",null,hasProviderSecret(p)?"Key stored":"No key");key.style.color=hasProviderSecret(p)?"var(--accent)":"var(--danger)";key.onclick=()=>{if(hasNativeSecrets()&&hasProviderSecret(p)){if(confirm("Remove the stored API key for this provider?")){window.NazSecrets.remove(p.secretRef);renderProvList();}}};
-    const del = el("button",null,"Delete"); del.onclick = ()=>{ if(confirm("Delete provider \""+p.name+"\"?")){ if(hasNativeSecrets())try{window.NazSecrets.remove(p.secretRef);}catch(e){} db.providers=db.providers.filter(x=>x.id!==p.id); if(db.lastProviderId===p.id){db.lastProviderId=null;db.lastModelId=null;} save(); renderProvList(); renderHeader(); } };
-    acts.appendChild(edit); acts.appendChild(key); acts.appendChild(del);
-    card.appendChild(acts);
-    list.appendChild(card);
-  });
-  const add = el("button","add-provider-btn","＋ Add provider");
-  add.onclick = ()=>openProvForm(null);
-  list.appendChild(add);
-  const workspaceLabel=el("div","settings-section-label","Workspace");workspaceLabel.style.marginTop="10px";list.appendChild(workspaceLabel);
-  const workspace=el("div","settings-row");workspace.innerHTML=`<div class="sr-icon">▦</div><div class="sr-text"><strong>Projects, prompts & artifacts</strong><small>${db.projects.length} projects · ${db.prompts.length} prompts · ${db.artifacts.length} artifacts</small></div><button class="mini-btn" id="workspaceBtn">Open</button>`;list.appendChild(workspace);$("#workspaceBtn").onclick=openToolsSheet;
-  renderSkillLibrary(list);
-  const updateLabel = el("div","settings-section-label","App"); updateLabel.style.marginTop="10px"; list.appendChild(updateLabel);
-  const update = el("div","settings-row");
-  update.innerHTML = `<div class="sr-icon">⬆️</div><div class="sr-text"><strong>App updates</strong><small>Kita Chat ${APP_VERSION} · GitHub</small><div id="updateStatus" class="update-badge" style="display:none"></div></div><button class="mini-btn" id="checkUpdateBtn">Check</button>`;
-  list.appendChild(update);
-  $("#checkUpdateBtn").onclick = checkForUpdate;
-  const data = el("div","settings-row");
-  data.innerHTML = `<div class="sr-icon">💾</div><div class="sr-text"><strong>Backup</strong><small>Safe export excludes raw API keys. Encrypted export protects the full local workspace.</small></div><button class="mini-btn" id="exportDataBtn">Export</button><button class="mini-btn" id="secureExportBtn">Encrypted</button><button class="mini-btn" id="importDataBtn">Import</button>`;
-  list.appendChild(data);
-  $("#exportDataBtn").onclick = exportBackup;
-  $("#secureExportBtn").onclick = exportEncryptedBackup;
-  $("#importDataBtn").onclick = importBackup;
+function settingsIcon(kind){
+  const paths={providers:'<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 5V3h8v2M8 10h8M8 14h5"/>',workspace:'<path d="M4 5h6l2 2h8v12H4z"/><path d="M8 12h8M8 16h5"/>',skills:'<path d="M12 3l1.8 5.2L19 10l-4 3.5 1.1 5.2L12 16l-4.1 2.7L9 13.5 5 10l5.2-1.8L12 3z"/>',appearance:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5v.2h-4v-.2a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 005.6 15a1.6 1.6 0 00-1.5-1H4v-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1L8 4.3l.1.1a1.6 1.6 0 001.8.3 1.6 1.6 0 001-1.5V3h4v.2a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 00-.3 1.8 1.6 1.6 0 001.5 1h.2v4h-.2a1.6 1.6 0 00-1.5 1z"/>',about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'};
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths[kind]||paths.about}</svg>`;
 }
+function settingsChevron(){return '<svg class="settings-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';}
+function settingsSubnav(title,actionText,action){
+  const nav=el("div","settings-subnav");
+  const back=el("button","settings-back",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> Back');
+  back.onclick=renderSettingsHub; nav.appendChild(back);
+  if(actionText){const act=el("button","mini-btn",actionText);act.onclick=action;nav.appendChild(act);}
+  return nav;
+}
+function renderSettingsPage(title,actionText,action,draw){
+  $("#setSheetTitle").textContent=title;
+  const list=$("#provList");list.innerHTML="";list.appendChild(settingsSubnav(title,actionText,action));draw(list);
+}
+function settingsHubRow(kind,title,subtitle,onclick){
+  const row=el("button","settings-hub-row");row.innerHTML=`<span class="settings-hub-icon">${settingsIcon(kind)}</span><span class="settings-hub-copy"><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></span>${settingsChevron()}`;row.onclick=onclick;return row;
+}
+function renderSettingsHub(){
+  $("#setSheetTitle").textContent="Settings";const list=$("#provList");list.innerHTML="";
+  const intro=el("div","settings-hub-intro","Choose a workspace area");list.appendChild(intro);
+  const group=el("div","settings-hub-group");
+  const models=(db.providers||[]).reduce((n,p)=>n+(p.selectedModels||[]).length,0);
+  group.appendChild(settingsHubRow("providers","Providers",`${db.providers.length} active provider${db.providers.length===1?"":"s"} · ${models} models`,renderProvidersSubView));
+  group.appendChild(settingsHubRow("workspace","Workspace",`${db.projects.length} projects · ${db.prompts.length} prompts · ${db.artifacts.length} artifacts`,()=>{closeSheet("setSheet");openToolsSheet();}));
+  group.appendChild(settingsHubRow("skills","Skill Library",`${activeSkills().length} active skills · Pack v${skillPack.packVersion}`,()=>{closeSheet("setSheet");skillLibraryOpen=true;renderSkillSheet();openSheet("skillSheet");}));
+  group.appendChild(settingsHubRow("appearance","Appearance",`${db.theme==="light"?"Light":"Dark"} theme · ${db.reasoningEffort} reasoning`,()=>renderSettingsAppearance()));
+  group.appendChild(settingsHubRow("about","About",`Kita Chat ${APP_VERSION} · Private BYOK`,()=>renderSettingsAbout()));
+  list.appendChild(group);
+  const note=el("div","settings-hub-note","Providers, skills and workspace tools open in their own focused views.");list.appendChild(note);
+}
+function renderSettingsAppearance(){
+  renderSettingsPage("Appearance",null,null,list=>{
+    const card=el("div","settings-hub-group");
+    const theme=el("div","settings-row");theme.innerHTML=`<div class="sr-text"><strong>Theme</strong><small>${db.theme==="light"?"Light":"Dark"}</small></div>`;const tb=el("button","mini-btn",db.theme==="light"?"Light":"Dark");tb.onclick=()=>{$("#themeBtn").click();renderSettingsAppearance();};theme.appendChild(tb);card.appendChild(theme);
+    const effort=el("div","settings-row");effort.innerHTML=`<div class="sr-text"><strong>Reasoning depth</strong><small>${db.reasoningEffort}</small></div>`;const eb=el("button","mini-btn",db.reasoningEffort);eb.onclick=()=>{$("#effortBtn").click();};effort.appendChild(eb);card.appendChild(effort);list.appendChild(card);
+  });
+}
+function renderSettingsAbout(){
+  renderSettingsPage("About",null,null,list=>{const card=el("div","settings-card");card.innerHTML=`<h4>Kita Chat ${APP_VERSION}</h4><p>Private, local-first Android BYOK chat for OpenAI-compatible providers.</p><p style="margin-top:10px">API keys stay in Android Keystore storage. Conversations and workspaces remain on this device.</p>`;list.appendChild(card);const update=el("button","btn secondary","Check for updates");update.onclick=checkForUpdate;list.appendChild(update);});
+}
+function renderProvidersSubView(){
+  renderSettingsPage("Providers","＋ Add",()=>openProvForm(null),list=>{
+    const hint=el("div","hint","Connect OpenAI-compatible providers. Tap a card to edit.");list.appendChild(hint);
+    const group=el("div","settings-hub-group");
+    if(!db.providers.length) group.appendChild(el("div","settings-empty","No providers connected yet."));
+    db.providers.forEach(p=>{
+      const card=el("button","provider-card");
+      const key=hasProviderSecret(p);
+      card.innerHTML=`<span class="provider-main"><span class="provider-title"><strong>${esc(p.name)}</strong><span class="key-status ${key?"stored":"missing"}"><i></i>${key?"Key stored":"No key"}</span></span><small title="${esc(p.baseUrl)}">${esc(p.baseUrl)}</small></span><span class="model-count">${p.selectedModels.length} model${p.selectedModels.length===1?"":"s"}</span>${settingsChevron()}`;
+      card.onclick=()=>openProvForm(p);group.appendChild(card);
+    });
+    list.appendChild(group);
+  });
+}
+function renderProvList(){renderSettingsHub();}
 
 let provFormState = null;
 function openProvForm(p, preset){
@@ -2108,7 +2207,7 @@ function renderProvForm(){
     const wrap = el("div");
     wrap.appendChild(el("div","model-group","Select models"));
     const box = el("div","model-list-box");
-    const search = el("input"); search.placeholder="🔍 Filter models…"; search.style.cssText="border:none;border-bottom:1px solid var(--border);border-radius:0;padding:12px 14px";
+    const search = el("input"); search.placeholder="Filter models…"; search.style.cssText="border:none;border-bottom:1px solid var(--border);border-radius:0;padding:12px 14px";
     box.appendChild(search);
     const tb = el("div","toolbar-row"); tb.style.cssText="padding:8px;border-bottom:1px solid var(--border)";
     const all = el("button",null,"Select All"); const none = el("button",null,"Deselect All");
@@ -2204,8 +2303,8 @@ function safeBackupObject(){const safe=JSON.parse(JSON.stringify(db));(safe.prov
 function bytesToB64(bytes){let s="";for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(s);}
 function b64ToBytes(s){const bin=atob(s),out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out;}
 async function deriveBackupKey(pass,salt){const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pass),"PBKDF2",false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:150000,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);}
-async function exportEncryptedBackup(){if(!crypto?.subtle){toast("Encrypted backup unavailable");return;}const pass=prompt("Create a backup passphrase (never lose it)");if(!pass||pass.length<8){toast("Use at least 8 characters");return;}const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await deriveBackupKey(pass,salt),data=new TextEncoder().encode(JSON.stringify(db));const cipher=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,data);const envelope={format:"kita-chat-encrypted-v1",salt:bytesToB64(salt),iv:bytesToB64(iv),ciphertext:bytesToB64(new Uint8Array(cipher)),createdAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(envelope)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="kita-chat-encrypted-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("Encrypted backup exported");}
-async function decodeBackup(text){const parsed=JSON.parse(text);if(parsed.format!=="kita-chat-encrypted-v1")return parsed;const pass=prompt("Enter the backup passphrase");if(!pass)throw new Error("Passphrase required");const key=await deriveBackupKey(pass,b64ToBytes(parsed.salt));const plain=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64ToBytes(parsed.iv)},key,b64ToBytes(parsed.ciphertext));return JSON.parse(new TextDecoder().decode(plain));}
+async function exportEncryptedBackup(){if(!crypto?.subtle){toast("Encrypted backup unavailable");return;}const pass=await promptDialog("Create a passphrase with at least 8 characters", "", {title:"Encrypted backup",mode:"input",confirmText:"Create"});if(!pass||pass.length<8){toast("Use at least 8 characters");return;}const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await deriveBackupKey(pass,salt),data=new TextEncoder().encode(JSON.stringify(db));const cipher=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,data);const envelope={format:"kita-chat-encrypted-v1",salt:bytesToB64(salt),iv:bytesToB64(iv),ciphertext:bytesToB64(new Uint8Array(cipher)),createdAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(envelope)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="kita-chat-encrypted-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("Encrypted backup exported");}
+async function decodeBackup(text){const parsed=JSON.parse(text);if(parsed.format!=="kita-chat-encrypted-v1")return parsed;const pass=await promptDialog("Enter the passphrase used for this backup", "", {title:"Unlock backup",mode:"input",confirmText:"Unlock"});if(!pass)throw new Error("Passphrase required");const key=await deriveBackupKey(pass,b64ToBytes(parsed.salt));const plain=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64ToBytes(parsed.iv)},key,b64ToBytes(parsed.ciphertext));return JSON.parse(new TextDecoder().decode(plain));}
 function importBackup(){const inp=document.createElement("input");inp.type="file";inp.accept="application/json";inp.onchange=async()=>{try{const d=await decodeBackup(await inp.files[0].text());if(!d.providers||!d.conversations)throw new Error();db=migrateDb({...db,...d});(db.providers||[]).forEach(p=>{if(p.apiKey&&hasNativeSecrets()){try{window.NazSecrets.put(p.secretRef||("provider:"+p.id),p.apiKey);delete p.apiKey;}catch(e){}}});save();renderAll();renderProvList();toast("Backup restored");}catch(e){toast("That backup file is not valid or passphrase was wrong");}};inp.click();}
 
 function buildHeaders(p){
@@ -2581,7 +2680,7 @@ async function send(text, opts){
   let searchUI = null;
   if(db.search && !toolsOnDefault){
     const bubble = $("#chatInner").lastChild.querySelector(".bubble");
-    searchUI = el("div","search-status", `<span class="spin"></span><span>🔍 Searching the web for “${esc(text.slice(0,60))}”…</span>`);
+    searchUI = el("div","search-status", `<span class="spin"></span><span>Searching the web for “${esc(text.slice(0,60))}”…</span>`);
     bubble.prepend(searchUI);
     try{
       const results = await webSearch(text);
@@ -3063,7 +3162,7 @@ $("#themeBtn").onclick = ()=>{
 function applyTheme(){
   document.documentElement.dataset.theme = db.theme==="light"?"light":"";
   document.querySelector('meta[name=theme-color]').content = db.theme==="light"?"#ffffff":"#0d0d0d";
-  $("#themeBtn").textContent = db.theme==="light"?"☀️":"🌙";
+  $("#themeBtn").innerHTML = db.theme==="light"?`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 15.2A8.5 8.5 0 018.8 3.5 8.5 8.5 0 1020.5 15.2z"/></svg>`;
 }
 
 $("#onboardingConnect").onclick=()=>{db.onboardingDone=true;save();$("#onboardingScrim").classList.remove("open");openSidebar();setTimeout(()=>$("#settingsBtn").click(),180);};

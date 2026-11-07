@@ -78,7 +78,7 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
  assert(await p.evaluate(()=>conv.messages.at(-1).usedSkills.includes('code-review')));
  console.log('PASS code collapse, skill badges, and Review & Improve');
  await p.click('#menuBtn');await p.click('#settingsBtn');await p.waitForTimeout(100);assert(await p.locator('#setSheet.open').count());assert((await p.locator('#provList').innerText()).includes('Skill Library'));
- await p.click('#manageSkillsBtn');assert(await p.locator('#skillSheet.open').count());
+ await p.locator('.settings-hub-row').filter({hasText:'Skill Library'}).click();assert(await p.locator('#skillSheet.open').count());
  await p.screenshot({path:'/tmp/kita-v30-library.png',fullPage:true});console.log('PASS settings skill library');
  await p.evaluate(()=>{db.projects=[{id:'project-1',name:'Docs',instructions:'Cite project sources.',sources:[]}];db.activeProjectId='project-1';indexProjectDocument({name:'guide.txt',text:'Kita Chat uses a local-first Android Keystore architecture.',type:'text/plain'});db.styles=[{id:'style-1',name:'Concise',instructions:'Be concise.'}];db.activeStyleId='style-1';db.parametersByModel['p:model-a']={temperature:.2,top_p:.9,max_tokens:512};db.artifacts=[{id:'artifact-1',name:'HTML artifact',kind:'html',content:'<h1>Kita</h1>',createdAt:Date.now()}];save();});
  assert(await p.evaluate(()=>retrieveProjectContext('What uses Android Keystore?').includes('Keystore')));assert(await p.evaluate(()=>currentStyle().name==='Concise'));assert(await p.evaluate(()=>modelParameters(currentModel()).max_tokens>=512));assert(await p.evaluate(()=>modelParameters(currentModel()).max_tokens>=autoMaxTokens(currentModel())));

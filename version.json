@@ -1,9 +1,9 @@
 {
-  "version": "3.6.0",
-  "versionCode": 25,
+  "version": "3.8.0",
+  "versionCode": 27,
   "name": "Kita Chat",
-  "changelog": "Minimalist visual refinement: removed loud signal colors, simplified dialogs and sheets, restored quiet graphite surfaces with one muted accent, and kept the terminal/workflow controls compact and professional.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v3.6.0/NazChat.apk",
-  "sha256": "a326ebde9f3f13da3a5f43c7a9f23f883147fc507bb34a465a32bc0805e7ff8e",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v3.6.0"
+  "changelog": "Settings Hub-and-Spoke navigation: Settings now shows grouped summary rows, Providers and Skill Library have dedicated drill-down views, provider cards and skill switches are compact and searchable, and long lists no longer flood the main settings page.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v3.8.0/NazChat.apk",
+  "sha256": "163080315dd9e20104cd276e28e686b24038094c73b01b9310fb841a057b1388",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v3.8.0"
 }
