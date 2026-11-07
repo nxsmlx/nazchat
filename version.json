@@ -1,9 +1,9 @@
 {
-  "version": "3.9.0",
-  "versionCode": 28,
+  "version": "3.9.1",
+  "versionCode": 29,
   "name": "Kita Chat",
-  "changelog": "Global UI/UX audit: removed all left accent bars, added two-line list rows and model provider filter pills, standardized search inputs, switches, badges and SVG iconography, and retained custom dialogs with no native browser prompts.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v3.9.0/NazChat.apk",
-  "sha256": "6a9424fd0623f49c741b952a4f261b645a1541bf42f00ed3a7d98e3d101c9e24",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v3.9.0"
+  "changelog": "Updater hotfix: the About → Check for updates button is now wired correctly after the Settings Hub-and-Spoke refactor, with a safe missing-element guard.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v3.9.1/NazChat.apk",
+  "sha256": "d08afa40fe1389c00133fe5e54481a420b5968e485594a5cdb4fa509e8d30a23",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v3.9.1"
 }

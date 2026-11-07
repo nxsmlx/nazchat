@@ -1,3 +1,9 @@
+# Kita Chat 3.9.1 — Updater button hotfix
+
+- Fixed the About → Check for updates button after the Settings Hub-and-Spoke refactor
+- Added the missing update button/status elements to the About sub-view
+- Added a safe guard so update checks report a Toast instead of failing on a missing view
+
 # Kita Chat 3.9.0 — Global UI/UX audit
 
 - Removed every `border-left` treatment from the UI; active states use subtle full borders, surface fills and soft elevation
