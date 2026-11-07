@@ -1,24 +1,36 @@
-# NazChat 2.5.0
+# NazChat 2.8.0 — Skill Pack
 
-NazChat 2.0 is a substantial UI and workflow refresh.
+NazChat can now apply focused expert guidance to relevant requests without sending a large prompt on every chat.
 
-## Highlights
+## Skills included
 
-- Commercial-style refinement pass with better motion, surfaces, spacing, and tactile feedback
-- Searchable, grouped, pinnable, renameable conversation sidebar
-- Richer model picker with provider grouping, filtering, and context metadata
+- Planning & Brainstorming
+- Frontend Design
+- UI/UX & Accessibility
+- TypeScript & Web Engineering
+- Backend & API Engineering
+- Database & Supabase
+- Systematic Debugging
+- Testing & Verification
+- Code Review & Improvement
+- Android & Kotlin
+- Application Security
+- MCP & Integrations
 
-- Composer-first model selection: the model is no longer placed in the top header.
-- Cleaner mobile chat workspace with a calmer header, better typography, table overflow, and streaming cursor.
-- Image attachments with client-side resize for vision-capable providers.
-- Text, Markdown, code, CSV, JSON, PDF, and DOCX attachments with client-side extraction.
-- Reasoning controls: Thinking toggle plus Low / High / Max depth.
-- Lyber-compatible reasoning delta parsing.
-- Native Android networking for providers without CORS headers.
-- Conversation backup export/import.
-- Settings update checker backed by this GitHub repository.
-- Android file chooser integration.
+## Using skills
 
-## Notes
+- Tap ✦ in the composer to choose Auto or Manual mode.
+- Auto selects at most 3 relevant skills per request. Casual chat receives no specialist skill injection.
+- Settings → Skill Library provides enable/disable controls, skill details, custom skills, and SKILL.md file/URL import.
+- Answers display the skills used, and code answers include Review & Improve.
+- The built-in pack works offline. Pack updates download silently from this repository.
 
-Provider API keys remain local to the device. Attachment content is sent to the selected provider only when the user sends the message.
+## Image features removed
+
+Image generation options and image/vision attachments have been removed. PDF, DOCX, text, Markdown, CSV, JSON, HTML, CSS, XML, and source-code attachments remain supported.
+
+## Attribution
+
+Skill instructions are adapted for NazChat from Anthropic Agent Skills (Apache-2.0), Superpowers (MIT), UI UX Pro Max (MIT), and Awesome Cursor Rules (CC0-1.0). See `THIRD_PARTY_NOTICES.md` and `licenses/`.
+
+Skills improve task guidance; they do not change the selected model or guarantee correctness. Provider API keys and custom skills remain on the device.

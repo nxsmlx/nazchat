@@ -1,8 +1,8 @@
 {
-  "version": "2.7.2",
-  "versionCode": 12,
+  "version": "2.8.0",
+  "versionCode": 13,
   "name": "NazChat",
-  "changelog": "Code blocks are now fully collapsed by default (Expand / Collapse toggle), with clean light-mode syntax contrast and duplicate header fix.",
+  "changelog": "12 curated expert skills with Auto/manual routing, a local Skill Library, SKILL.md import, background pack updates, and Review & Improve. Image generation and image attachments removed.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }
