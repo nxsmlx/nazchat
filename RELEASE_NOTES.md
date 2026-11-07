@@ -1,3 +1,16 @@
+# Kita Chat 3.2.0 — Long answers fixed
+
+Two symptoms had one root cause: the default output budget was 2048 tokens. A full HTML page is much larger, so the stream was cut off mid-code. The UI showed nothing useful, and any follow-up "change this" reply was cut off too, which is why the second preview never worked.
+
+- Default **Max output tokens** raised from 2048 to **8192** (still adjustable per model in Tools)
+- Truncated answers now say so explicitly and offer **▶ Continue** instead of ending silently
+- Tool-call-only streams are explained in plain language instead of producing an empty reply
+- Streaming render is throttled to ~140ms and skips syntax highlighting/KaTeX mid-stream, so long pages cannot freeze the WebView
+- Answers over ~12k characters render as lightweight text while streaming, then as full Markdown when finished
+- A stall watchdog shows "Waiting for the provider…" with elapsed seconds instead of appearing dead
+- HTML detection prefers a complete document when a reply contains several fences
+- New `tests/streaming-long-answers.test.js` covers 42k-character generations, follow-up edits, truncation, tool calls, and the default budget
+
 # Kita Chat 3.1.3 — Model selection fix
 
 Choosing a model with more than one provider configured appeared to do nothing: the picker closed but the composer kept showing the first provider's model.

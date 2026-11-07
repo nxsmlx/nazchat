@@ -158,6 +158,8 @@ header .menu-btn{background:var(--bg3);}
 .act-btn{background:none; border:none; color:var(--text2); font-size:12.5px; padding:6px 10px; border-radius:8px; display:flex; align-items:center; gap:5px;}
 .act-btn:active{background:var(--bg3); color:var(--text);}
 .act-btn.copied{color:var(--accent);}
+.stream-status{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:6px 10px;border-radius:8px;background:var(--bg3);color:var(--text2);font-size:11.5px;}
+.md-live-raw{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:var(--text2);max-height:60vh;overflow:hidden;}
 .skill-badges{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 8px;}
 .skill-badge{display:inline-flex;align-items:center;gap:4px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:4px 8px;font-size:10.5px;font-weight:700;}
 .skill-badge:before{content:"✦";color:var(--accent);}
@@ -861,7 +863,7 @@ const PROVIDER_PRESETS = [
 function currentProject(){return db.projects.find(p=>p.id===db.activeProjectId)||null;}
 function currentStyle(){return db.styles.find(s=>s.id===conv?.styleId)||db.styles.find(s=>s.id===db.activeStyleId)||null;}
 function estimateTokens(text){return Math.max(1,Math.ceil(String(text||"").length/4));}
-function modelParameters(model){const key=model?model.provider.id+":"+model.modelId:"default";return db.parametersByModel[key]||{temperature:.7,top_p:1,max_tokens:2048};}
+function modelParameters(model){const key=model?model.provider.id+":"+model.modelId:"default";const saved=db.parametersByModel[key]||{};return {temperature:saved.temperature??.7, top_p:saved.top_p??1, max_tokens:saved.max_tokens??8192};}
 function contextStats(model,history,extra){const max=Number(model?.provider?.modelMeta?.[model.modelId]?.context_length||model?.provider?.modelMeta?.[model.modelId]?.contextLength)||8192;const used=history.reduce((n,m)=>n+estimateTokens(typeof m.content==="string"?m.content:JSON.stringify(m.content)),0)+estimateTokens(extra||"");return {max,used,pct:Math.min(100,Math.round(used/max*100))};}
 function indexProjectDocument(a){const project=currentProject();if(!project||!a?.text)return;project.sources=Array.isArray(project.sources)?project.sources:[];const chunkSize=1800;for(let i=0;i<a.text.length;i+=chunkSize){const text=a.text.slice(i,i+chunkSize);project.sources.push({id:uid(),name:a.name,text,terms:text.toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>2).slice(0,500)});}project.updatedAt=Date.now();save();}
 function retrieveProjectContext(query){const project=currentProject();if(!project?.sources?.length)return "";const terms=String(query||"").toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>2);return project.sources.map(s=>({s,score:terms.reduce((n,t)=>n+(s.terms||[]).includes(t)?1:0,0)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>0).slice(0,5).map((x,i)=>`[Project source ${i+1}: ${x.s.name}]\n${x.s.text}`).join("\n\n").slice(0,12000);}
@@ -874,8 +876,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "3.1.3";
-const APP_VERSION_CODE = 19;
+const APP_VERSION = "3.2.0";
+const APP_VERSION_CODE = 20;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -913,12 +915,14 @@ function renderMarkdown(src){
   return html;
 }
 // post-process: wrap code blocks, add copy buttons, target=_blank, katex
-function enhance(container){
+function enhance(container, opts){
+  const light = !!(opts && opts.light);
   container.querySelectorAll("pre > code").forEach(code=>{
     const pre = code.parentElement;
     if(pre.parentElement && pre.parentElement.classList.contains("code-wrap")) return;
     const lang = ((code.className.match(/language-([\w+-]+)/)||[])[1] || "text").toLowerCase();
     const rawCode = code.textContent || "";
+    if(light){ code.innerHTML = esc(rawCode); return; }
     const lines = rawCode.replace(/\n$/,"").split("\n").length;
     let highlighted = esc(rawCode);
     try{
@@ -953,6 +957,7 @@ function enhance(container){
   });
   container.querySelectorAll("a").forEach(a=>{ a.target="_blank"; a.rel="noopener"; });
   container.querySelectorAll("code:not(pre code)").forEach(c=>{ if(!c.classList.contains("inline-code")) c.classList.add("inline-code"); });
+  if(light) return;
   try{
     renderMathInElement(container, {delimiters:[{left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false}], throwOnError:false});
   }catch(e){}
@@ -1117,7 +1122,13 @@ function renderAssistant(bubble, msg, live){
   // content
   const md = el("div","md");
   const src = (live ? msg.content : (extractThink(msg.content).content || msg.content)) || "";
-  md.innerHTML = renderMarkdown(src);
+  if(live && src.length > 12000){
+    // Very long streams render as plain text to keep the UI responsive; the final pass renders markdown.
+    md.className = "md md-live-raw";
+    md.textContent = src.slice(-16000);
+  } else {
+    md.innerHTML = renderMarkdown(src);
+  }
   if(live && (msg.reasoning || msg.content)){
     md.innerHTML += '<span class="stream-cursor" aria-hidden="true"></span>';
     // If preview is open in live mode, refresh it (debounced) as HTML streams in
@@ -1133,7 +1144,7 @@ function renderAssistant(bubble, msg, live){
     }
   }
   bubble.appendChild(md);
-  enhance(md);
+  enhance(md, {light:live});
   // active skills (visible provenance, no extra prompt text in the answer)
   if(Array.isArray(msg.usedSkills) && msg.usedSkills.length){
     const badges=el("div","skill-badges");
@@ -1167,6 +1178,7 @@ function renderAssistant(bubble, msg, live){
     bar.appendChild(cp); bar.appendChild(rg);
     if(msg.comparisons?.length){const compare=el("button","act-btn","⇄ Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
     else if(db.providers.reduce((n,p)=>n+p.selectedModels.length,0)>1){const compare=el("button","act-btn","⇄ Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
+    if(msg.truncated){const cont=el("button","act-btn","▶ Continue");cont.onclick=()=>{if(generating)return;send("Continue exactly where you stopped. Do not repeat text that was already written.",{skipTitle:true});};bar.appendChild(cont);}
     if(/```[\w+-]*\n[\s\S]+/.test(msg.content||"") || extractHtmlBlock(msg.content)){
       const htmlCandidate=extractHtmlBlock(msg.content);
       if(htmlCandidate){const pv=el("button","act-btn","▶ Preview");pv.onclick=()=>openPreview(htmlCandidate,{live:false});bar.appendChild(pv);}
@@ -1187,7 +1199,11 @@ function extractHtmlBlock(content){
   const src = String(content||"");
   if(!src.trim()) return "";
   const fences = Array.from(src.matchAll(/```[ \t]*(html|htm|xhtml)[ \t]*\r?\n([\s\S]*?)(?:```|$)/gi));
-  if(fences.length) return fences.sort((a,b)=>b[2].length-a[2].length)[0][2].trim();
+  if(fences.length){
+    const full = fences.filter(f=>/<html[\s>]|<!doctype|<body[\s>]/i.test(f[2]));
+    const pool = full.length ? full : fences;
+    return pool.sort((a,b)=>b[2].length-a[2].length)[0][2].trim();
+  }
   const bare = src.match(/(?:<!doctype html[\s\S]*<\/html\s*>|<html[\s\S]*<\/html\s*>)/i);
   return bare ? bare[0].trim() : "";
 }
@@ -1295,8 +1311,8 @@ function openPreview(html, opts){
   previewOriginal = html || "";
   previewDiagText = "";
   if(!previewOriginal.trim()){ toast("Nothing to preview in this block"); return; }
-  if(hasNativePreview() && !opts.inApp && openNativePreview()) return;
   $("#previewCode").value = previewOriginal;
+  if(hasNativePreview() && !opts.inApp && openNativePreview()) return;
   $("#consoleCount").textContent = "0";
   $("#previewConsole").innerHTML = `<div class="console-empty">Console output from previewed page…</div>`;
   $("#previewLive").style.display = opts.live ? "" : "none";
@@ -1995,17 +2011,42 @@ async function send(text, opts){
     ? { model: model.modelId, input: history.map(h=>({role:h.role==="assistant"?"assistant":h.role, content:h.content})), stream:true, temperature:params.temperature, top_p:params.top_p, max_output_tokens:params.max_tokens, ...(db.thinking?{reasoning:{effort:db.reasoningEffort}}:{}) }
     : { model: model.modelId, messages: history, stream:true, temperature:params.temperature, top_p:params.top_p, max_tokens:params.max_tokens, ...(db.thinking?{reasoning_effort:db.reasoningEffort}:{}) };
 
-  // live render target
-  let bubble, thinkStart = null;
-  function liveRender(){
+  // live render target — throttled so long HTML answers cannot freeze the WebView
+  let bubble, thinkStart = null, lastPaint = 0, paintTimer = null, toolCallSeen = false, finishReason = null, lastDataAt = Date.now();
+  function paint(){
     const lastMsgEl = $("#chatInner").lastChild;
+    if(!lastMsgEl) return;
     bubble = lastMsgEl.querySelector(".bubble");
+    if(!bubble) return;
     renderAssistant(bubble, aiMsg, true);
     const tb = bubble.querySelector(".think-box");
     if(tb && aiMsg.reasoning && !aiMsg._thinkShown){ tb.classList.add("thinking"); aiMsg._thinkShown=true; thinkStart=Date.now(); }
     else if(tb && tb.classList.contains("thinking") && aiMsg.content){ tb.classList.remove("thinking"); tb.classList.add("collapsed"); aiMsg.thinkSecs = Math.round((Date.now()-(thinkStart||Date.now()))/1000); }
     scrollIfNear();
   }
+  function liveRender(force){
+    lastDataAt = Date.now();
+    const now = Date.now();
+    if(force || now - lastPaint > 140){
+      lastPaint = now;
+      paint();
+      return;
+    }
+    if(paintTimer) return;
+    paintTimer = setTimeout(()=>{ paintTimer=null; lastPaint=Date.now(); paint(); }, 140);
+  }
+  // Stall watchdog: tell the user what is happening instead of going silent.
+  let slowNotice = false;
+  const watchdog = setInterval(()=>{
+    if(!generating) return;
+    const idle = Date.now() - lastDataAt;
+    const el0 = $("#chatInner").lastChild && $("#chatInner").lastChild.querySelector(".stream-status");
+    if(idle > 12000 && !el0){
+      const host = $("#chatInner").lastChild && $("#chatInner").lastChild.querySelector(".bubble");
+      if(host){ const s = el("div","stream-status", `Waiting for the provider… ${Math.round(idle/1000)}s. Tap Stop to cancel.`); host.appendChild(s); slowNotice = true; }
+    } else if(el0 && idle < 3000){ el0.remove(); slowNotice = false; }
+    else if(el0){ el0.textContent = `Waiting for the provider… ${Math.round(idle/1000)}s. Tap Stop to cancel.`; }
+  }, 1000);
 
   let SSE_ITER = null;
   let sid = null;
@@ -2049,7 +2090,6 @@ async function send(text, opts){
       })();
     }
     // unified line processing
-    let SID = HAS_NATIVE ? null : null;
     for await (const rawLine of SSE_ITER){
         const t = (rawLine||"").trim();
         if(!t.startsWith("data:")) continue;
@@ -2057,11 +2097,14 @@ async function send(text, opts){
         if(payload === "[DONE]") continue;
         let j; try{ j = JSON.parse(payload); }catch(e){ continue; }
         // chat completions
-        const d = j.choices?.[0]?.delta;
+        const choice = j.choices?.[0];
+        const d = choice?.delta;
+        if(choice?.finish_reason) finishReason = choice.finish_reason;
         if(d){
           if(d.reasoning_content) aiMsg.reasoning += d.reasoning_content;
           else if(d.thinking) aiMsg.reasoning += d.thinking;
           else if(d.reasoning) aiMsg.reasoning += d.reasoning;
+          if(d.tool_calls || d.function_call) toolCallSeen = true;
           if(d.content){
             if(typeof d.content === "string") aiMsg.content += d.content;
             else if(Array.isArray(d.content)) d.content.forEach(c=>{ if(c.text) aiMsg.content += c.text; });
@@ -2071,18 +2114,36 @@ async function send(text, opts){
         if(j.type === "response.output_text.delta" && j.delta) aiMsg.content += j.delta;
         if(j.type === "response.reasoning_text.delta" && j.delta) aiMsg.reasoning += j.delta;
         if(j.delta?.text) aiMsg.content += j.delta.text;
+        if(j.type === "response.completed" && j.response?.status === "incomplete") finishReason = j.response?.incomplete_details?.reason || "length";
+        if(j.type === "response.output_item.added" && j.item?.type === "function_call") toolCallSeen = true;
         if(j.usage) aiMsg.usage=j.usage;
         liveRender();
     }
+    clearInterval(watchdog);
+    const statusEl = $("#chatInner").lastChild && $("#chatInner").lastChild.querySelector(".stream-status");
+    if(statusEl) statusEl.remove();
     if(HAS_NATIVE && sid !== null){ try{ NazStream.close(sid); }catch(e){} }
   }catch(e){
+    clearInterval(watchdog);
+    const statusEl2 = $("#chatInner").lastChild && $("#chatInner").lastChild.querySelector(".stream-status");
+    if(statusEl2) statusEl2.remove();
     if(e.name !== "AbortError"){
       aiMsg.content += (aiMsg.content?"\n\n":"") + "⚠️ **Error:** "+e.message;
     }
   }
   // finalize
+  clearTimeout(paintTimer); paintTimer = null;
+  clearInterval(watchdog);
   const p2 = extractThink(aiMsg.content);
   if(p2.think && !aiMsg.reasoning){ aiMsg.reasoning = p2.think; aiMsg.content = p2.content; }
+  if(toolCallSeen && !aiMsg.content.trim()){
+    aiMsg.content = "This model tried to call a tool instead of replying. Kita Chat does not run tools, so nothing was generated.\n\nAsk again in plain language, or pick a model that answers directly.";
+    aiMsg.toolCall = true;
+  }
+  if(finishReason === "length"){
+    aiMsg.truncated = true;
+    aiMsg.content += "\n\n⚠️ **Response hit the output limit** and was cut off. Increase **Max output tokens** in Tools → Model parameters, then tap Continue.";
+  }
   aiMsg.thinkSecs = aiMsg.thinkSecs || (thinkStart ? Math.round((Date.now()-thinkStart)/1000) : null);
   aiMsg.usage=aiMsg.usage||{prompt_tokens:aiMsg.context?.used||0,completion_tokens:estimateTokens(aiMsg.content)};
   aiMsg.estimatedCost=estimateCost(model,Number(aiMsg.usage.prompt_tokens||aiMsg.usage.input_tokens||0),Number(aiMsg.usage.completion_tokens||aiMsg.usage.output_tokens||0));
