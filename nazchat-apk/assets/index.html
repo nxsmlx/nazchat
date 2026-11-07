@@ -111,7 +111,13 @@ header .menu-btn{background:var(--bg3);}
 .md a{color:#58a6ff;}
 .md hr{border:none; border-top:1px solid var(--border); margin:16px 0;}
 .md img{max-width:100%; border-radius:10px;}
-.code-wrap{margin:12px 0; border-radius:12px; overflow:hidden; border:1px solid #30363d; background:#0d1117;}
+.code-wrap{margin:12px 0; border-radius:12px; overflow:hidden; border:1px solid #30363d; background:#0d1117; position:relative;}
+.code-wrap.collapsed pre{max-height:240px; overflow:hidden;}
+.code-fade{position:absolute; left:0; right:0; bottom:0; height:92px; background:linear-gradient(to bottom, transparent, rgba(13,17,23,.96)); display:none; pointer-events:none;}
+.code-wrap.collapsed .code-fade{display:block;}
+.code-toggle{position:absolute; left:50%; bottom:12px; transform:translateX(-50%); z-index:2; display:none; align-items:center; gap:6px; background:#21262d; color:#c9d1d9; border:1px solid #3a424c; border-radius:999px; padding:7px 12px; font-size:12px; font-weight:700; box-shadow:0 8px 20px rgba(0,0,0,.28);}
+.code-wrap.collapsed .code-toggle{display:inline-flex;}
+.code-toggle:active{background:#2d333b;}
 .code-head{display:flex; align-items:center; justify-content:space-between; background:#161b22; padding:7px 12px; font-size:12px; color:#8b949e; font-family:ui-monospace,Menlo,Consolas,monospace;}
 .copy-btn{background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; padding:4px 10px; font-size:12px; display:flex; align-items:center; gap:6px;}
 .copy-btn.copied{color:#3fb950; border-color:#238636;}
@@ -400,7 +406,7 @@ label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:va
       <button class="icon-btn" id="settingsBtn" title="Providers"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
       <button class="icon-btn" id="themeBtn" title="Theme">🌙</button>
       <div style="flex:1"></div>
-      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.7</span>
+      <span id="appVersion" style="font-size:12px; color:var(--text2); align-self:center">v2.7.1</span>
     </div>
   </div>
 </div>
@@ -504,8 +510,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "2.7.0";
-const APP_VERSION_CODE = 10;
+const APP_VERSION = "2.7.1";
+const APP_VERSION_CODE = 11;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -568,6 +574,18 @@ function enhance(container){
     head.appendChild(btnWrap);
     pre.replaceWith(wrap);
     wrap.appendChild(head); wrap.appendChild(pre);
+    const fade = el("div","code-fade");
+    const lines = (code.textContent || "").split("\n").length;
+    const longCode = lines > 18 || code.textContent.length > 1800;
+    if(longCode){
+      const toggle = el("button","code-toggle", `Show all code (${lines} lines) <span>⌄</span>`);
+      toggle.onclick = () => {
+        const collapsed = wrap.classList.toggle("collapsed");
+        toggle.innerHTML = collapsed ? `Show all code (${lines} lines) <span>⌄</span>` : "Show less <span>⌃</span>";
+      };
+      wrap.classList.add("collapsed");
+      wrap.appendChild(fade); wrap.appendChild(toggle);
+    }
   });
   container.querySelectorAll("a").forEach(a=>{ a.target="_blank"; a.rel="noopener"; });
   container.querySelectorAll("code:not(pre code)").forEach(c=>{ if(!c.classList.contains("inline-code")) c.classList.add("inline-code"); });
@@ -669,7 +687,7 @@ function msgEl(msg){
       });
       bubble.appendChild(files);
     }
-    if(msg.content) bubble.appendChild(el("div","user-text",esc(msg.content)));
+    if(msg.content){ const msgContent = el("div"); msgContent.innerHTML = esc(msg.content); bubble.appendChild(msgContent); }
   if(msg.attachments && msg.attachments.some(a=>/\.html?$/i.test(a.name||"")) && msg.content){
     const pv = el("button","act-btn","▶ Preview HTML");
     pv.onclick = ()=>openPreview(msg.content, {live:false});

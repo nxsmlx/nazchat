@@ -1,8 +1,8 @@
 {
-  "version": "2.7.0",
-  "versionCode": 10,
+  "version": "2.7.1",
+  "versionCode": 11,
   "name": "NazChat",
-  "changelog": "Layout polish inspired by a cleaner mobile AI app: centered brand header, large greeting, suggestion cards, and a floating composer card with model and tools inside.",
+  "changelog": "Long code blocks are now collapsible: preview shows a compact section with a Show all code button, so chats stay short and readable.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }
