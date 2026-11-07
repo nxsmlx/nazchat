@@ -163,6 +163,14 @@ header .menu-btn{background:var(--bg3);}
 .tool-trace-title{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);}
 .tool-trace-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--text2);}
 .tool-trace-ms{color:var(--text3);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.code-live{border-color:color-mix(in srgb,var(--border) 80%,var(--accent));background:var(--bg2);}
+.code-live-head{gap:10px;}
+.code-live-meta{margin-left:auto;font-size:11.5px;color:var(--text3);font-weight:500;font-variant-numeric:tabular-nums;}
+.code-live .think-head:before{background:var(--text3);box-shadow:none;animation:pulse 1.2s infinite;}
+.code-live-acts{display:flex;gap:6px;justify-content:flex-end;padding:0 12px 8px;}
+.code-live-body{margin:0;max-height:150px;overflow:auto;padding:10px 12px 12px;border-top:1px solid var(--line);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.5;color:var(--text2);white-space:pre;background:var(--bg3);}
+.code-live.collapsed-live .code-live-body{display:none;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .md-live-raw{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:var(--text2);max-height:60vh;overflow:hidden;}
 .skill-badges{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 8px;}
 .skill-badge{display:inline-flex;align-items:center;gap:4px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:4px 8px;font-size:10.5px;font-weight:700;}
@@ -916,8 +924,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "3.3.0";
-const APP_VERSION_CODE = 21;
+const APP_VERSION = "3.3.1";
+const APP_VERSION_CODE = 22;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1143,6 +1151,58 @@ async function compareLastAnswer(msg){
   for(const model of selected){const started=Date.now();try{const content=await requestOnce(model,promptText);msg.comparisons.push({label:model.label,content,ms:Date.now()-started});}catch(e){msg.comparisons.push({label:model.label,content:"⚠️ "+e.message,ms:Date.now()-started,error:true});}renderAll();}
   save();
 }
+/* Split a live stream into prose + the code block currently being written, so code never spills into the chat. */
+function splitLiveCode(content){
+  const src=String(content||"");
+  const re=/```[ \t]*([\w+-]*)[ \t]*\r?\n/g;
+  let m, last=null;
+  while((m=re.exec(src))){
+    const bodyStart=m.index+m[0].length;
+    const end=src.indexOf("```", bodyStart);
+    last={lang:(m[1]||"text").toLowerCase(), body:src.slice(bodyStart, end===-1?src.length:end), start:m.index, closed:end!==-1, end:end===-1?src.length:end+3};
+    if(end===-1) break;
+    re.lastIndex=end+3;
+  }
+  if(!last) return {prose:src, code:null, tail:""};
+  return {prose:src.slice(0,last.start), code:last, tail:last.closed?src.slice(last.end):""};
+}
+function renderLiveCode(bubble, code){
+  const lines=code.body.replace(/\n$/,"").split("\n").length;
+  const kb=(code.body.length/1024).toFixed(1);
+  const box=el("div","think-box code-live");
+  const head=el("div","think-head code-live-head");
+  head.innerHTML=`<span>⌨ Writing ${esc(code.lang)}…</span><span class="code-live-meta">${lines} line${lines===1?"":"s"} · ${kb} KB</span>`;
+  box.appendChild(head);
+  const acts=el("div","code-live-acts");
+  if(/^(html|htm|xhtml)$/.test(code.lang)){
+    const pv=el("button","preview-btn","▶ Preview");
+    pv.onclick=()=>openPreview(code.body,{live:true});
+    acts.appendChild(pv);
+  }
+  const toggle=el("button","code-toggle","Expand ⌄");
+  const body=el("pre","code-live-body");
+  body.textContent=code.body;
+  toggle.onclick=()=>{ const c=box.classList.toggle("collapsed-live"); toggle.innerHTML=c?"Expand ⌄":"Collapse ⌃"; if(!c) body.scrollTop=body.scrollHeight; };
+  acts.appendChild(toggle);
+  box.appendChild(acts);
+  box.appendChild(body);
+  bubble.appendChild(box);
+  requestAnimationFrame(()=>{ body.scrollTop=body.scrollHeight; });
+}
+/* Keep an open live preview in sync while HTML is still being written. */
+function refreshLivePreview(content){
+  if(!previewLiveState || !$("#htmlPreview").classList.contains("open")) return;
+  const htmlBlock = extractHtmlBlock(content);
+  if(!htmlBlock || htmlBlock.length < 40 || htmlBlock.length > 240000) return;
+  clearTimeout(previewLiveState.timer);
+  const now = Date.now();
+  const wait = now - previewLiveState.lastRun > 500 ? 250 : 700;
+  previewLiveState.timer = setTimeout(()=>{
+    $("#previewCode").value = htmlBlock;
+    renderPreview();
+    previewLiveState.lastRun = Date.now();
+  }, wait);
+}
 function renderAssistant(bubble, msg, live){
   bubble.innerHTML = "";
   // thinking accordion
@@ -1161,7 +1221,12 @@ function renderAssistant(bubble, msg, live){
   }
   // content
   const md = el("div","md");
-  const src = (live ? msg.content : (extractThink(msg.content).content || msg.content)) || "";
+  let src = (live ? msg.content : (extractThink(msg.content).content || msg.content)) || "";
+  let liveCode = null, liveTail = "";
+  if(live){
+    const split = splitLiveCode(src);
+    if(split.code){ liveCode = split.code; src = split.prose; liveTail = split.tail; }
+  }
   if(live && src.length > 12000){
     // Very long streams render as plain text to keep the UI responsive; the final pass renders markdown.
     md.className = "md md-live-raw";
@@ -1169,19 +1234,18 @@ function renderAssistant(bubble, msg, live){
   } else {
     md.innerHTML = renderMarkdown(src);
   }
+  if(liveCode){
+    // Code being generated stays inside its own frame instead of spilling into the chat.
+    if(src.trim()){ md.innerHTML = renderMarkdown(src); enhance(md,{light:true}); bubble.appendChild(md); }
+    renderLiveCode(bubble, liveCode);
+    if(liveTail.trim()){ const after=el("div","md"); after.innerHTML=renderMarkdown(liveTail); enhance(after,{light:true}); bubble.appendChild(after); }
+    refreshLivePreview(msg.content);
+    scrollIfNear();
+    return;
+  }
   if(live && (msg.reasoning || msg.content)){
     md.innerHTML += '<span class="stream-cursor" aria-hidden="true"></span>';
-    // If preview is open in live mode, refresh it (debounced) as HTML streams in
-    if(previewLiveState && $("#htmlPreview").classList.contains("open")){
-      const htmlBlock = extractHtmlBlock(msg.content);
-      if(htmlBlock && htmlBlock.length > 40 && htmlBlock.length < 240000){
-        const now = Date.now();
-        clearTimeout(previewLiveState.timer);
-        if(now - previewLiveState.lastRun > 500 || !previewLiveState.timer){
-          previewLiveState.timer = setTimeout(()=>{ $("#previewCode").value = htmlBlock; renderPreview(); previewLiveState.lastRun = Date.now(); }, 250);
-        }
-      }
-    }
+    refreshLivePreview(msg.content);
   }
   bubble.appendChild(md);
   enhance(md, {light:live});

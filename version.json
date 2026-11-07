@@ -1,9 +1,9 @@
 {
-  "version": "3.3.0",
-  "versionCode": 21,
+  "version": "3.3.1",
+  "versionCode": 22,
   "name": "Kita Chat",
-  "changelog": "Real tool calling: web_search and fetch_url now run natively with visible tool traces. Output length is fully automatic (derived from the model, learned from provider errors, retried silently). Edit requests resend only the current document.",
+  "changelog": "Code being written now stays inside its own collapsible frame instead of spilling into the chat. Prose before and after the block still streams normally, and HTML can be previewed live while it is still being generated.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk",
-  "sha256": "9024c0c2e20a3a73f931d76f99cc51eb8b8bef425af661d8956ba3cdebe78342",
+  "sha256": "bfcde8df378c0494bba8ecdf2b46c68846b57988f679f5b24d1a9ae19ce5a79e",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/latest"
 }

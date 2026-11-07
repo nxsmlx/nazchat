@@ -91,6 +91,26 @@ const assert=require('assert');
  assert(params.max_tokens>=8192,'default max_tokens too small: '+params.max_tokens);
  console.log('PASS default max output tokens',params.max_tokens);
 
+ // 6. Code being written stays inside its own frame, never spilling into chat text.
+ const liveFrame=await p.evaluate(()=>{
+   const html='<!doctype html><html><body><h1>Frame Check</h1>'+('<p>kod halaman</p>'.repeat(200))+'</body></html>';
+   const msg={id:'live',role:'assistant',content:'Ini halaman anda:\n\n```html\n'+html,reasoning:'',sources:[],timestamp:Date.now()};
+   const wrap=document.createElement('div');wrap.className='msg assistant';
+   const bubble=document.createElement('div');bubble.className='bubble';wrap.appendChild(bubble);
+   document.querySelector('#chatInner').appendChild(wrap);
+   renderAssistant(bubble,msg,true);
+   const frame=bubble.querySelector('.code-live');
+   const md=bubble.querySelector('.md');
+   return {hasFrame:!!frame,label:frame?frame.querySelector('.think-head').innerText:'',mdText:md?md.innerText:'',bodyText:frame?frame.querySelector('.code-live-body').textContent:'',height:frame?frame.querySelector('.code-live-body').getBoundingClientRect().height:0,preview:frame?!!frame.querySelector('.preview-btn'):false};
+ });
+ assert(liveFrame.hasFrame,'streaming code frame missing');
+ assert(/Writing html/.test(liveFrame.label),'frame label wrong: '+liveFrame.label);
+ assert(liveFrame.bodyText.includes('Frame Check'),'code not inside frame');
+ assert(!/kod halaman/.test(liveFrame.mdText),'code spilled into chat text');
+ assert(liveFrame.height>0&&liveFrame.height<=160,'frame height wrong: '+liveFrame.height);
+ assert(liveFrame.preview,'HTML preview button missing while streaming');
+ console.log('PASS streaming code confined to its own frame');
+
  assert.deepStrictEqual(errors,[]);
  console.log('PASS no page errors');
  await b.close();

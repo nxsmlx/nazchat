@@ -1,3 +1,13 @@
+# Kita Chat 3.3.1 — Code stays in its own frame
+
+While an answer is being written, code used to pour straight into the message text. It now behaves like the thinking panel:
+
+- Once a ```` ``` ```` block opens, the code moves into its own collapsible frame headed **⌨ Writing html…** with live line and size counts
+- The frame body scrolls itself to the newest line and never dumps thousands of lines into the chat
+- Prose before the block still streams above it, and prose after the block appears once it closes
+- **▶ Preview** is available inside the frame while HTML is still being generated, with the live preview updating as it arrives
+- When generation finishes the frame is replaced by the normal collapsed code block with Copy, Preview, and Expand
+
 # Kita Chat 3.3.0 — Real tool calling, zero tuning
 
 ### Tools now actually run
