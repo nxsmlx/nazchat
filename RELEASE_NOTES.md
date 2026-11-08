@@ -1,4 +1,4 @@
-# Kita Chat 4.2.1 — Light and dark theme consistency
+# Kita Chat 4.2.2 — Light and dark theme consistency
 
 - Unified semantic colors across chat, composer, sidebar, Settings, providers, model picker, Skill Library, dialogs and preview chrome
 - Fixed light-mode surfaces retaining dark backgrounds and low-contrast text; improved dark-mode hierarchy and readable secondary text
@@ -6,9 +6,24 @@
 - Restore the saved theme before first paint; keep browser controls, Android system bars and native preview toolbar in sync
 - Fixed reduced-motion theme transitions and duplicate input fields in custom dialogs
 - 126 theme/screen checks at 360px, 390px and 1440px, plus existing chat/streaming/tools regression tests
-- Version code 34; package ID `com.nazchat.app` and original signing identity retained for updates without uninstalling
+- Preserved the Releases API fallback, fixed public API authentication and exact Android version/checksum metadata; stale raw manifests can now be superseded safely
+- Fixed native version checks on Android 7 / API 24–27
+- Version code 35; package ID `com.nazchat.app` and original signing identity retained for updates without uninstalling
 
 The generated HTML document keeps its own colors. The app does not force its theme onto the document.
+
+# Kita Chat 4.2.1 — Update check fix
+
+The update check was failing to detect new versions when raw.githubusercontent.com served stale `version.json` due to CDN caching.
+
+This release adds a robust fallback:
+
+- First tries `raw.githubusercontent.com/main/version.json` (fast, cache-friendly)
+- If that fails or returns invalid data, falls back to GitHub Releases API (`/repos/{owner}/{repo}/releases/latest`) — always fresh, no CDN interference
+- Parses APK asset URL to extract version and constructs full metadata on-the-fly
+- Still respects `APP_VERSION_CODE`, native updater version, and SHA-256 verification
+
+Now reliably detects latest releases.
 
 # Kita Chat 4.2.0 — Complete theme audit
 

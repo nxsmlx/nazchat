@@ -35,7 +35,7 @@ public class NazUpdater {
     public int getVersion() {
         try {
             PackageInfo pi = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0);
-            return (int) pi.getLongVersionCode();
+            return Build.VERSION.SDK_INT >= 28 ? (int) pi.getLongVersionCode() : pi.versionCode;
         } catch (Exception e) { return 0; }
     }
 

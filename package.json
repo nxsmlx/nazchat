@@ -1,10 +1,10 @@
 {
   "name": "kita-chat-checks",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "private": true,
   "scripts": {
     "test:themes": "node tests/themes.test.js",
-    "test": "node tests/themes.test.js && node tests/ui-minimal.test.js && node tests/phased-building.test.js && node tests/skills-browser.test.js && node tests/streaming-long-answers.test.js && node tests/tools-and-budget.test.js"
+    "test": "node tests/updater.test.js && node tests/themes.test.js && node tests/ui-minimal.test.js && node tests/phased-building.test.js && node tests/skills-browser.test.js && node tests/streaming-long-answers.test.js && node tests/tools-and-budget.test.js"
   },
   "devDependencies": {
     "playwright-core": "^1.58.0"
