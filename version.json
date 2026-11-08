@@ -1,9 +1,9 @@
 {
-  "version": "4.2.1",
-  "versionCode": 34,
+  "version": "4.2.2",
+  "versionCode": 35,
   "name": "Kita Chat",
-  "changelog": "Fixed update check: added GitHub Releases API fallback when raw.githubusercontent.com is stale or blocked. Now reliably detects latest version.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.2.1/NazChat.apk",
-  "sha256": "9bd270389a7fc9775d04c63056b42277bb41e2ce31fadf9db7785195d5ba6dda",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.2.1"
+  "changelog": "Fixed light/dark themes across all screens, native system bars and preview; improved updater fallback with exact version and SHA-256 metadata.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.2.2/NazChat.apk",
+  "sha256": "2d2e983e8e3429daef056751dd77d9ad6ae5944a51d963cff9a07b8eeadac621",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.2.2"
 }
