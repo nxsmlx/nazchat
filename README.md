@@ -11,7 +11,7 @@ Kita Chat is a private, local-first Android BYOK AI chat client for OpenAI-compa
 - Project reassignment, reviewed prompt saving, complete fenced-code artifact saving and keyboard/focus fixes
 - Production HTML, CSS and JavaScript are explicitly bundled in the APK; `design-lab/` stays separate
 
-Release target: **4.3.0 / versionCode 36**, package `com.nazchat.app`, original signing identity. Existing storage and key references are retained. See `tests/README.md` for browser checks and `docs/ANDROID_BUILD.md` for unsigned CI/local signing. Browser/mocked-bridge verification is not physical-device installation testing or Google Play readiness.
+Signed APK: **4.3.0 / versionCode 36**, package `com.nazchat.app`, original signing certificate verified with v2/v3. The full browser suite passed, including 126 theme/screen checks and 21 Studio cases. Existing storage and key references are retained by the implementation and upgrade fixtures; actual device installation/upgrade has not been performed by the agent. See `tests/README.md` and `docs/ANDROID_BUILD.md`. This is not Google Play readiness. The updater manifest is advanced only after the signed APK is published and verified.
 
 ## v4.2.2 — Theme consistency fixes
 
@@ -185,11 +185,11 @@ This version is prepared locally but has not been published yet.
 - Search conversations and local backup export/import
 - Dark/light theme
 - GitHub update check from Settings
-- Conversation search, date grouping, pinning, double-tap rename, and polished sidebar
+- Conversation search, date grouping, pinning and rename/delete through the conversation action menu
 
 ## Project layout
 
-- `nazchat/index.html` — Kita Chat web source — standalone web app / preview source
+- `nazchat/index.html` — Kita Chat entry point; keep adjacent `studio.css` and `studio.js` for the production interface
 - `nazchat-apk/` — native WebView APK wrapper and network bridge
 - `NazChat.apk` — signed Kita Chat APK artifact (kept for update compatibility) — built signed APK
 - `version.json` — APK update manifest consumed by the app
