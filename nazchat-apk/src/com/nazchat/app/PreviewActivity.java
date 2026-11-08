@@ -27,20 +27,21 @@ public class PreviewActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         String html = pendingHtml == null ? "" : pendingHtml;
+        NazTheme.Palette palette = NazTheme.load(this);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.parseColor("#0b0e0d"));
+        root.setBackgroundColor(palette.background);
 
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setPadding(dp(12), dp(10), dp(8), dp(10));
-        bar.setBackgroundColor(Color.parseColor("#121716"));
+        bar.setBackgroundColor(palette.surface);
 
         TextView title = new TextView(this);
         title.setText(getIntent().getStringExtra("title") == null ? "Preview" : getIntent().getStringExtra("title"));
-        title.setTextColor(Color.parseColor("#edf4f0"));
+        title.setTextColor(palette.text);
         title.setTextSize(15f);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         title.setLayoutParams(tlp);
@@ -48,7 +49,7 @@ public class PreviewActivity extends Activity {
 
         Button reload = new Button(this);
         reload.setText("↻");
-        reload.setTextColor(Color.parseColor("#edf4f0"));
+        reload.setTextColor(palette.text);
         reload.setBackgroundColor(Color.TRANSPARENT);
         reload.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { if (web != null) web.reload(); }
@@ -57,7 +58,7 @@ public class PreviewActivity extends Activity {
 
         Button close = new Button(this);
         close.setText("✕");
-        close.setTextColor(Color.parseColor("#edf4f0"));
+        close.setTextColor(palette.text);
         close.setBackgroundColor(Color.TRANSPARENT);
         close.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { finish(); }
@@ -82,6 +83,8 @@ public class PreviewActivity extends Activity {
             s.setAllowFileAccessFromFileURLs(false);
             s.setAllowUniversalAccessFromFileURLs(false);
         }
+        // The surrounding native UI follows the app palette, not the HTML document.
+        NazTheme.disableWebDarkening(web);
         web.setBackgroundColor(Color.WHITE);
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -99,6 +102,7 @@ public class PreviewActivity extends Activity {
         root.addView(web, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         setContentView(root);
+        NazTheme.applyWindow(this, palette);
         // loadDataWithBaseURL is the dependable renderer inside Android WebView.
         web.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
     }

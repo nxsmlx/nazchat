@@ -1,4 +1,4 @@
-const {chromium}=require('/tmp/node_modules/playwright-core');
+const {launch, appUrl}=require('./browser');
 const assert=require('assert');
 
 // Phased building: a long artifact request must be split into small calls
@@ -6,7 +6,7 @@ const assert=require('assert');
 // output limit. Plus reasoning guardrails: capped reasoning and rescue when
 // reasoning alone hits the length limit.
 (async()=>{
- const b=await chromium.launch({executablePath:'/usr/bin/chromium-headless-shell',args:['--no-sandbox']});
+ const b=await launch();
  const p=await b.newPage({viewport:{width:390,height:844}});
  const errors=[];p.on('pageerror',e=>errors.push(e.message));
  const calls=[];
@@ -40,7 +40,7 @@ const assert=require('assert');
    ])});
  });
 
- await p.goto('file:///data/user/0/id.griphub.agent/files/home/workspace/build-a-web-app-116-648/nazchat/index.html');
+ await p.goto(appUrl);
  await p.evaluate(()=>{localStorage.setItem('nazchat_v1',JSON.stringify({schemaVersion:3,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],conversations:[],projects:[],prompts:[],styles:[],artifacts:[],lastProviderId:'p',lastModelId:'m',onboardingDone:true,theme:'dark',parametersByModel:{},skillSettings:{mode:'auto',selected:[],disabled:[],custom:[]}}));location.reload()});
  await p.waitForFunction(()=>typeof currentModel==='function');
 

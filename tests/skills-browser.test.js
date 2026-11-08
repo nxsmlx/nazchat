@@ -1,8 +1,8 @@
-const {chromium}=require('/tmp/node_modules/playwright-core');
+const {launch, appUrl}=require('./browser');
 const assert=require('assert');
-function skillData(){return require('/data/user/0/id.griphub.agent/files/home/workspace/build-a-web-app-116-648/skills.json').skills;}
+function skillData(){return require('../skills.json').skills;}
 (async()=>{
- const b=await chromium.launch({executablePath:'/usr/bin/chromium-headless-shell',args:['--no-sandbox']});
+ const b=await launch();
  const p=await b.newPage({viewport:{width:390,height:844}});const errors=[];p.on('pageerror',e=>errors.push(e.message));
  let requests=[];
  await p.route('https://api.test/v1/chat/completions',async route=>{
@@ -21,7 +21,7 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
    await route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:`data: ${JSON.stringify({choices:[{delta:{reasoning:'Checking the requirements',content:response}}]})}\n\ndata: [DONE]\n\n`});
  });
  await p.route('https://raw.githubusercontent.com/nxsmlx/nazchat/main/skills.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({packVersion:1,skills:[{id:'frontend-design',name:'Updated design',content:'Use deliberate design.'}]})}));
- await p.goto('file:///data/user/0/id.griphub.agent/files/home/workspace/build-a-web-app-116-648/nazchat/index.html');
+ await p.goto(appUrl);
  await p.evaluate(()=>{localStorage.setItem('nazchat_v1',JSON.stringify({schemaVersion:3,providers:[],conversations:[],projects:[],prompts:[],styles:[],artifacts:[],activeProjectId:null,lastProviderId:null,lastModelId:null,theme:'dark',thinking:false,search:false,reasoningEffort:'high',onboardingDone:true,parametersByModel:{},skillSettings:{mode:'auto',selected:[],disabled:[],custom:[]}}));location.reload();});
  await p.waitForTimeout(400);
  await p.evaluate(()=>{
@@ -79,7 +79,7 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
  console.log('PASS code collapse, skill badges, and Review & Improve');
  await p.click('#menuBtn');await p.click('#settingsBtn');await p.waitForTimeout(100);assert(await p.locator('#setSheet.open').count());assert((await p.locator('#provList').innerText()).includes('Skill Library'));
  await p.locator('.settings-hub-row').filter({hasText:'Skill Library'}).click();assert(await p.locator('#skillSheet.open').count());
- await p.screenshot({path:'/tmp/kita-v30-library.png',fullPage:true});console.log('PASS settings skill library');
+ await p.screenshot({path:require('path').join(__dirname,'../test-results/kita-library.png'),fullPage:true});console.log('PASS settings skill library');
  await p.evaluate(()=>{db.projects=[{id:'project-1',name:'Docs',instructions:'Cite project sources.',sources:[]}];db.activeProjectId='project-1';indexProjectDocument({name:'guide.txt',text:'Kita Chat uses a local-first Android Keystore architecture.',type:'text/plain'});db.styles=[{id:'style-1',name:'Concise',instructions:'Be concise.'}];db.activeStyleId='style-1';db.parametersByModel['p:model-a']={temperature:.2,top_p:.9,max_tokens:512};db.artifacts=[{id:'artifact-1',name:'HTML artifact',kind:'html',content:'<h1>Kita</h1>',createdAt:Date.now()}];save();});
  assert(await p.evaluate(()=>retrieveProjectContext('What uses Android Keystore?').includes('Keystore')));assert(await p.evaluate(()=>currentStyle().name==='Concise'));assert(await p.evaluate(()=>modelParameters(currentModel()).max_tokens>=512));assert(await p.evaluate(()=>modelParameters(currentModel()).max_tokens>=autoMaxTokens(currentModel())));
  await p.evaluate(()=>{const backup=JSON.parse(JSON.stringify(db));backup.providers.forEach(x=>delete x.apiKey);if(backup.providers.some(x=>Object.prototype.hasOwnProperty.call(x,'apiKey')))throw new Error('raw secret field in safe backup');});
@@ -91,7 +91,7 @@ function skillData(){return require('/data/user/0/id.griphub.agent/files/home/wo
  for(const f of p.frames()){ if(f===p.mainFrame())continue; try{ const t=await f.locator('#preview-ok').innerText({timeout:1200}); if(t.includes('Preview regression'))rendered=true; }catch(e){} }
  assert(rendered,'preview iframe did not render the HTML document');
  assert.strictEqual(await p.locator('#previewDiag.show').count(),0,'diagnostics panel should be hidden on success');
- await p.screenshot({path:'/tmp/kita-preview-render.png'});
+ await p.screenshot({path:require('path').join(__dirname,'../test-results/kita-preview.png')});
  await p.click('#previewClose');console.log('PASS HTML preview renders real content (pixel/frame check)');
  await p.evaluate(()=>{db.providers=[{id:'p1',name:'One',baseUrl:'https://a/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['a1'],modelMeta:{}},{id:'p2',name:'Two',baseUrl:'https://b/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['b1','b2'],modelMeta:{}}];db.lastProviderId='p1';db.lastModelId='a1';conv=null;save();renderAll();});
  await p.evaluate(()=>{document.querySelectorAll('.sheet.open').forEach(s=>s.classList.remove('open'));document.querySelectorAll('.sheet-scrim.open').forEach(s=>s.classList.remove('open'));});

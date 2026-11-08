@@ -2,6 +2,16 @@
 
 Kita Chat is a private, local-first Android BYOK AI chat client for OpenAI-compatible providers.
 
+## Unreleased — Theme consistency fixes
+
+- One shared semantic palette for light/dark surfaces, text, controls, selection, status and code colors
+- Theme-aware Settings, model/provider lists, dialogs, terminal, syntax highlighting and preview chrome
+- Persisted theme restored before first paint; browser controls and `theme-color` follow the active palette
+- Native theme bridge synchronizes WebView background, Android system bars and preview toolbar; generated HTML keeps its own colors
+- Portable browser checks for both themes at 360px, 390px and 1440px (`npm run test:themes`; see `tests/README.md`)
+
+Source changes only: the existing `NazChat.apk` and update manifest are not rebuilt or published by this change.
+
 ## v4.2.0 — Complete theme audit
 
 - Unified light/dark surfaces, spacing, typography and elevation across header, sidebar, chat canvas, composer, terminal and sheets
