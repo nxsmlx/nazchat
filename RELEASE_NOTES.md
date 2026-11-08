@@ -1,3 +1,15 @@
+# Kita Chat 4.2.1 — Light and dark theme consistency
+
+- Unified semantic colors across chat, composer, sidebar, Settings, providers, model picker, Skill Library, dialogs and preview chrome
+- Fixed light-mode surfaces retaining dark backgrounds and low-contrast text; improved dark-mode hierarchy and readable secondary text
+- Theme-aware terminal and syntax highlighting, including corrected browser Highlight.js asset
+- Restore the saved theme before first paint; keep browser controls, Android system bars and native preview toolbar in sync
+- Fixed reduced-motion theme transitions and duplicate input fields in custom dialogs
+- 126 theme/screen checks at 360px, 390px and 1440px, plus existing chat/streaming/tools regression tests
+- Version code 34; package ID `com.nazchat.app` and original signing identity retained for updates without uninstalling
+
+The generated HTML document keeps its own colors. The app does not force its theme onto the document.
+
 # Kita Chat 4.2.0 — Complete theme audit
 
 The previous light/dark modes were inconsistent in spacing, typography and elevation. This release refines both themes globally:

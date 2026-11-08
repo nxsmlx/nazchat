@@ -1,0 +1,131 @@
+name: Build Android (unsigned)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: sh
+    env:
+      UNSIGNED_ONLY: '1'
+      LC_ALL: C
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          architecture: x64
+
+      - name: Ensure Android SDK 36 and Build Tools 36.0.0
+        run: |
+          set -eu
+          test "$(uname -m)" = x86_64
+          : "${ANDROID_HOME:?Hosted runner must provide ANDROID_HOME}"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$SDKMANAGER"
+          # POSIX sh uses the last pipeline command's status, not yes's SIGPIPE.
+          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses >/dev/null
+          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --install \
+            'platforms;android-36' 'build-tools;36.0.0'
+          test -f "$ANDROID_HOME/platforms/android-36/android.jar"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/aapt2"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/zipalign"
+          test -f "$ANDROID_HOME/build-tools/36.0.0/lib/apksigner.jar"
+          command -v zip
+          java -version
+          javac -version
+
+      - name: Build unsigned APK only
+        run: sh build.sh
+
+      - name: Validate package and stage explicit artifact files
+        run: |
+          set -eu
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          APK=nazchat-apk/unsigned.apk
+          ART=nazchat-apk/ci-artifact
+          mkdir -p "$ART"
+          "$BT/zipalign" -c -P 16 4 "$APK"
+          "$BT/aapt2" dump badging "$APK" > "$ART/badging.txt"
+          package_field() {
+            awk -F "'" -v key="$1" '
+              /^package: / {
+                for (i = 1; i < NF; i += 2) {
+                  if ($i ~ ("(^|[[:space:]])" key "=$")) {
+                    print $(i + 1)
+                    found = 1
+                    exit
+                  }
+                }
+              }
+              END { if (!found) exit 1 }
+            ' "$ART/badging.txt"
+          }
+          expected_field() {
+            awk -v key="$1" '
+              index($0, key "=") == 1 {
+                print substr($0, length(key) + 2)
+                found = 1
+                exit
+              }
+              END { if (!found) exit 1 }
+            ' nazchat-apk/build-metadata.txt
+          }
+          # Expected versions were extracted from AndroidManifest.xml by build.sh.
+          actual_package=$(package_field name)
+          actual_code=$(package_field versionCode)
+          actual_name=$(package_field versionName)
+          expected_package=$(expected_field package)
+          expected_code=$(expected_field versionCode)
+          expected_name=$(expected_field versionName)
+          test "$actual_package" = com.nazchat.app
+          test "$actual_package" = "$expected_package"
+          test "$actual_code" = "$expected_code"
+          test "$actual_name" = "$expected_name"
+          # Ensure the verifier runs, then reject any accidentally signed build.
+          java -jar "$BT/lib/apksigner.jar" version
+          if java -jar "$BT/lib/apksigner.jar" verify "$APK" > "$ART/unsigned-verification.txt" 2>&1; then
+            printf '%s\n' 'Unexpected signed APK; refusing to upload.' >&2
+            exit 1
+          fi
+          cp "$APK" "$ART/unsigned.apk"
+          cp "$BT/lib/apksigner.jar" "$ART/apksigner.jar"
+          cp nazchat-apk/build-metadata.txt "$ART/build-metadata.txt"
+          {
+            printf '%s\n' 'signing=unsigned' 'jdk=17' 'runner=ubuntu-24.04-x86_64'
+            printf 'commit=%s\nrunId=%s\nrunAttempt=%s\n' \
+              "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+            java -version 2>&1
+            "$BT/aapt2" version
+          } >> "$ART/build-metadata.txt"
+          (cd "$ART" && sha256sum unsigned.apk apksigner.jar build-metadata.txt badging.txt > SHA256SUMS)
+
+      - name: Upload unsigned APK and local signing tool
+        uses: actions/upload-artifact@v4
+        with:
+          name: nazchat-unsigned-${{ github.run_id }}-${{ github.run_attempt }}
+          # Deliberate allowlist: never upload the workspace or nazchat-apk/ tree.
+          path: |
+            nazchat-apk/ci-artifact/unsigned.apk
+            nazchat-apk/ci-artifact/apksigner.jar
+            nazchat-apk/ci-artifact/build-metadata.txt
+            nazchat-apk/ci-artifact/badging.txt
+            nazchat-apk/ci-artifact/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          include-hidden-files: false

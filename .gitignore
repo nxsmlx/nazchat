@@ -7,6 +7,19 @@ nazchat-apk/nazchat.keystore
 nazchat-apk/NazChat.apk
 nazchat-apk/NazChat.apk.idsig
 nazchat-apk/build.log
+nazchat-apk/unsigned.apk
+nazchat-apk/unsigned.apk.idsig
+nazchat-apk/build-metadata.txt
+nazchat-apk/ci-artifact/
+/.NazChat.apk.*
+
+# Local signing material (never add these to CI artifacts)
+*.keystore
+*.jks
+*.p12
+*.pfx
+.env
+.env.*
 
 # Local/test files
 .attachments/
