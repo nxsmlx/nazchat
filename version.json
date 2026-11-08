@@ -1,9 +1,9 @@
 {
-  "version": "4.2.2",
-  "versionCode": 35,
+  "version": "4.3.0",
+  "versionCode": 36,
   "name": "Kita Chat",
-  "changelog": "Fixed light/dark themes across all screens, native system bars and preview; improved updater fallback with exact version and SHA-256 metadata.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.2.2/NazChat.apk",
-  "sha256": "2d2e983e8e3429daef056751dd77d9ad6ae5944a51d963cff9a07b8eeadac621",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.2.2"
+  "changelog": "Kita Studio: refreshed chat/composer, Projects and Library, reorganized real Tools, Light/Dark/System themes and larger text. Existing chats, providers and keys retained.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.3.0/NazChat.apk",
+  "sha256": "70f515ac51e018c4a9fbd806d22b186eca7f737411c3061b871201b3e1ce5521",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.3.0"
 }
