@@ -1,3 +1,20 @@
+# Kita Chat 4.2.0 — Complete theme audit
+
+The previous light/dark modes were inconsistent in spacing, typography and elevation. This release refines both themes globally:
+
+- Header: glass bar with backdrop blur, consistent height and padding
+- Sidebar: clean surface, fixed width, subtle border, proper spacing
+- Chat canvas: clear max-width, consistent gap, no overflow
+- User bubble: calmer background, readable contrast, correct radius
+- Thinking panel: distinct but quiet visual treatment, expandable on its own
+- Terminal frame: fixed-height, scrollable, with soft monospace styling
+- Composer: floating card with full header/footer, model/tools row
+- Settings sheets & modals: elevated surfaces, uniform radius, layered shadows
+- Action buttons: consistent sizing, spacing and hover states
+- All typefaces use a single rhythm: Space Grotesk for display, Manrope for body
+
+Local build only.
+
 # Kita Chat 4.1.0 — Dark mode refinement
 
 Local build — not published yet.

@@ -1,9 +1,9 @@
 {
-  "version": "4.1.0",
-  "versionCode": 32,
+  "version": "4.2.0",
+  "versionCode": 33,
   "name": "Kita Chat",
-  "changelog": "Dark-mode refinement: layered graphite surfaces, clearer separation between background/surface/raised panels, calmer steel accent, and improved composer, terminal, sheets and message contrast.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.1.0/NazChat.apk",
-  "sha256": "5ca422d3bbcdb2c4120f46a529ce969602e0f041b678815a71efa5e942adb118",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.1.0"
+  "changelog": "Complete theme audit: refined light/dark mode surfaces, spacing, typography and elevation across all components — header, sidebar, chat canvas, composer, terminal, Thinking panel, sheets, modals, and actions.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.2.0/NazChat.apk",
+  "sha256": "7dd1c2fc5a921b384c954ef3f42049f8598cd2ee814d6fc0d2a65b7d344b0829",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.2.0"
 }
