@@ -1,9 +1,9 @@
 {
-  "version": "4.4.3",
-  "versionCode": 41,
+  "version": "4.4.4",
+  "versionCode": 42,
   "name": "Kita Chat",
-  "changelog": "Fixes broken HTML rendering in chat, makes Stop cancel waits, streams and searches, and turns the tool-round limit into a real final answer.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.4.3/NazChat.apk",
-  "sha256": "2adcdd3d7d3b2d767beca93cb0a815d347952c4958e27ffd2e3379a837e34fb5",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.4.3"
+  "changelog": "New provider picker, text/code size controls, optional update prompts, safer backup and updater checks.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.4.4/NazChat.apk",
+  "sha256": "223fd0e8f3815f61a8636576603a3cde5533de1aa8c7c688128a6a0700fb292d",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.4.4"
 }
