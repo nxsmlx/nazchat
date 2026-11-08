@@ -18,6 +18,17 @@ palette callbacks and browser errors. Screens include chat, sidebar, models,
 Settings, providers, skills, workspace tools, dialogs, onboarding and preview.
 Screenshots are written to ignored `test-results/themes/`.
 
+`studio.test.js` exercises the **production** UI (not `design-lab/`). Its 21 cases
+cover schema-3 upgrade fixtures, retained chats/provider-key references/projects,
+real navigation and empty states, prompt review/persistence, artifact parsing and
+preview, project assignment/context, generation navigation guards, Tools/model
+selection, larger text, theme persistence, native-System **mocks**, keyboard/focus
+and responsive layouts at 320×480, 390×844, 800×400 and 1440×900. Provider replies
+are mocked in tests only; no live AI requests are made. Selected visible controls
+are measured against a 44px target. This is not a complete accessibility audit.
+Run it independently with `npm run test:studio`; screenshots and reports go to
+ignored `test-results/studio/`.
+
 These are browser tests, not Android instrumentation tests. Native system bars,
 startup colors and preview chrome must also be checked on a device after building
 an APK. Test fixtures use an isolated browser profile; no real API keys or user

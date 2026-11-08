@@ -89,7 +89,7 @@ const {launch, appUrl, root} = require('./browser');
         });
         assert.equal(result.overflow,false,`${width}/${theme}/${label}: horizontal overflow`);
         assert.equal(result.scheme,theme,`${label}: native control scheme`);
-        assert(result.fade.includes(theme==='light'?'247, 247, 246':'17, 19, 24'),`${label}: composer gradient uses the wrong palette`);
+        assert(result.fade==='none'||result.fade.includes(theme==='light'?'250, 251, 252':'23, 25, 32'),`${label}: composer uses the wrong palette`);
         assert.equal(result.meta,result.bg,`${label}: stale browser theme-color`);
         assert.deepEqual(result.low,[],`${width}/${theme}/${label}: low text contrast\n${JSON.stringify(result.low,null,2)}`);
         for(const s of result.surfaces)assert.equal(s.light,theme==='light',`${width}/${theme}/${label}: wrong surface ${s.sel}`);
@@ -160,7 +160,7 @@ const {launch, appUrl, root} = require('./browser');
         await checkScreen('preview-console',theme); await closeOverlays();
         await page.evaluate(()=>{toast('Theme saved');miniToast('Copied');}); await checkScreen('toasts',theme);
         // Both switching controls, persistence and native sync use the same source of truth.
-        await page.evaluate(()=>{renderSettingsAppearance();document.querySelector('#provList .mini-btn').click();});
+        await page.evaluate(()=>{renderSettingsAppearance();document.querySelector('[data-theme-choice="'+(db.theme==='light'?'dark':'light')+'"]').click();});
         assert.equal(await page.evaluate(()=>db.theme),theme==='light'?'dark':'light');
         await page.evaluate(()=>document.querySelector('#themeBtn').click());
         const sync=await page.evaluate(()=>window.themeSyncs.at(-1));

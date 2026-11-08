@@ -42,6 +42,8 @@ Jalankan dari root repositori:
 ANDROID_HOME=/path/to/android-sdk UNSIGNED_ONLY=1 sh build.sh
 ```
 
+Aset produksi disalin melalui allowlist: `nazchat/index.html`, `nazchat/studio.css` dan `nazchat/studio.js` → `nazchat-apk/assets/`. Ketiga-tiganya wajib wujud. `design-lab/` tidak dibungkus. Selepas build, bandingkan ketiga-tiga aset dalam APK dengan sumber yang disemak, bukan HTML sahaja.
+
 Output utama ialah `nazchat-apk/unsigned.apk`, sudah aligned. `nazchat-apk/build-metadata.txt` merekodkan package, versi dan toolchain. Dalam mod ini skrip tidak memerlukan/membaca keystore atau kata laluan, tidak menjalankan signing dan tidak menyentuh root `NazChat.apk`.
 
 Jika perlu, tetapkan `AAPT2=/path/to/native/aapt2` dan `ZIPALIGN=/path/to/native/zipalign` dalam environment. Build biasa masih memerlukan platform JAR dan D8 daripada SDK 36.0.0.

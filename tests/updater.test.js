@@ -11,7 +11,7 @@ const {launch,appUrl} = require('./browser');
     const result=await p.evaluate(async()=>{
       const original=window.fetch, calls=[];
       const make=(version,versionCode)=>({version,versionCode,sha256:'a'.repeat(64),apkUrl:`https://github.com/nxsmlx/nazchat/releases/download/v${version}/NazChat.apk`});
-      const current=make('4.2.2',35),next=make('4.2.3',36);
+      const current=make(APP_VERSION,APP_VERSION_CODE),next=make('4.3.1',APP_VERSION_CODE+1);
       let raw=current,latest=next,failRaw=false,failApi=false,noMarker=false;
       const request=async(url,opts)=>{
         calls.push({url,headers:opts?.headers});
@@ -27,18 +27,18 @@ const {launch,appUrl} = require('./browser');
         failApi=false;noMarker=true;const legacy=(await fetchUpdateInfo()).versionCode;
         failRaw=true;let rejects=false;try{await fetchUpdateInfo();}catch(e){rejects=true;}
         failRaw=false;noMarker=false;raw=current;latest=next;
-        window.NazUpdater={getVersion:()=>35,downloadAndInstall:(url,hash)=>window.installArgs=[url,hash]};
+        window.NazUpdater={getVersion:()=>APP_VERSION_CODE,downloadAndInstall:(url,hash)=>window.installArgs=[url,hash]};
         renderSettingsAbout();await checkForUpdate();
         const button=document.querySelector('#checkUpdateBtn').textContent;
         document.querySelector('#checkUpdateBtn').click();
         const install=window.installArgs;
-        raw=next;window.NazUpdater.getVersion=()=>36;await checkForUpdate();
+        raw=next;window.NazUpdater.getVersion=()=>APP_VERSION_CODE+1;await checkForUpdate();
         const upToDate=document.querySelector('#updateStatus').textContent;
-        return {stale,fallback,rateLimited,legacy,rejects,button,install,upToDate,calls,invalid:[{...current,versionCode:0},{...current,sha256:''},{...current,apkUrl:'https://example.com/bad.apk'}].every(x=>!validUpdateInfo(x))};
+        return {currentCode:APP_VERSION_CODE,stale,fallback,rateLimited,legacy,rejects,button,install,upToDate,calls,invalid:[{...current,versionCode:0},{...current,sha256:''},{...current,apkUrl:'https://example.com/bad.apk'}].every(x=>!validUpdateInfo(x))};
       }finally{window.fetch=original;delete window.NazUpdater;}
     });
-    assert.equal(result.stale,36);assert.equal(result.fallback,36);
-    assert.equal(result.rateLimited,35);assert.equal(result.legacy,35);
+    assert.equal(result.stale,result.currentCode+1);assert.equal(result.fallback,result.currentCode+1);
+    assert.equal(result.rateLimited,result.currentCode);assert.equal(result.legacy,result.currentCode);
     assert(result.rejects&&result.invalid,'must reject missing/invalid exact metadata');
     assert.equal(result.button,'Install update');assert.equal(result.install[1],'a'.repeat(64));
     assert.match(result.upToDate,/up to date/);

@@ -13,6 +13,7 @@ import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient.FileChooserParams;
 import android.net.Uri;
 import android.content.Intent;
+import android.content.res.Configuration;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -60,7 +61,7 @@ public class MainActivity extends Activity {
 
         NazTheme.disableWebDarkening(web);
         theme = new NazTheme(this, web);
-        // Palette-only bridge; never expose this on generated-HTML preview WebViews.
+        // Theme-only bridge; never expose this on generated-HTML preview WebViews.
         web.addJavascriptInterface(theme, "NazTheme");
 
         // Native bridges — CORS-free networking for any provider
@@ -158,7 +159,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() { if (web != null) web.onPause(); super.onPause(); }
     @Override
-    protected void onResume() { if (web != null) web.onResume(); super.onResume(); }
+    protected void onResume() { super.onResume(); if (web != null) web.onResume(); if (theme != null) theme.refreshSystemTheme(); }
+    @Override
+    public void onConfigurationChanged(Configuration configuration) {
+        super.onConfigurationChanged(configuration);
+        if (theme != null) theme.refreshSystemTheme();
+    }
     @Override
     protected void onDestroy() {
         if (theme != null) { theme.dispose(); theme = null; }

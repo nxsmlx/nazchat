@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#111318">
+<meta name="theme-color" content="#171920">
 <meta name="color-scheme" content="dark light">
 <script>
 // Restore before first paint; keep the existing storage key for installed apps.
-try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("nazchat_v1"))?.theme==="light"?"light":"dark";}catch(e){document.documentElement.dataset.theme="dark";}
+try{const t=JSON.parse(localStorage.getItem("nazchat_v1"))?.theme;const dark=typeof window.NazTheme?.isSystemDark==='function'?window.NazTheme.isSystemDark():matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=t==="light"||(t==="system"&&!dark)?"light":"dark";}catch(e){document.documentElement.dataset.theme="dark";}
 </script>
 <title>Kita Chat</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
@@ -20,20 +20,20 @@ try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("nazc
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
 <style>
 /* Theme contract: define every palette here. Components use semantic tokens,
    never a separate set of hardcoded dark/light overrides. */
 :root{
   color-scheme:dark;
-  --bg:#111318; --bg2:#181b22; --bg3:#222730; --panel:#1b1f27;
-  --border:#343b48; --line:#2b313c; --border-soft:var(--line); --control-border:#738095;
-  --text:#f3f4f6; --text2:#b1bac7; --text3:#9da8b8;
-  --accent:#aeb9c8; --accent2:#bac5d4; --accent-soft:#2b3442;
+  --bg:#171920; --bg2:#1e212a; --bg3:#292d38; --panel:#1e212a;
+  --border:#343947; --line:#2a2e39; --border-soft:var(--line); --control-border:#758095;
+  --text:#edf0f7; --text2:#a5adbf; --text3:#969fb3;
+  --accent:#bdadff; --accent2:#cabdff; --accent-soft:#302a47;
   --signal:var(--accent); --cobalt:var(--accent); --lime:var(--success);
-  --user-bubble:#20252d; --selected:#303946; --selected-border:#8392a8; --hover:#282f3a;
-  --input:#111419; --sidebar:#14171d; --header:#14171d;
-  --on-primary:#171a20; --primary:#eef0f2;
+  --user-bubble:#292d38; --selected:#302a47; --selected-border:#8c7bbd; --hover:#292d38;
+  --input:#171920; --sidebar:#13151b; --header:#171920;
+  --on-primary:#28203f; --primary:#bdadff;
   --danger:#ffaaaa; --danger-fill:#a52a37; --on-danger:#ffffff;
   --success:#a4d6b5; --warning:#e8c47f; --link:#9ec5ff;
   --code-bg:#12161c; --code-head:#1e242d; --code-text:#d5dde7;
@@ -48,13 +48,13 @@ try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("nazc
 }
 [data-theme="light"]{
   color-scheme:light;
-  --bg:#f7f7f6; --bg2:#ffffff; --bg3:#eef0f3; --panel:#ffffff;
-  --border:#cdd2d9; --line:#e1e4e9; --control-border:#7d8898;
-  --text:#20242b; --text2:#505c6c; --text3:#5c6878;
-  --accent:#465970; --accent2:#35475d; --accent-soft:#e7ecf3;
-  --user-bubble:#e9edf2; --selected:#e1e7ef; --selected-border:#697b92; --hover:#e8ecf1;
-  --input:#f5f6f8; --sidebar:#eff1f4; --header:#f7f7f6;
-  --on-primary:#ffffff; --primary:#263447;
+  --bg:#fafbfc; --bg2:#ffffff; --bg3:#eceef4; --panel:#ffffff;
+  --border:#dce0e9; --line:#e9ecf2; --control-border:#788195;
+  --text:#222531; --text2:#626879; --text3:#60697a;
+  --accent:#6653bb; --accent2:#5642aa; --accent-soft:#eeebf9;
+  --user-bubble:#eceef4; --selected:#eeebf9; --selected-border:#8370bf; --hover:#eceef4;
+  --input:#f4f5f8; --sidebar:#eef0f5; --header:#fafbfc;
+  --on-primary:#ffffff; --primary:#6653bb;
   --danger:#a92c3b; --danger-fill:#a92c3b; --on-danger:#ffffff;
   --success:#246443; --warning:#80510b; --link:#215cac;
   --code-bg:#f5f6f8; --code-head:#e9edf2; --code-text:#263447;
@@ -871,6 +871,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 @media(min-width:761px){#sidebar #sidebarPanel{background:var(--sidebar);border-right-color:var(--border);}}
 /* Artifact documents retain their own colors; never theme the preview iframe. */
 </style>
+<link rel="stylesheet" href="studio.css">
 </head>
 <body>
 <div id="app">
@@ -879,32 +880,38 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
       <button class="icon-btn menu-btn" id="menuBtn" aria-label="Menu">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
       </button>
-      <div class="header-brand"><span class="brand-mark">K</span><span>Kita Chat</span></div>
-      <div class="header-title"><strong id="chatTitle">New chat</strong><small>Kita workspace</small></div>
+      <div class="header-brand"><span class="brand-mark" data-kita-mark></span><span>Kita</span></div>
+      <div class="header-title"><strong id="chatTitle">Kita Chat</strong><small id="studioHeaderNote">A little room to think.</small></div>
       <div class="header-status" title="Connection status"><span class="dot"></span></div>
       <button class="icon-btn" id="newChatBtn" aria-label="New chat">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       </button>
     </header>
-    <div id="chatScroll"><div id="chatInner"></div></div>
-    <div id="empty">
-      <div class="logo">💬</div>
-      <h2>Kita Chat</h2>
-      <p>Your models. Your keys. Your conversations.</p>
-      <div class="sugg">
-        <button data-p="Explain quantum computing in simple terms"><span class="ico">Ask</span><span><strong>Explain a concept</strong><small>Science, code, or ideas</small></span></button>
-        <button data-p="Write a Python web scraper with requests and BeautifulSoup"><span class="ico">&lt;/&gt;</span><span><strong>Write code</strong><small>Scripts and small apps</small></span></button>
-        <button data-p="Buat saya resipi nasi goreng yang sedap"><span class="ico">Idea</span><span><strong>Cooking idea</strong><small>Resipi dan menu harian</small></span></button>
+    <div id="workspaceView" hidden tabindex="-1"></div>
+    <div id="chatScroll" tabindex="-1"><div id="chatInner"></div></div>
+    <div id="empty" tabindex="-1">
+      <div class="studio-home">
+        <div class="studio-welcome-mark" data-kita-mark></div>
+        <p class="studio-greeting" id="studioGreeting">A fresh thought starts here.</p>
+        <h2>A little space<br>for your next idea.</h2>
+        <p>Think it through. Find the words. Build something that feels like you.</p>
+        <div class="sugg">
+          <button data-p="Help me introduce a small design studio without sounding like every other agency."><span class="ico" data-kita-icon="pen"></span><span><strong>Find the right words</strong><small>Turn a rough thought into a clear story</small></span><span class="studio-arrow" data-kita-icon="arrow"></span></button>
+          <button data-p="Design a simple landing page for a creative studio. Make it feel thoughtful, natural, and a little different."><span class="ico" data-kita-icon="code"></span><span><strong>Make something real</strong><small>Go from an idea to a working first draft</small></span><span class="studio-arrow" data-kita-icon="arrow"></span></button>
+          <button data-p="How can I turn reading notes into ideas I actually use?"><span class="ico" data-kita-icon="think"></span><span><strong>Look at it differently</strong><small>A fresh angle on what you’re exploring</small></span><span class="studio-arrow" data-kita-icon="arrow"></span></button>
+        </div>
+        <div id="studioResume"></div>
       </div>
     </div>
     <div id="composerWrap">
+      <div id="studioContext" hidden></div>
       <div id="composer">
         <div id="attachmentPreview"></div>
         <div class="attachment-inline" id="attachmentInline"></div>
         <div id="inputRow">
           <button id="attachBtn" aria-label="Attach documents" title="Attach document or code"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
           <input id="fileInput" type="file" multiple accept=".pdf,.txt,.md,.markdown,.csv,.json,.js,.ts,.tsx,.jsx,.py,.java,.kt,.html,.css,.xml,.docx">
-          <textarea id="promptInput" rows="1" placeholder="Ask Kita Chat…"></textarea>
+          <textarea id="promptInput" rows="1" placeholder="What’s on your mind?" aria-label="Message Kita"></textarea>
           <button id="sendBtn" aria-label="Send">
             <svg id="sendIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
             <svg id="stopIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="5" y="5" width="14" height="14" rx="3"/></svg>
@@ -923,6 +930,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
           </div>
         </div>
       </div>
+      <p class="studio-composer-note">Your keys. Your models. Check important answers.</p>
     </div>
   </div>
 </div>
@@ -932,12 +940,13 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
   <div id="scrim"></div>
   <div id="sidebarPanel">
     <div class="side-head">
-      <strong style="font-size:17px">Kita Chat</strong>
-      <button class="icon-btn" id="closeSide"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <strong class="studio-side-brand"><span data-kita-mark></span>Kita</strong>
+      <button class="icon-btn" id="closeSide" aria-label="Close navigation"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
-    <button class="btn" style="margin:0 14px 10px; width:calc(100% - 28px)" id="sideNew">New Chat</button>
-    <div class="conv-search"><input id="convSearch" type="search" placeholder="Search conversations…" autocomplete="off"></div>
-    <div class="side-title">Conversations</div>
+    <button class="btn" id="sideNew"><span data-kita-icon="plus"></span>New chat</button>
+    <nav class="studio-nav" aria-label="Workspace"><button class="studio-nav-item active" data-studio-view="chat"><span data-kita-icon="chat"></span>Chats</button><button class="studio-nav-item" data-studio-view="projects"><span data-kita-icon="folder"></span>Projects<span id="studioProjectCount"></span></button><button class="studio-nav-item" data-studio-view="library"><span data-kita-icon="library"></span>Library<span id="studioLibraryCount"></span></button></nav>
+    <div class="studio-history-head">Recent chats</div>
+    <div class="conv-search"><input id="convSearch" type="search" placeholder="Find a conversation…" aria-label="Search conversations" autocomplete="off"></div>
     <div id="convList"></div>
     <div class="side-foot">
       <button class="icon-btn" id="settingsBtn" title="Providers"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
@@ -977,8 +986,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <div class="sheet-scrim" id="toolsSheetScrim"></div>
 <div class="sheet" id="toolsSheet" style="max-height:90dvh">
   <div class="grab"></div>
-  <div class="sheet-head"><h3>Tools & workspace</h3><button class="icon-btn" data-close="toolsSheet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
-  <div class="sheet-body" id="toolsSheetBody"></div>
+  <div class="sheet-head"><h3>Tools for this conversation</h3><button class="icon-btn" data-close="toolsSheet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body"><div id="studioChatControls"></div><div id="toolsSheetBody"></div></div>
 </div>
 
 <!-- Provider form sheet -->
@@ -1059,6 +1068,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <div class="modal-scrim" id="effortScrim"><div class="modal"><h3>Reasoning depth</h3><p style="margin:0;color:var(--text2);font-size:13px">Choose how much internal reasoning the model should use.</p><div id="effortOptions" style="display:grid;gap:8px"></div><button class="btn secondary" id="effortCancel">Cancel</button></div></div>
 <div class="modal-scrim" id="onboardingScrim"><div class="modal onboarding-modal"><div class="onboarding-mark">K</div><h3>Welcome to Kita Chat</h3><p>Your models, your keys, your conversations. Connect a provider to start chatting directly with your chosen AI service.</p><div class="settings-card"><p><strong>Private by design</strong><br>Keys stay in protected app storage on Android. Kita Chat does not operate a proxy or add a markup.</p></div><button class="btn" id="onboardingConnect">Connect a provider</button><button class="btn secondary" id="onboardingSkip">Explore first</button></div></div>
 
+<script src="studio.js"></script>
 <script>
 "use strict";
 const THINK_OPEN = "\u003Cthink\u003E", THINK_CLOSE = "\u003C/think\u003E";
@@ -1363,8 +1373,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.2.2";
-const APP_VERSION_CODE = 35;
+const APP_VERSION = "4.3.0";
+const APP_VERSION_CODE = 36;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1523,16 +1533,14 @@ function renderSidebar(){
     const group=conversationDay(c.updatedAt);
     if(group!==previousGroup){list.appendChild(el("div","conv-group-label",group));previousGroup=group;}
     const item=el("div","conv-item"+(conv&&c.id===conv.id?" active":"")+(c.pinned?" pinned":""));
-    item.innerHTML=`<span class="pin">●</span><div class="t">${esc(c.title||"New chat")}</div><div class="conv-actions"><button class="pin-btn" title="${c.pinned?"Unpin":"Pin"}">${c.pinned?"Pinned":"Pin"}</button><button class="del" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2-2H7a2 2 0 01-2-2V6"/></svg></button></div>`;
-    item.querySelector(".pin-btn").onclick=e=>{e.stopPropagation();c.pinned=!c.pinned;save();renderSidebar();haptic();};
-    item.querySelector(".del").onclick=async e=>{e.stopPropagation();if(await confirmDialog("Delete this conversation?",{title:"Delete conversation",danger:true,confirmText:"Delete"})){db.conversations=db.conversations.filter(x=>x.id!==c.id);if(conv&&conv.id===c.id)conv=null;save();renderAll();haptic();}};
-    item.ondblclick=()=>renameConversation(c);
-    item.onclick=()=>{conv=c;if(c.projectId)db.activeProjectId=c.projectId;closeSidebar();renderAll();haptic();};
+    item.innerHTML=`<button class="studio-conv-open"><span class="pin">●</span><span class="t">${esc(c.title||"New chat")}</span></button><button class="studio-conv-menu" aria-label="Manage conversation: ${esc(c.title||"New chat")}">${kitaIcon('more')}</button>`;
+    item.querySelector('.studio-conv-open').onclick=()=>studioOpenConversation(c);
+    item.querySelector('.studio-conv-menu').onclick=()=>{closeSidebar();studioConversationMenu(c);};
     list.appendChild(item);
   });
 }
-function openSidebar(){ $("#sidebar").classList.add("open"); haptic(); }
-function closeSidebar(){ $("#sidebar").classList.remove("open"); }
+function openSidebar(){ studioSidebarFocus=document.activeElement;$("#sidebar").classList.add("open");$("#menuBtn").setAttribute('aria-expanded','true');if(innerWidth<=760)$("#closeSide").focus();haptic(); }
+function closeSidebar(){ const wasOpen=$("#sidebar").classList.contains('open');$("#sidebar").classList.remove("open");$("#menuBtn").setAttribute('aria-expanded','false');if(wasOpen&&innerWidth<=760&&studioSidebarFocus?.isConnected)studioSidebarFocus.focus({preventScroll:true}); }
 
 /* ===================== Chat rendering ===================== */
 function currentModel(){ // {provider, modelId}
@@ -1574,7 +1582,7 @@ function renderChat(){
   conv.messages.forEach(msg=>inner.appendChild(msgEl(msg)));
   scrollBottom();
 }
-function renderAll(){ renderHeader(); renderSidebar(); renderChat(); }
+function renderAll(){ renderHeader(); renderSidebar(); renderChat(); renderStudioView(); }
 
 function msgEl(msg){
   const wrap = el("div","msg "+(msg.role==="user"?"user":"assistant"));
@@ -1679,6 +1687,9 @@ function refreshLivePreview(content){
 }
 function renderAssistant(bubble, msg, live){
   bubble.innerHTML = "";
+  const signature=el("div","studio-assistant-label",kitaMark()+"<span>Kita</span>");
+  if(msg.modelName){const modelLabel=el("small");modelLabel.textContent=msg.modelName;signature.appendChild(modelLabel);}
+  bubble.appendChild(signature);
   // thinking accordion
   const {think, content} = extractThink(msg.reasoning || (live? "" : "") || "");
   let reasoning = msg.reasoning || "";
@@ -1687,7 +1698,7 @@ function renderAssistant(bubble, msg, live){
   if(reasoning && reasoning.trim()){
     const box = el("div","think-box"+(msg.thinkCollapsed!==false && !live ? " collapsed":""));
     const head = el("button","think-head");
-    head.innerHTML = `<span>💭 Thinking Process${msg.thinkSecs?` (${msg.thinkSecs}s)`:""}</span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>`;
+    head.innerHTML = `<span>Thinking${msg.thinkSecs?` (${msg.thinkSecs}s)`:""}</span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>`;
     head.onclick = ()=>box.classList.toggle("collapsed");
     const body = el("div","think-body", esc(reasoning));
     box.appendChild(head); box.appendChild(body);
@@ -1939,6 +1950,7 @@ function openPreview(html, opts){
   haptic();
 }
 function closePreview(){
+  $('#previewMenu').classList.remove('open');$('#previewMenuScrim').style.display='none';
   const scr = $("#htmlPreview"); scr.classList.remove("open"); scr.setAttribute("aria-hidden","true");
   const frame=$("#previewFrame");
   frame.removeAttribute("srcdoc"); frame.src = "about:blank";
@@ -1978,10 +1990,10 @@ $("#pmDownload").onclick = ()=>{
 $("#pmReset").onclick = ()=>{ $("#previewCode").value = previewOriginal; renderPreview(); $("#previewMenu").classList.remove("open"); $("#previewMenuScrim").style.display="none"; };
 
 /* ===================== Sheets ===================== */
-function openSheet(id){ $("#"+id+"Scrim").classList.add("open"); $("#"+id).classList.add("open"); }
-function closeSheet(id){ $("#"+id+"Scrim").classList.remove("open"); $("#"+id).classList.remove("open"); }
+function openSheet(id){ document.querySelectorAll('.sheet.open').forEach(s=>{if(s.id!==id)closeSheet(s.id);});$("#"+id+"Scrim").classList.add("open"); $("#"+id).classList.add("open");studioOverlayOpened(id); }
+function closeSheet(id){ const wasOpen=$("#"+id).classList.contains('open');$("#"+id+"Scrim").classList.remove("open"); $("#"+id).classList.remove("open");if(wasOpen)studioOverlayClosed(id); }
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>closeSheet(b.dataset.close));
-document.querySelectorAll(".sheet-scrim").forEach(s=>s.onclick=()=>{ s.classList.remove("open"); document.querySelector(".sheet.open")?.classList.remove("open"); });
+document.querySelectorAll(".sheet-scrim").forEach(s=>s.onclick=()=>closeSheet(s.id.replace(/Scrim$/,'')));
 
 /* Model picker */
 function renderModelSheetLegacy(){
@@ -2018,14 +2030,14 @@ function renderModelSheet(){
   if(!db.providers.length){list.appendChild(el("div","",`<div style="color:var(--text2);text-align:center;padding:28px 0">No models yet.<br>Add a provider in Settings.</div>`));const add=el("button","btn","Add Provider");add.onclick=()=>{closeSheet("modelSheet");openProvForm(null);};list.appendChild(add);return;}
   const searchWrap=el("div","model-search");const search=el("input");search.placeholder="Search models…";searchWrap.appendChild(search);list.appendChild(searchWrap);
   const filters=el("div","model-filters");const all=[{id:"all",name:"All",count:db.providers.reduce((n,p)=>n+p.selectedModels.length,0)},...db.providers.map(p=>({id:p.id,name:p.name,count:p.selectedModels.length}))];
-  all.forEach(f=>{const b=el("button","model-filter"+(modelProviderFilter===f.id?" active":""),`${f.name} <span>${f.count}</span>`);b.onclick=()=>{modelProviderFilter=f.id;renderModelSheet();};filters.appendChild(b);});list.appendChild(filters);
+  all.forEach(f=>{const b=el("button","model-filter"+(modelProviderFilter===f.id?" active":""),`${esc(f.name)} <span>${f.count}</span>`);b.onclick=()=>{modelProviderFilter=f.id;renderModelSheet();};filters.appendChild(b);});list.appendChild(filters);
   const draw=()=>{
     list.querySelectorAll(".model-item,.model-empty,.model-section-label").forEach(x=>x.remove());
     const q=search.value.trim().toLowerCase();let visible=0;
     db.providers.filter(p=>modelProviderFilter==="all"||p.id===modelProviderFilter).forEach(p=>{
-      const models=p.selectedModels.filter(id=>!q||id.toLowerCase().includes(q)||prettyModel(id).toLowerCase().includes(q));if(!models.length)return;
-      list.appendChild(el("div","model-section-label",p.name));
-      models.forEach(mid=>{visible++;const it=el("div","model-item"+(cur&&cur.provider.id===p.id&&cur.modelId===mid?" sel":""));const context=p.modelMeta?.[mid]?.context_length||p.modelMeta?.[mid]?.contextLength;it.innerHTML=`<span class="nm"><strong>${esc(prettyModel(mid))}</strong><small>${esc(mid)}${context?` · ${Math.round(context/1000)}k context`:""}</small></span><span class="model-meta-pill">${context?Math.round(context/1000)+"k":"Model"}</span>`;if(cur&&cur.provider.id===p.id&&cur.modelId===mid)it.innerHTML+=`<svg class="check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;it.onclick=()=>{db.lastProviderId=p.id;db.lastModelId=mid;if(conv){conv.providerId=p.id;conv.modelId=mid;}save();renderHeader();renderModelSheet();closeSheet("modelSheet");if(conv)renderAll();haptic("success");};list.appendChild(it);});
+      const models=p.selectedModels.filter(id=>!q||id.toLowerCase().includes(q)||prettyModel(id).toLowerCase().includes(q)||p.name.toLowerCase().includes(q));if(!models.length)return;
+      list.appendChild(el("div","model-section-label",esc(p.name)));
+      models.forEach(mid=>{visible++;const it=el("button","model-item"+(cur&&cur.provider.id===p.id&&cur.modelId===mid?" sel":""));const context=p.modelMeta?.[mid]?.context_length||p.modelMeta?.[mid]?.contextLength;it.innerHTML=`<span class="nm"><strong>${esc(prettyModel(mid))}</strong><small>${esc(mid)}${context?` · ${Math.round(context/1000)}k context`:""}</small></span><span class="model-meta-pill">${context?Math.round(context/1000)+"k":"Model"}</span>`;if(cur&&cur.provider.id===p.id&&cur.modelId===mid)it.innerHTML+=`<svg class="check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;it.onclick=()=>{db.lastProviderId=p.id;db.lastModelId=mid;if(conv){conv.providerId=p.id;conv.modelId=mid;}save();renderHeader();renderModelSheet();closeSheet("modelSheet");if(conv)renderAll();haptic("success");};list.appendChild(it);});
     });
     if(!visible){const anyModels=db.providers.some(p=>Array.isArray(p.selectedModels)&&p.selectedModels.length);const msg=anyModels?"No matching models":"No models selected yet. Open Settings → provider → Edit and choose models.";list.appendChild(el("div","model-empty",`<div style="color:var(--text2);font-size:13px;padding:15px 3px;line-height:1.5">${esc(msg)}</div>`));}
   };search.oninput=draw;draw();
@@ -2124,42 +2136,38 @@ $("#skillFileInput").onchange=async e=>{const f=e.target.files?.[0];e.target.val
 /* ===================== Provider management ===================== */
 async function createProject(){
   const name=await promptDialog("Give this project a name", "New project", {title:"New project"}); if(!name||!name.trim())return;
-  const p={id:uid(),name:name.trim().slice(0,80),instructions:"",sourceIds:[],createdAt:Date.now(),updatedAt:Date.now()};db.projects.push(p);db.activeProjectId=p.id;save();renderAll();renderToolsSheet();toast("Project created");
+  if(!studioCanNavigate())return;
+  const p={id:uid(),name:name.trim().slice(0,80),instructions:"",sourceIds:[],createdAt:Date.now(),updatedAt:Date.now()};db.projects.push(p);save();studioView='projects';renderAll();openStudioProject(p);toast("Project created");
 }
 async function createPrompt(){
   const name=await promptDialog("Give this saved prompt a name", "New prompt", {title:"Save prompt"}); if(!name||!name.trim())return;
-  const content=input.value.trim()||await promptDialog("Write the prompt text", "", {title:"Prompt text",mode:"textarea"}); if(!content||!content.trim())return;
-  db.prompts.push({id:uid(),name:name.trim().slice(0,80),content:content.trim(),tags:[],createdAt:Date.now(),updatedAt:Date.now()});save();renderToolsSheet();toast("Prompt saved");
+  const content=await promptDialog("Review the prompt text before saving", input.value.trim(), {title:"Prompt text",mode:"textarea"}); if(!content||!content.trim())return;
+  db.prompts.push({id:uid(),name:name.trim().slice(0,80),content:content.trim(),tags:[],createdAt:Date.now(),updatedAt:Date.now()});save();if(studioView==='library')renderStudioLibrary();else renderToolsSheet();renderStudioView();toast("Prompt saved");
 }
-function usePrompt(p){input.value=p.content;input.dispatchEvent(new Event("input"));closeSheet("toolsSheet");input.focus();}
+function usePrompt(p){if(!studioCanNavigate())return;studioView='chat';renderAll();input.value=p.content;input.dispatchEvent(new Event("input"));closeSheet("toolsSheet");input.focus();}
 async function createStyle(){
   const name=await promptDialog("Give this response style a name", "Concise", {title:"New response style"});if(!name||!name.trim())return;
   const instructions=await promptDialog("Describe how the assistant should respond", "Answer clearly and concisely.", {title:"Style instructions",mode:"textarea"});if(!instructions||!instructions.trim())return;
-  const s={id:uid(),name:name.trim().slice(0,60),instructions:instructions.trim().slice(0,1000),createdAt:Date.now()};db.styles.push(s);db.activeStyleId=s.id;save();renderToolsSheet();toast("Style saved");
+  const s={id:uid(),name:name.trim().slice(0,60),instructions:instructions.trim().slice(0,1000),createdAt:Date.now()};db.styles.push(s);db.activeStyleId=s.id;if(conv)conv.styleId=s.id;save();renderToolsSheet();renderStudioContext();toast("Style saved");
 }
 function saveArtifactFromMessage(msg){
-  const code=(msg.content.match(/```([\\w+-]*)\\n([\\s\\S]*?)(?:```|$)/)||[])[2];if(!code)return;
-  const lang=(msg.content.match(/```([\\w+-]*)/)||[])[1]||"text";
-  const a={id:uid(),name:(lang==="html"?"Web artifact":"Code artifact")+" · "+new Date().toLocaleDateString(),kind:lang,content:code,conversationId:conv?.id||null,createdAt:Date.now()};db.artifacts.push(a);save();toast("Artifact saved to Kita Library");
+  const block=studioExtractCodeBlock(msg.content);
+  if(!block){toast('No code block to save');return;}
+  const {lang,code}=block;
+  if(db.artifacts.some(a=>a.content===code&&a.conversationId===conv?.id)){toast('Already saved in Library');return;}
+  const a={id:uid(),name:(conv?.title&&conv.title!=='New chat'?conv.title:(lang==='html'?'Web artifact':'Code artifact')),kind:lang,content:code,conversationId:conv?.id||null,createdAt:Date.now()};db.artifacts.push(a);save();renderStudioContext();$('#studioLibraryCount').textContent=db.prompts.length+db.artifacts.length;toast('Artifact saved to Library');
 }
 function renderToolsSheet(){
   const body=$("#toolsSheetBody");body.innerHTML="";
+  $('#studioChatControls').hidden=false;$('#toolsSheet .sheet-head h3').textContent='Tools for this conversation';
+  const projectControl=el('button','btn secondary','Project: '+esc(currentProject()?.name||'None'));projectControl.onclick=openStudioProjectPicker;body.appendChild(projectControl);
   const voice=el("div","settings-card");voice.innerHTML=`<div class="row"><div><h4>Voice</h4><p id="voiceStatus">Dictate a prompt or read the latest answer aloud.</p></div><button class="mini-btn" id="voiceInputBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0014 0M12 18v3M9 21h6"/></svg> Dictate</button></div><button class="mini-btn" id="speakLastBtn" style="margin-top:8px;width:100%"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4H4z"/><path d="M17 9a5 5 0 010 6M19.5 6.5a9 9 0 010 11"/></svg> Read latest answer</button>`;body.appendChild(voice);
   $("#voiceInputBtn").onclick=()=>startVoiceInput();$("#speakLastBtn").onclick=()=>{const last=conv?.messages?.slice().reverse().find(x=>x.role==="assistant"&&x.content);if(last)speakText(last.content);else toast("No answer to read yet");};
-  const project= currentProject();
-  const projectBox=el("div","settings-card");projectBox.innerHTML=`<div class="row"><div><h4>Project</h4><p>${project?esc(project.name):"No project selected"}</p></div><button class="mini-btn" id="newProjectTool">New</button></div>`;body.appendChild(projectBox);
-  const projects=el("select");projects.innerHTML=`<option value="">No project</option>`+db.projects.map(p=>`<option value="${esc(p.id)}" ${p.id===db.activeProjectId?"selected":""}>${esc(p.name)}</option>`).join("");projects.onchange=()=>{db.activeProjectId=projects.value||null;save();renderAll();renderToolsSheet();};body.appendChild(projects);$("#newProjectTool").onclick=createProject;
-  if(project){const inst=el("textarea");inst.placeholder="Project instructions…";inst.value=project.instructions||"";inst.onchange=()=>{project.instructions=inst.value.slice(0,6000);project.updatedAt=Date.now();save();};body.appendChild(inst);}
   const styleBox=el("div","settings-card");styleBox.innerHTML=`<div class="row"><div><h4>Response style</h4><p>${currentStyle()?esc(currentStyle().name):"Default"}</p></div><button class="mini-btn" id="newStyleTool">New</button></div>`;body.appendChild(styleBox);
-  const styles=el("select");styles.innerHTML=`<option value="">Default</option>`+db.styles.map(s=>`<option value="${esc(s.id)}" ${s.id===db.activeStyleId?"selected":""}>${esc(s.name)}</option>`).join("");styles.onchange=()=>{db.activeStyleId=styles.value||null;save();renderToolsSheet();};body.appendChild(styles);$("#newStyleTool").onclick=createStyle;
-  const promptLabel=el("div","settings-section-label","Prompt library");body.appendChild(promptLabel);
-  const promptActions=el("div","toolbar-row");const saveP=el("button",null,"Save prompt");saveP.onclick=createPrompt;promptActions.appendChild(saveP);body.appendChild(promptActions);
-  db.prompts.slice().reverse().slice(0,12).forEach(p=>{const r=el("div","settings-row");r.innerHTML=`<div class="sr-text"><strong>${esc(p.name)}</strong><small>${esc(p.content.slice(0,100))}</small></div>`;const use=el("button","mini-btn","Use");use.onclick=()=>usePrompt(p);r.appendChild(use);body.appendChild(r);});
-  const artifactLabel=el("div","settings-section-label","Artifacts");body.appendChild(artifactLabel);
-  if(!db.artifacts.length) body.appendChild(el("div","hint","Save HTML and code outputs from a response to keep them in your local library."));
-  db.artifacts.slice().reverse().slice(0,12).forEach(a=>{const r=el("div","settings-row");r.innerHTML=`<div class="sr-text"><strong>${esc(a.name)}</strong><small>${esc(a.kind)} · ${new Date(a.createdAt).toLocaleDateString()}</small></div>`;const view=el("button","mini-btn","Open");view.onclick=()=>openPreview(a.content,{live:false});r.appendChild(view);body.appendChild(r);});
+  const styles=el("select");styles.setAttribute('aria-label','Response style');styles.innerHTML=`<option value="">Default</option>`+db.styles.map(s=>`<option value="${esc(s.id)}" ${s.id===db.activeStyleId?"selected":""}>${esc(s.name)}</option>`).join("");styles.onchange=()=>{db.activeStyleId=styles.value||null;if(conv)conv.styleId=db.activeStyleId;save();renderToolsSheet();renderStudioContext();};body.appendChild(styles);$("#newStyleTool").onclick=createStyle;
+  const library=el('button','btn secondary','Open prompt & artifact library');library.onclick=()=>{closeSheet('toolsSheet');studioNavigate('library');};body.appendChild(library);
   const paramLabel=el("div","settings-section-label","Model parameters");body.appendChild(paramLabel);
-  const m=currentModel(),params=modelParameters(m);const pbox=el("div","settings-card");pbox.innerHTML=`<p><strong>${m?esc(prettyModel(m.modelId)):"Select a model"}</strong></p><p class="hint">Output length is automatic: Kita Chat always asks for the largest budget the model allows (<strong>${params.max_tokens}</strong> tokens) and adjusts itself if a provider rejects it.</p>`;[['temperature','Temperature',0,2,.1],['top_p','Top-p',0,1,.05]].forEach(([key,label,min,max,step])=>{const l=el("label","fld",label);const range=el("input");range.type="range";range.min=min;range.max=max;range.step=step;range.value=params[key];const val=el("span","hint",String(params[key]));range.oninput=()=>{val.textContent=range.value;};range.onchange=()=>{if(m){const id=m.provider.id+":"+m.modelId;db.parametersByModel[id]={...params,[key]:Number(range.value)};save();}};l.appendChild(range);l.appendChild(val);pbox.appendChild(l);});body.appendChild(pbox);
+  const m=currentModel(),params=modelParameters(m);const pbox=el("div","settings-card");pbox.innerHTML=`<p><strong>${m?esc(prettyModel(m.modelId)):"Select a model"}</strong></p><p class="hint">Output length is automatic: Kita Chat always asks for the largest budget the model allows (<strong>${params.max_tokens}</strong> tokens) and adjusts itself if a provider rejects it.</p>`;[['temperature','Temperature',0,2,.1],['top_p','Top-p',0,1,.05]].forEach(([key,label,min,max,step])=>{const l=el("label","fld",label);const range=el("input");range.type="range";range.min=min;range.max=max;range.step=step;range.value=params[key];const val=el("span","hint",String(params[key]));range.oninput=()=>{val.textContent=range.value;};range.onchange=()=>{if(m){const id=m.provider.id+":"+m.modelId;db.parametersByModel[id]={...modelParameters(m),[key]:Number(range.value)};save();}};l.appendChild(range);l.appendChild(val);pbox.appendChild(l);});body.appendChild(pbox);
 }
 function speakText(text){try{if("speechSynthesis" in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text||"").replace(/```[\s\S]*?```/g,"code block").slice(0,12000));speechSynthesis.speak(u);toast("Reading answer aloud");}else toast("Text-to-speech is not available");}catch(e){toast("Voice output unavailable");}}
 let voiceRecognition=null;
@@ -2167,7 +2175,7 @@ function startVoiceInput(){
   if(typeof window.NazVoice==="object"&&NazVoice.start){window.nazVoiceStatus=(s)=>{const x=$("#voiceStatus");if(x)x.textContent=s==="listening"?"Listening… speak now":"Voice: "+s;};window.nazVoiceResult=(text,done)=>{if(text){input.value=text;input.dispatchEvent(new Event("input"));}if(done)toast("Dictation ready");};NazVoice.start();return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast("Voice input is only available in the Android app");return;}voiceRecognition?.stop();voiceRecognition=new SR();voiceRecognition.interimResults=true;voiceRecognition.lang=document.documentElement.lang||"ms-MY";voiceRecognition.onresult=e=>{input.value=Array.from(e.results).map(r=>r[0].transcript).join("");input.dispatchEvent(new Event("input"));};voiceRecognition.onend=()=>toast("Dictation ready");voiceRecognition.start();toast("Listening…");
 }
-function openToolsSheet(){renderToolsSheet();openSheet("toolsSheet");}
+function openToolsSheet(){syncToggles();renderToolsSheet();openSheet("toolsSheet");}
 
 function settingsIcon(kind){
   const paths={providers:'<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 5V3h8v2M8 10h8M8 14h5"/>',workspace:'<path d="M4 5h6l2 2h8v12H4z"/><path d="M8 12h8M8 16h5"/>',skills:'<path d="M12 3l1.8 5.2L19 10l-4 3.5 1.1 5.2L12 16l-4.1 2.7L9 13.5 5 10l5.2-1.8L12 3z"/>',appearance:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5v.2h-4v-.2a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 005.6 15a1.6 1.6 0 00-1.5-1H4v-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1L8 4.3l.1.1a1.6 1.6 0 001.8.3 1.6 1.6 0 001-1.5V3h4v.2a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 00-.3 1.8 1.6 1.6 0 001.5 1h.2v4h-.2a1.6 1.6 0 00-1.5 1z"/>',about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'};
@@ -2194,20 +2202,14 @@ function renderSettingsHub(){
   const group=el("div","settings-hub-group");
   const models=(db.providers||[]).reduce((n,p)=>n+(p.selectedModels||[]).length,0);
   group.appendChild(settingsHubRow("providers","Providers",`${db.providers.length} active provider${db.providers.length===1?"":"s"} · ${models} models`,renderProvidersSubView));
-  group.appendChild(settingsHubRow("workspace","Workspace",`${db.projects.length} projects · ${db.prompts.length} prompts · ${db.artifacts.length} artifacts`,()=>{closeSheet("setSheet");openToolsSheet();}));
+  group.appendChild(settingsHubRow("workspace","Workspace",`${db.projects.length} projects · ${db.prompts.length} prompts · ${db.artifacts.length} artifacts`,renderStudioWorkspaceSettings));
   group.appendChild(settingsHubRow("skills","Skill Library",`${activeSkills().length} active skills · Pack v${skillPack.packVersion}`,()=>{closeSheet("setSheet");skillLibraryOpen=true;renderSkillSheet();openSheet("skillSheet");}));
-  group.appendChild(settingsHubRow("appearance","Appearance",`${db.theme==="light"?"Light":"Dark"} theme · ${db.reasoningEffort} reasoning`,()=>renderSettingsAppearance()));
+  group.appendChild(settingsHubRow("appearance","Appearance",`${studioThemeName()} theme · ${db.textSize==="large"?"Larger":"Default"} conversation text`,()=>renderSettingsAppearance()));
   group.appendChild(settingsHubRow("about","About",`Kita Chat ${APP_VERSION} · Private BYOK`,()=>renderSettingsAbout()));
   list.appendChild(group);
   const note=el("div","settings-hub-note","Providers, skills and workspace tools open in their own focused views.");list.appendChild(note);
 }
-function renderSettingsAppearance(){
-  renderSettingsPage("Appearance",null,null,list=>{
-    const card=el("div","settings-hub-group");
-    const theme=el("div","settings-row");theme.innerHTML=`<div class="sr-text"><strong>Theme</strong><small>${db.theme==="light"?"Light":"Dark"}</small></div>`;const tb=el("button","mini-btn",db.theme==="light"?"Light":"Dark");tb.onclick=()=>{$("#themeBtn").click();renderSettingsAppearance();};theme.appendChild(tb);card.appendChild(theme);
-    const effort=el("div","settings-row");effort.innerHTML=`<div class="sr-text"><strong>Reasoning depth</strong><small>${db.reasoningEffort}</small></div>`;const eb=el("button","mini-btn",db.reasoningEffort);eb.onclick=()=>{$("#effortBtn").click();};effort.appendChild(eb);card.appendChild(effort);list.appendChild(card);
-  });
-}
+function renderSettingsAppearance(){renderStudioAppearance();}
 function renderSettingsAbout(){
   renderSettingsPage("About",null,null,list=>{const card=el("div","settings-card");card.innerHTML=`<h4>Kita Chat ${APP_VERSION}</h4><p>Private, local-first Android BYOK chat for OpenAI-compatible providers.</p><p style="margin-top:10px">API keys stay in Android Keystore storage. Conversations and workspaces remain on this device.</p>`;list.appendChild(card);const update=el("button","btn secondary","Check for updates");update.id="checkUpdateBtn";update.onclick=checkForUpdate;list.appendChild(update);const status=el("div","update-badge");status.id="updateStatus";status.style.display="none";list.appendChild(status);});
 }
@@ -2770,6 +2772,7 @@ function ensureConv(){
 }
 function setSendMode(gen){
   generating = gen;
+  $("#sendBtn").setAttribute("aria-label",gen?"Stop response":"Send message");
   $("#sendBtn").classList.toggle("stop", gen);
   $("#sendIcon").style.display = gen?"none":"";
   $("#stopIcon").style.display = gen?"":"none";
@@ -2787,6 +2790,7 @@ function apiContent(text, attachments){
 async function send(text, opts){
   opts = opts||{};
   if(generating) return;
+  studioView="chat";
   const model = currentModel();
   if(!model){ toast("Add a provider & select a model first"); openSidebar(); setTimeout(()=>$("#settingsBtn").click(),300); return; }
   if(HAS_NATIVE && !hasProviderSecret(model.provider)){ toast("Provider key missing — open Settings and enter it again"); openSidebar(); setTimeout(()=>$("#settingsBtn").click(),300); return; }
@@ -2800,7 +2804,7 @@ async function send(text, opts){
   conv_.updatedAt = Date.now(); save();
 
   const usedSkills=opts.review?activeSkills().filter(s=>["code-review","testing"].includes(s.id)):selectSkills(text,model);
-  const aiMsg = { id:uid(), role:"assistant", reasoning:"", content:"", sources:[], usedSkills:usedSkills.map(s=>s.id), timestamp:Date.now(), thinking:db.thinking };
+  const aiMsg = { id:uid(), role:"assistant", reasoning:"", content:"", sources:[], usedSkills:usedSkills.map(s=>s.id), timestamp:Date.now(), thinking:db.thinking, modelName:prettyModel(model.modelId) };
   conv_.messages.push(aiMsg);
   renderAll();
   setSendMode(true);
@@ -3281,6 +3285,9 @@ function syncToggles(){
   const effort=db.reasoningEffort[0].toUpperCase()+db.reasoningEffort.slice(1);
   $("#effortBtn").innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 4a8 8 0 00-8 8 8 8 0 008 8 8 8 0 008-8 8-8 0 00-8-8z"/><path d="M12 4a8 8 0 018 8h-8V4z" fill="currentColor" stroke="none" opacity=".55"/></svg><span class="tool-label">${effort}</span>`;
   $("#effortBtn").title = "Reasoning depth: "+effort;
+  renderStudioContext();
+  $("#tglThink").setAttribute("aria-pressed",String(db.thinking));
+  $("#tglSearch").setAttribute("aria-pressed",String(db.search));
 }
 $("#tglThink").onclick = ()=>{ db.thinking=!db.thinking; save(); syncToggles(); };
 $("#tglSearch").onclick = ()=>{ db.search=!db.search; save(); syncToggles(); };
@@ -3296,18 +3303,18 @@ $("#effortScrim").onclick=e=>{if(e.target.id==="effortScrim")$("#effortScrim").c
 $("#menuBtn").onclick = openSidebar;
 $("#closeSide").onclick = closeSidebar;
 $("#scrim").onclick = closeSidebar;
-$("#sideNew").onclick = ()=>{ conv=null; closeSidebar(); renderAll(); };
-$("#newChatBtn").onclick = ()=>{ conv=null; renderAll(); };
+$("#sideNew").onclick = ()=>studioNewChat();
+$("#newChatBtn").onclick = ()=>studioNewChat();
 $("#bottomModelBtn").onclick = ()=>{ renderModelSheet(); openSheet("modelSheet"); };
 $("#skillBtn").onclick=openSkillPicker;
 $("#moreToolsBtn").onclick=openToolsSheet;
 $("#settingsBtn").onclick = ()=>{ closeSidebar(); renderProvList(); openSheet("setSheet"); };
 $("#themeBtn").onclick = ()=>{
-  db.theme = db.theme==="dark"?"light":"dark";
+  db.theme = document.documentElement.dataset.theme==="dark"?"light":"dark";
   applyTheme(); save();
 };
 function applyTheme(){
-  const light = db.theme === "light";
+  const light = db.theme === "light" || (db.theme === "system" && !studioSystemIsDark());
   document.documentElement.dataset.theme = light ? "light" : "dark";
   const palette = getComputedStyle(document.documentElement);
   const bg = palette.getPropertyValue("--bg").trim();
@@ -3322,7 +3329,7 @@ function applyTheme(){
 
 $("#onboardingConnect").onclick=()=>{db.onboardingDone=true;save();$("#onboardingScrim").classList.remove("open");openSidebar();setTimeout(()=>$("#settingsBtn").click(),180);};
 $("#onboardingSkip").onclick=()=>{db.onboardingDone=true;save();$("#onboardingScrim").classList.remove("open");};
-applyTheme(); migrateLegacySecrets(); syncToggles(); renderAll();
+initializeStudio(); applyTheme(); migrateLegacySecrets(); syncToggles(); renderAll();
 if(!db.onboardingDone && !db.providers.length) setTimeout(()=>$("#onboardingScrim").classList.add("open"),450);
 refreshSkillPack(true);
 </script>

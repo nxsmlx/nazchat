@@ -5,7 +5,8 @@ const assert=require('assert');
   const b=await launch();
   const p=await b.newPage({viewport:{width:360,height:800}});
   const errors=[];p.on('pageerror',e=>errors.push(e.message));
-  await p.goto(appUrl);
+  // Optional font loads must not delay DOM-only checks; app scripts remain blocking.
+  await p.goto(appUrl,{waitUntil:'domcontentloaded',timeout:60000});
   await p.waitForTimeout(250);
   const mobile=await p.evaluate(()=>{
     const root=getComputedStyle(document.documentElement), modal=getComputedStyle(document.querySelector('.modal'));
@@ -20,12 +21,12 @@ const assert=require('assert');
     };
   });
   assert(mobile.overflow,'mobile layout has horizontal overflow');
-  assert(mobile.bg==='#111318','layered graphite background missing: '+mobile.bg);
-  assert(mobile.accent==='#aeb9c8','muted accent missing: '+mobile.accent);
-  assert(mobile.modalRadius==='14px','dialog radius is not consistent');
+  assert(mobile.bg==='#171920','Studio ink background missing: '+mobile.bg);
+  assert(mobile.accent==='#bdadff','Studio iris accent missing: '+mobile.accent);
+  assert(mobile.modalRadius==='16px','dialog radius is not consistent: '+mobile.modalRadius);
   assert(!mobile.modalHasGradient,'dialog contains a gradient');
   assert(mobile.svgTools===5,'tool icon family incomplete: '+mobile.svgTools);
-  assert(mobile.sendWidth>=36&&mobile.sendWidth<=44,'send control is not touch-sized');
+  assert(mobile.sendWidth>=44&&mobile.sendWidth<=52,'send control is not touch-sized');
   console.log('PASS mobile minimalist visual tokens and controls');
 
   await p.setViewportSize({width:1440,height:900});await p.waitForTimeout(150);
@@ -60,7 +61,7 @@ const assert=require('assert');
   await p.evaluate(()=>{openSheet('modelSheet')});await p.waitForTimeout(100);
   assert(await p.locator('#modelSheet.open').count(),'model sheet did not open');
   const sheet=await p.evaluate(()=>{const s=getComputedStyle(document.querySelector('#modelSheet'));return {radius:s.borderTopLeftRadius,shadow:s.boxShadow};});
-  assert(sheet.radius==='16px','sheet is not minimalist');
+  assert(sheet.radius==='22px','sheet does not match the Studio system: '+sheet.radius);
   await p.evaluate(()=>closeSheet('modelSheet'));
   await p.evaluate(()=>{renderProvList();openSheet('setSheet');});await p.waitForTimeout(100);
   const hub=await p.evaluate(()=>({title:document.querySelector('#setSheetTitle').textContent,rows:document.querySelectorAll('.settings-hub-row').length,providerCards:document.querySelectorAll('.provider-card').length}));

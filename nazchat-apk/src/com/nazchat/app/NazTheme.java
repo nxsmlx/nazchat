@@ -3,6 +3,7 @@ package com.nazchat.app;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -17,10 +18,10 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import java.lang.ref.WeakReference;
 
-/** Palette-only bridge: no URLs, scripts, secrets or preference reads are exposed to JS. */
+/** Theme-only bridge: validated palette writes and an OS night-mode boolean; no secrets or URLs. */
 public final class NazTheme {
     private static final String PREFS = "naz_theme";
-    private static final Palette DEFAULT = new Palette(false, "#111318", "#181b22", "#f3f4f6");
+    private static final Palette DEFAULT = new Palette(false, "#171920", "#1e212a", "#edf0f7");
     private final WeakReference<Activity> activity;
     private final WeakReference<WebView> web;
     private final SharedPreferences preferences;
@@ -29,6 +30,7 @@ public final class NazTheme {
     private Palette pending;
     private boolean posted;
     private boolean closed;
+    private volatile boolean systemDark;
 
     // At most one queued update and one pending palette, even if JS calls sync repeatedly.
     private final Runnable applyPending = new Runnable() {
@@ -63,9 +65,23 @@ public final class NazTheme {
         activity = new WeakReference<Activity>(owner);
         web = new WeakReference<WebView>(view);
         preferences = preferences(owner);
+        systemDark = (owner.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
         applied = load(owner);
         view.setBackgroundColor(applied.background);
         applyWindow(owner, applied);
+    }
+
+    /** OS configuration, not WebView's fixed Theme.Black media-query preference. */
+    @JavascriptInterface
+    public boolean isSystemDark() { return systemDark; }
+
+    /** Main UI thread only; no URLs or arbitrary input cross this bridge. */
+    void refreshSystemTheme() {
+        Activity owner = activity.get();
+        WebView view = web.get();
+        if (closed || owner == null || view == null || owner.isFinishing() || owner.isDestroyed()) return;
+        systemDark = (owner.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        view.evaluateJavascript("if(window.nazSystemThemeChanged)window.nazSystemThemeChanged();", null);
     }
 
     @JavascriptInterface

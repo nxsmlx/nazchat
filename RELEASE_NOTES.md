@@ -1,3 +1,16 @@
+# Kita Chat 4.3.0 — Kita Studio
+
+- A new calm Studio interface: mist/ink surfaces, iris accent, DM Sans, readable conversation layout and a simpler composer
+- Dedicated Chats, Projects and Library with real saved conversations, project instructions, prompts and artifacts — not prototype demo content
+- Searchable provider/model picker and grouped Tools for web search, thinking, reasoning depth, skills, voice, response styles and model parameters
+- Light, Dark and System appearance with larger conversation text; System mode uses Android configuration in the APK
+- Project reassignment without deleting messages; prompt-content review before saving; fenced-code artifacts retain embedded backticks and avoid duplicate saves
+- Responsive drawers/sheets, keyboard focus/Escape handling and improved mobile touch targets
+- Existing `nazchat_v1` data and native provider-key references are retained; no new database or account is required
+- Version code **36**, package `com.nazchat.app`; designed for an original-key-signed in-place update from v4.2.2
+
+This is a GitHub Android release, not a Google Play production approval. Browser regression checks and mocked native callbacks do not replace device tests. Physical-device installation, Android keyboard/Back, TalkBack, native networking and lifecycle behavior have not been verified by the build agent. The previously identified production-hardening work remains separate.
+
 # Kita Chat 4.2.2 — Light and dark theme consistency
 
 - Unified semantic colors across chat, composer, sidebar, Settings, providers, model picker, Skill Library, dialogs and preview chrome
