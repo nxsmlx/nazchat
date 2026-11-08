@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name=\"viewport\" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#171920">
 <meta name="color-scheme" content="dark light">
 <script>
@@ -1370,11 +1370,10 @@ function estimateCost(model,inputTokens,outputTokens){const p=modelPricing(model
 
 let conv = null;            // active conversation
 let generating = false;
-let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.3.1";
-const APP_VERSION_CODE = 37;
+const APP_VERSION = "4.4.0";
+const APP_VERSION_CODE = 38;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1429,6 +1428,16 @@ const esc = s => s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"
 
 /* ===================== Markdown rendering ===================== */
 marked.setOptions({ breaks:true, gfm:true });
+/* Keep the fence info string on the code element so real file names survive parsing. */
+try{
+  marked.use({renderer:{code(code, info){
+    if(code && typeof code === 'object'){ info = code.lang; code = code.text; }
+    const infoText = String(info||'').trim();
+    const lang = infoText.split(/\s+/)[0] || '';
+    const cls = (infoText || lang).trim().replace(/["]/g, '&quot;');
+    return '<pre><code class="'+cls+'">'+esc(String(code||''))+'</code></pre>\n';
+  }}});
+}catch(e){}
 function extractThink(text){
   // returns {think, content} — handles unclosed <think> during streaming
   let think="", content=text;
@@ -1446,45 +1455,57 @@ function renderMarkdown(src){
   return html;
 }
 // post-process: wrap code blocks, add copy buttons, target=_blank, katex
+/* File name for a fenced block: "```js title=app.js" / "```js app.js" / first comment line. */
+function codeFileName(lang, raw){
+  const probe=String(raw||"").split("\n").slice(0,3).join("\n");
+  const comment=(probe.match(/^\s*(?:\/\/|#|\/\*|<!--)\s*(?:file|filename|path)\s*[:=]\s*([\w./-]+)/i)||[])[1]
+    || (probe.match(/^\s*(?:<!--\s*)?([\w./-]+\.(?:html?|css|js|jsx|ts|tsx|py|json|md|java|kt|sh|sql|yml|yaml))\s*(?:-->)?\s*$/i)||[])[1];
+  if(comment) return comment;
+  const ext={html:"html",htm:"html",xhtml:"html",css:"css",json:"json",python:"py",py:"py",javascript:"js",js:"js",typescript:"ts",ts:"ts",jsx:"jsx",tsx:"tsx",markdown:"md",md:"md",bash:"sh",shell:"sh",sh:"sh",sql:"sql",java:"java",kotlin:"kt",kt:"kt",xml:"xml",yaml:"yml",yml:"yml",text:"txt"}[lang]||"txt";
+  return "snippet."+ext;
+}
+function downloadText(name, text){
+  try{
+    const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob); a.download=String(name||"kita-snippet.txt");
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast("Downloaded "+a.download);
+  }catch(e){ toast("Could not download this file"); }
+}
+function lineTable(html, count){
+  const numbers=[];
+  for(let i=1;i<=count;i++) numbers.push(`<span>${i}</span>`);
+  return `<table class="code-table"><tbody><tr><td class="code-gutter" aria-hidden="true">${numbers.join("")}</td><td class="code-source hl"><pre>${html}</pre></td></tr></tbody></table>`;
+}
+/* A fenced block can carry a file name in its info string (“```js app.js”). */
+function fenceFileName(code){
+  const token=String(code.className||"").replace(/language-/,"").trim().split(/\s+/).filter(Boolean);
+  const named=token.slice(1).find(part=>/^[\w./-]+\.[a-z0-9]{1,5}$/i.test(part));
+  return named||"";
+}
+/* post-process: stable code viewer with line numbers, file tabs, copy and download. */
 function enhance(container, opts){
   const light = !!(opts && opts.light);
+  // Multi-file answers share one tabbed viewer instead of a stack of separate frames.
+  const blocks = [...container.querySelectorAll("pre > code")];
+  const filtered = blocks.filter(code=>{
+    const pre=code.parentElement; return !(pre.parentElement && pre.parentElement.classList.contains("code-wrap"));
+  });
+  if(!light && blocks.length>1){
+    buildCodeTabs(container, filtered);
+    filtered.forEach(code=>{
+      const pre=code.parentElement;
+      if(pre.parentElement && pre.parentElement.classList.contains("code-collapsed") && !pre.closest(".code-tabs-panel")) pre.parentElement.style.display="none";
+    });
+  }
   container.querySelectorAll("pre > code").forEach(code=>{
     const pre = code.parentElement;
     if(pre.parentElement && pre.parentElement.classList.contains("code-wrap")) return;
-    const lang = ((code.className.match(/language-([\w+-]+)/)||[])[1] || "text").toLowerCase();
-    const rawCode = code.textContent || "";
-    if(light){ code.innerHTML = esc(rawCode); return; }
-    const lines = rawCode.replace(/\n$/,"").split("\n").length;
-    let highlighted = esc(rawCode);
-    try{
-      if(lang!=="text" && hljs.getLanguage(lang)) highlighted = hljs.highlight(rawCode,{language:lang,ignoreIllegals:true}).value;
-      else highlighted = hljs.highlightAuto(rawCode).value;
-    }catch(e){}
-    code.innerHTML = highlighted;
-    const wrap = el("div","code-wrap collapsed");
-    const head = el("div","code-head");
-    const meta = el("div","code-meta",`<span>&lt;/&gt; ${esc(lang)}</span><span class="code-lines">· ${lines} line${lines===1?"":"s"}</span>`);
-    head.appendChild(meta);
-    const btnWrap = el("div","code-actions");
-    const toggle = el("button","code-toggle","Expand ⌄");
-    toggle.onclick = () => {
-      const collapsed = wrap.classList.toggle("collapsed");
-      toggle.innerHTML = collapsed ? "Expand ⌄" : "Collapse ⌃";
-    };
-    btnWrap.appendChild(toggle);
-    if(lang === "html" || lang === "xhtml" || lang === "htm"){
-      const pv = el("button","preview-btn","Preview");
-      pv.title = "Preview this HTML";
-      pv.onclick = ()=>openPreview(rawCode, {live:false});
-      btnWrap.appendChild(pv);
-    }
-    const btn = el("button","copy-btn");
-    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
-    btn.onclick = ()=>copyText(rawCode, btn, "✓ Copied!");
-    btnWrap.appendChild(btn);
-    head.appendChild(btnWrap);
-    pre.replaceWith(wrap);
-    wrap.appendChild(head); wrap.appendChild(pre);
+    if(pre.closest(".code-tabs-panel")) return;
+    if(light){ code.innerHTML = esc(code.textContent||""); return; }
+    decorateCodeBlock(pre, code, {});
   });
   container.querySelectorAll("a").forEach(a=>{ a.target="_blank"; a.rel="noopener"; });
   container.querySelectorAll("code:not(pre code)").forEach(c=>{ if(!c.classList.contains("inline-code")) c.classList.add("inline-code"); });
@@ -1493,7 +1514,84 @@ function enhance(container, opts){
     renderMathInElement(container, {delimiters:[{left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false}], throwOnError:false});
   }catch(e){}
 }
-
+function decorateCodeBlock(pre, code, opts){
+  const fenceInfo = String(code.className||"").trim().split(/\s+/).filter(Boolean);
+  const lang = (fenceInfo[0] || opts.lang || "text").toLowerCase();
+  const rawCode = code.textContent || "";
+  if(!rawCode.trim()) return;
+  const count = String(rawCode).replace(/\r\n/g,"\n").replace(/\n+$/,"").split("\n").length;
+  let highlighted = esc(rawCode);
+  try{
+    if(lang!=="text" && hljs.getLanguage(lang)) highlighted = hljs.highlight(rawCode,{language:lang,ignoreIllegals:true}).value;
+    else highlighted = hljs.highlightAuto(rawCode).value;
+  }catch(e){}
+  const name = opts.name || fenceFileName(code) || codeFileName(lang || opts.lang || "", rawCode);
+  const wrap = el("div","code-wrap collapsed");
+  const head = el("div","code-head");
+  const meta = el("div","code-meta code-file");
+  meta.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9ZM14 2v7h7"/></svg><span class="code-name" title="${esc(name)}">${esc(name)}</span><span class="code-lines">${esc(lang)} · ${count} line${count===1?"":"s"}</span>`;
+  head.appendChild(meta);
+  const btnWrap = el("div","code-actions");
+  const toggle = el("button","code-toggle","Expand");
+  toggle.setAttribute("aria-label","Expand code");
+  toggle.onclick = ()=>{
+    const collapsed = wrap.classList.toggle("collapsed");
+    toggle.textContent = collapsed ? "Expand" : "Collapse";
+    toggle.setAttribute("aria-label", collapsed ? "Expand code" : "Collapse code");
+  };
+  btnWrap.appendChild(toggle);
+  if(lang === "html" || lang === "xhtml" || lang === "htm"){
+    const pv = el("button","preview-btn","Preview");
+    pv.onclick = ()=>openPreview(rawCode, {live:false});
+    btnWrap.appendChild(pv);
+  }
+  const dl = el("button","copy-btn","Download");
+  dl.setAttribute("aria-label","Download "+name);
+  dl.onclick = ()=>downloadText(name, rawCode);
+  btnWrap.appendChild(dl);
+  const btn = el("button","copy-btn");
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
+  btn.onclick = ()=>copyText(rawCode, btn, "✓ Copied!");
+  btnWrap.appendChild(btn);
+  head.appendChild(btnWrap);
+  const body = el("div","code-body");
+  body.innerHTML = lineTable(highlighted, count);
+  pre.replaceWith(wrap);
+  wrap.appendChild(head); wrap.appendChild(body);
+  if(opts.defaultOpen){ wrap.classList.remove("collapsed"); toggle.textContent="Collapse"; }
+  return wrap;
+}
+function buildCodeTabs(container, blocks){
+  const first = blocks[0].parentElement;
+  const tabs = el("div","code-tabs"); tabs.setAttribute("role","tablist"); tabs.setAttribute("aria-label","Generated files");
+  const panes = el("div","code-tabs-panes");
+  const panelWrap = el("div","code-wrap"); panelWrap.style.overflow="visible";
+  const list = [];
+  blocks.forEach((code,i)=>{
+    const pre = code.parentElement;
+    const lang = (String(code.className||"").trim().split(/\s+/)[0] || "text").toLowerCase();
+    const raw = code.textContent || "";
+    const name = fenceFileName(code) || codeFileName(lang, raw);
+    const pane = el("div","code-tab-pane"); pane.hidden = i!==0;
+    const holder = el("pre"); const clone = document.createElement("code");
+    clone.className = code.className; clone.textContent = raw;
+    holder.appendChild(clone); pane.appendChild(holder);
+    panes.appendChild(pane); list.push({code:clone, name, raw, pane});
+    const tab = el("button","code-tab", name);
+    tab.setAttribute("role","tab"); tab.setAttribute("aria-selected", String(i===0));
+    tab.onclick = ()=>{
+      list.forEach((entry,j)=>{ entry.pane.hidden = j!==i; });
+      tabs.querySelectorAll(".code-tab").forEach((t,j)=>t.setAttribute("aria-selected", String(j===i)));
+    };
+    tabs.appendChild(tab);
+  });
+  container.insertBefore(panelWrap, first);
+  container.insertBefore(tabs, panelWrap);
+  panelWrap.appendChild(tabs); panelWrap.appendChild(panes);
+  list.forEach(entry=>{ entry.pane.hidden=false; decorateCodeBlock(entry.pane.firstChild, entry.code, {name:entry.name}); });
+  list.forEach((entry,i)=>{ entry.pane.hidden = i!==0; });
+  blocks.forEach(code=>{ const pre=code.parentElement; if(pre && pre.parentElement===container) pre.remove(); });
+}
 /* ===================== Sidebar / Conversations ===================== */
 function renderSidebarLegacy(){
   const list = $("#convList"); list.innerHTML = "";
@@ -1690,45 +1788,60 @@ function renderAssistant(bubble, msg, live){
   const signature=el("div","studio-assistant-label",kitaMark()+"<span>Kita</span>");
   if(msg.modelName){const modelLabel=el("small");modelLabel.textContent=msg.modelName;signature.appendChild(modelLabel);}
   bubble.appendChild(signature);
-  // thinking accordion
-  const {think, content} = extractThink(msg.reasoning || (live? "" : "") || "");
-  let reasoning = msg.reasoning || "";
-  if(live){ reasoning = msg.reasoning || ""; }
-  else if(!msg.reasoning && msg.content){ const p = extractThink(msg.content); if(p.think){ reasoning = p.think; } }
-  if(reasoning && reasoning.trim()){
-    const box = el("div","think-box"+(msg.thinkCollapsed!==false && !live ? " collapsed":""));
-    const head = el("button","think-head");
-    head.innerHTML = `<span>Thinking${msg.thinkSecs?` (${msg.thinkSecs}s)`:""}</span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>`;
-    head.onclick = ()=>box.classList.toggle("collapsed");
-    const body = el("div","think-body", esc(reasoning));
-    box.appendChild(head); box.appendChild(body);
+  // Unified status bar: thinking, tool activity and incremental execution in one compact place.
+  const showStatus = live || (msg.phases && msg.phases.state && msg.phases.state!=="done") || !!(msg.reasoning && String(msg.reasoning).trim());
+  if(showStatus){
+    const box = el("div","run-status");
+    const state = msg.phases ? msg.phases.state : (msg.content ? "execute" : msg.reasoning ? "think" : "waiting");
+    const busy = !!live && state!=="done" && state!=="incomplete";
+    const label = msg.phases ? phaseStatusLabel(state) : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider");
+    const parts = msg.phases && msg.phases.parts && msg.phases.parts.length ? msg.phases.parts : null;
+    const head = el("button","run-summary");
+    head.setAttribute("aria-expanded", String(!!msg._runOpen));
+    head.innerHTML = `<span class="run-dot${busy?" busy":""}" aria-hidden="true"></span><span class="run-label">${esc(label)}</span>`
+      + (parts ? `<span class="run-count">${parts.filter(p=>p.status==="done").length}/${parts.length}</span>` : "")
+      + (busy && msg.reasoning && !parts ? `<span class="run-live">${esc(String(msg.reasoning).replace(/\s+/g," ").trim().slice(-70))}</span>` : "")
+      + (msg.thinkSecs ? `<span class="run-time">${msg.thinkSecs}s</span>` : "")
+      + `<span class="run-chev" aria-hidden="true">\u2304</span>`;
+    head.onclick = ()=>{ msg._runOpen = !msg._runOpen; box.classList.toggle("open", !!msg._runOpen); head.setAttribute("aria-expanded", String(!!msg._runOpen)); };
+    if(msg._runOpen) box.classList.add("open");
+    box.appendChild(head);
+    const detail = el("div","run-detail");
+    if(parts){
+      const list = el("ol","run-parts");
+      parts.forEach((p,i)=>{
+        const li = el("li", "run-part "+p.status);
+        li.innerHTML = `<span class="run-part-status" aria-hidden="true">${p.status==="done"?"\u2713":p.status==="running"?"\u25cc":(p.status==="failed"||p.status==="skipped")?"!":"\u00b7"}</span><span class="run-part-title">${esc(p.title)}</span>`
+          + (p.ms?`<span class="run-part-ms">${p.ms}ms</span>`:"")
+          + (p.status==="failed" && p.error?`<small>${esc(p.error)}</small>`:"");
+        li.setAttribute("aria-label", "Part "+(i+1)+" "+p.status+": "+p.title);
+        list.appendChild(li);
+      });
+      detail.appendChild(list);
+      if(phaseNoteText && live) detail.appendChild(el("div","run-note", esc(phaseNoteText)));
+      if(msg.phases.validation) detail.appendChild(el("div","run-note", esc(msg.phases.validation)));
+    }
+    if(msg.reasoning && String(msg.reasoning).trim()){
+      const think = el("div","run-think");
+      think.textContent = msg.reasoning;
+      detail.appendChild(think);
+    }
+    if(detail.childNodes.length) box.appendChild(detail);
     bubble.appendChild(box);
   }
-  // two-phase progress: ONE thinking phase, then ONE coding phase
-  if(msg.phases && msg.phases.state!=="done"){
-    const ph=msg.phases;
-    const box=el("div","phase-box");
-    const steps=[
-      {label:"Thinking", done:ph.state==="code"||ph.state==="done", active:ph.state==="think"},
-      {label:"Coding", done:ph.state==="done", active:ph.state==="code"}
-    ];
-    const head=el("div","phase-head");
-    steps.forEach((s,i)=>{
-      const chip=el("span","phase-chip"+(s.done?" done":"")+(s.active?" active":""),
-        (s.done?"✓ ":s.active?"◌ ":"· ")+s.label);
-      head.appendChild(chip);
-      if(i<steps.length-1) head.appendChild(el("span","phase-arrow","→"));
-    });
-    box.appendChild(head);
-    if(ph.parts && ph.parts.length){
-      const bar=el("div","phase-bar");
-      const fill=el("div","phase-fill");
-      fill.style.width = ph.state==="think"?"12%":ph.state==="code"?"60%":"100%";
-      bar.appendChild(fill); box.appendChild(bar);
+  // Live frame for the part currently being written (never grows past its own scroll area).
+  if(live && msg.phases && msg.phases.state==="execute"){
+    const running = (msg.phases.parts||[]).find(p=>p.status==="running");
+    if(running){
+      const frame = el("div","code-live");
+      const head = el("div","code-live-head");
+      head.innerHTML = `<span class="term-dots"><i></i><i></i><i></i></span><span>${esc(running.title)}</span><span class="code-live-meta">${running.chars||0} chars</span>`;
+      frame.appendChild(head);
+      const body = el("pre","code-live-body");
+      frame.appendChild(body);
+      bubble.appendChild(frame);
+      requestAnimationFrame(()=>{ body.scrollTop = body.scrollHeight; });
     }
-    if(ph.state=="think") box.appendChild(el("div","phase-note","Planning the structure before writing code…"));
-    if(ph.state=="paused") box.appendChild(el("div","phase-note","Stopped before finishing."));
-    bubble.appendChild(box);
   }
   // content
   const md = el("div","md");
@@ -1806,6 +1919,11 @@ function renderAssistant(bubble, msg, live){
     if(msg.comparisons?.length){const compare=el("button","act-btn","Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
     else if(db.providers.reduce((n,p)=>n+p.selectedModels.length,0)>1){const compare=el("button","act-btn","Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
     if(msg.truncated){const cont=el("button","act-btn","Continue");cont.onclick=()=>{if(generating)return;send("Continue exactly where you stopped. Do not repeat text that was already written.",{skipTitle:true});};bar.appendChild(cont);}
+    if(msg.phases && msg.phases.state==="paused" && (msg.phases.parts||[]).some(p=>p.status!=="done")){
+      const resume=el("button","act-btn","Resume build");
+      resume.onclick=()=>window.kitaResumeBuild(msg.id);
+      bar.appendChild(resume);
+    }
     if(/```[\w+-]*\n[\s\S]+/.test(msg.content||"") || extractHtmlBlock(msg.content)){
       const htmlCandidate=extractHtmlBlock(msg.content);
       if(htmlCandidate){const pv=el("button","act-btn","Preview");pv.onclick=()=>openPreview(htmlCandidate,{live:false});bar.appendChild(pv);}
@@ -1820,7 +1938,22 @@ function renderAssistant(bubble, msg, live){
 function scrollBottom(){ const s=$("#chatScroll"); s.scrollTop = s.scrollHeight; }
 
 /* ===================== HTML Preview ===================== */
+let phaseNoteText = "";
 let previewOriginal = "", previewLiveState = null, previewNonce = "", previewRenderSeq = 0, previewDiagText = "";
+function phaseStatusLabel(status){
+  return ({plan:"Thinking through the structure", execute:"Executing", validate:"Checking the result", done:"Completed", incomplete:"Finished with warnings", paused:"Stopped", failed:"Failed"})[status]||"Working";
+}
+function setPhaseNote(text){
+  phaseNoteText = String(text||"");
+  if(aiMsgLive && aiMsgLive.bubble && aiMsgLive.msg) renderAssistant(aiMsgLive.bubble, aiMsgLive.msg, true);
+}
+function setPhaseStream(partial){
+  if(!aiMsgLive || !aiMsgLive.bubble) return;
+  const host = aiMsgLive.bubble.querySelector(".code-live-body");
+  if(host){ host.textContent = String(partial||""); host.scrollTop = host.scrollHeight; }
+}
+const aiMsgLive = { bubble:null, msg:null };
+
 let previewRenderState = { renderer:"", timer:null };
 function extractHtmlBlock(content){
   const src = String(content||"");
@@ -1872,12 +2005,12 @@ function buildPreviewDoc(html, runJs){
     let doc = html;
     const security = runJs ? "" : `<script>window.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('script').forEach(s=>s.type='text/blocked')},true)<\/script>`;
     if(!/<meta[^>]+name=["']viewport/i.test(doc) && /<head/i.test(doc))
-      doc = doc.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width, initial-scale=1">');
+      doc = doc.replace(/<head([^>]*)>/i, '<head$1><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">');
     if(/<\/head>\s*<body/i.test(doc)) doc = doc.replace(/<\/head>\s*<body/i, bridge + "</head><body");
     else if(/<\/head>/i.test(doc)) doc = doc.replace(/<\/head>/i, bridge + "</head>");
     return doc;
   }
-  return `<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>html,body{margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:0}</style>${bridge}</head><body>${html}</body></html>`;
+  return `<!doctype html><html lang="ms"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><style>html,body{margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:0}</style>${bridge}</head><body>${html}</body></html>`;
 }
 function showPreviewTab(name){
   document.querySelectorAll(".preview-tab").forEach(t=>t.classList.toggle("active", t.dataset.tab===name));
@@ -2464,43 +2597,76 @@ function buildHeaders(p){
 }
 
 /* ===================== Web Search (free, RAG-lite) ===================== */
-async function webSearch(query){
+/* Web search: each source runs independently with its own timeout, results are
+   deduplicated, and a slow or failing source never blocks the others. */
+const SEARCH_TIMEOUT_MS = 12000;
+async function searchDuckJson(query, signal){
+  const r = await fetch("https://api.duckduckgo.com/?q="+encodeURIComponent(query)+"&format=json&no_redirect=1&no_html=1", {signal});
+  const j = await r.json();
+  const out=[];
+  if(j.AbstractText && j.AbstractURL) out.push({title:j.Heading||query, url:j.AbstractURL, snippet:j.AbstractText});
+  (j.RelatedTopics||[]).forEach(t=>{ if(t.Text && t.FirstURL && out.length<6) out.push({title:t.Text.slice(0,70), url:t.FirstURL, snippet:t.Text}); });
+  return out;
+}
+async function searchDuckHtml(query, signal){
+  const r = await fetch("https://html.duckduckgo.com/html/?q="+encodeURIComponent(query), {headers:{"Accept":"text/html"}, signal});
+  const html = await r.text();
+  const doc = new DOMParser().parseFromString(html,"text/html");
+  const out=[];
+  doc.querySelectorAll("div.result, div.web-result").forEach(res=>{
+    if(out.length>=6) return;
+    const a = res.querySelector("a.result__a"); if(!a) return;
+    const sn = res.querySelector(".result__snippet");
+    const href=a.getAttribute("href")||"";
+    const url = href.startsWith("//duckduckgo.com/l/") ? (decodeURIComponent(href.match(/uddg=([^&]+)/)?.[1]||href)) : a.href;
+    if(url.startsWith("http") && !out.find(x=>x.url===url))
+      out.push({title:a.textContent.trim(), url, snippet: sn?sn.textContent.trim():""});
+  });
+  return out;
+}
+async function webSearch(query, opts){
+  opts = opts||{};
+  const q = String(query||"").slice(0,300);
+  const ac = new AbortController();
+  const onAbort = ()=>ac.abort();
+  if(opts.signal){ if(opts.signal.aborted) ac.abort(); else opts.signal.addEventListener("abort", onAbort); }
+  const timer = setTimeout(()=>ac.abort(), opts.timeout || SEARCH_TIMEOUT_MS);
   const results = [];
+  const push = list=>list.forEach(r=>{ if(r.url && !results.find(x=>x.url===r.url)) results.push(r); });
   try{
-    const r = await fetch("https://api.duckduckgo.com/?q="+encodeURIComponent(query)+"&format=json&no_redirect=1&no_html=1");
-    const j = await r.json();
-    if(j.AbstractText) results.push({title:j.Heading||query, url:j.AbstractURL, snippet:j.AbstractText});
-    (j.RelatedTopics||[]).forEach(t=>{ if(t.Text && t.FirstURL && results.length<6) results.push({title:t.Text.slice(0,70), url:t.FirstURL, snippet:t.Text}); });
-  }catch(e){}
-  try{
-    const r2 = await fetch("https://html.duckduckgo.com/html/?q="+encodeURIComponent(query), {headers:{"Accept":"text/html"}});
-    const html = await r2.text();
-    const doc = new DOMParser().parseFromString(html,"text/html");
-    doc.querySelectorAll("div.result, div.web-result").forEach(res=>{
-      if(results.length>=6) return;
-      const a = res.querySelector("a.result__a");
-      if(!a) return;
-      const sn = res.querySelector(".result__snippet");
-      const url = a.href.startsWith("//duckduckgo.com/l/") ? (decodeURIComponent(a.href.match(/uddg=([^&]+)/)?.[1]||a.href)) : a.href;
-      if(url.startsWith("http") && !results.find(x=>x.url===url))
-        results.push({title:a.textContent.trim(), url, snippet: sn?sn.textContent.trim():""});
-    });
-  }catch(e){}
-  // enrich top result via r.jina.ai
-  if(results.length){
-    try{
-      const r3 = await fetch("https://r.jina.ai/"+results[0].url, {headers:{"Accept":"text/plain"}});
-      if(r3.ok){
-        const t = (await r3.text()).slice(0,3000);
-        results[0].content = t;
-      }
-    }catch(e){}
+    // Fetch both public endpoints at once; use whichever answers first / returns rows.
+    const settled = await Promise.allSettled([searchDuckJson(q, ac.signal), searchDuckHtml(q, ac.signal)]);
+    for(const s of settled) if(s.status==="fulfilled") push(s.value);
+    if(results.length){
+      applyEnrichment(results, await enrichTopResult({...results[0]}, ac.signal));
+    }
+  }finally{
+    clearTimeout(timer);
+    if(opts.signal) opts.signal.removeEventListener("abort", onAbort);
   }
+  return results.slice(0,6);
+}
+async function enrichTopResult(first, signal){
+  try{
+    const r = await fetch("https://r.jina.ai/"+first.url, {headers:{"Accept":"text/plain"}, signal});
+    if(!r.ok) return [];
+    const t = (await r.text()).slice(0,3000);
+    return t.trim() ? [{...first, url: first.url, content:t}] : [];
+  }catch(e){ return []; }
+}
+/* Merge an enriched copy into the existing result so URL identity and order stay stable. */
+function applyEnrichment(results, enriched){
+  if(!enriched.length) return results;
+  const top=enriched[0];
+  const hit=results.find(r=>r.url===top.url||r.url===String(top.url).replace(/\/$/,""));
+  if(hit) hit.content=top.content;
   return results;
 }
 
 /* ===================== Native Network Layer (CORS-free in APK) ===================== */
-const HAS_NATIVE = typeof window.NazBridge === "object" && typeof window.NazStream === "object";
+let HAS_NATIVE = typeof window.NazBridge === "object" && typeof window.NazStream === "object";
+/* Tests force native paths by setting window.__KITA_NATIVE__ before load. */
+if(typeof window.__KITA_NATIVE__ === "boolean") HAS_NATIVE = window.__KITA_NATIVE__;
 function prepareProviderSecret(p){
   if(!p) return "";
   p.secretRef=p.secretRef||("provider:"+p.id);
@@ -2522,38 +2688,93 @@ function hasProviderSecret(p){
   return hasNativeSecrets() ? !!(window.NazSecrets.has && window.NazSecrets.has(ref)) : !!p?.apiKey;
 }
 
-/* Non-streaming fetch (for /models). Native async in APK, regular fetch in browser. */
+/* Non-streaming fetch (for /models, tools). Every native request is keyed by its own id,
+   so concurrent calls cannot settle each other, and a timeout always settles the promise. */
+const NAZ_FETCH_TIMEOUT_MS = 45000;
+function withTimeout(promise, ms, message){
+  return new Promise((resolve, reject)=>{
+    const timer = setTimeout(()=>reject(new Error(message||'Request timed out')), ms);
+    promise.then(v=>{ clearTimeout(timer); resolve(v); }, e=>{ clearTimeout(timer); reject(e); });
+  });
+}
+function nativeFetchOnce(url, opts){
+  opts = opts || {};
+  return new Promise((resolve)=>{
+    let settled = false;
+    let reqId = null;
+    const finish = (status, body)=>{
+      if(settled) return;
+      settled = true;
+      clearTimeout(timer);
+      const text = String(body==null?"":body);
+      resolve({ status, ok: status>=200 && status<300, text: ()=>Promise.resolve(text),
+        json: ()=>{ try{ return Promise.resolve(JSON.parse(text)); }catch(e){ return Promise.reject(new Error("bad json")); } } });
+    };
+    const timer = setTimeout(()=>{
+      // Native side cannot be cancelled per request yet; ignore its late callback.
+      try{ if(reqId!=null && window.NazBridge?.cancel) window.NazBridge.cancel(reqId); }catch(e){}
+      finish(0, 'Network error: timed out after '+Math.round(NAZ_FETCH_TIMEOUT_MS/1000)+'s');
+    }, opts.timeout || NAZ_FETCH_TIMEOUT_MS);
+    try{
+      const args = [url, opts.method||"GET", JSON.stringify(opts.headers||{}), opts.body||""];
+      reqId = opts.secretRef && NazBridge.fetchSecret
+        ? NazBridge.fetchSecret(...args, opts.secretRef)
+        : NazBridge.fetch(...args);
+      if(typeof reqId === "number") nazFetchWaiters.set(reqId, finish);
+      else finish(0, 'Network bridge rejected this request');
+    }catch(e){ finish(0, e && e.message ? e.message : 'Network bridge error'); }
+  });
+}
+const nazFetchWaiters = new Map();
+window.nazFetchDone = (rid, status, body)=>{ const fn = nazFetchWaiters.get(rid); if(fn){ nazFetchWaiters.delete(rid); fn(status, body); } };
+// One global abort for the request in flight: Stop must stop native streams, browser reads
+// and pending web searches, not merely flip the button back.
+let abortCtl = null;
+const abortSubscribers = new Set();
+function currentAbortSignal(){ return abortCtl ? abortCtl.signal : undefined; }
+function newAbortController(){
+  abortCtl = new AbortController();
+  abortCtl.signal.addEventListener("abort", ()=>{ for(const fn of abortSubscribers){ try{ fn(); }catch(e){} } });
+  return abortCtl;
+}
+function stopGeneration(){
+  if(abortCtl && !abortCtl.signal.aborted) abortCtl.abort();
+  abortSubscribers.clear();
+}
 async function netFetch(url, opts){
   opts = opts || {};
-  if(HAS_NATIVE){
-    return await new Promise((resolve)=>{
-      window.nazFetchDone = (rid, status, body) => {
-        delete window.nazFetchDone;
-        resolve({ status, ok: status>=200 && status<300, text: ()=>Promise.resolve(body), json: ()=>{ try{ return Promise.resolve(JSON.parse(body)); }catch(e){ return Promise.reject(new Error("bad json")); } } });
-      };
-      try{
-        if(opts.secretRef && NazBridge.fetchSecret) NazBridge.fetchSecret(url, opts.method||"GET", JSON.stringify(opts.headers||{}), opts.body||"", opts.secretRef);
-        else NazBridge.fetch(url, opts.method||"GET", JSON.stringify(opts.headers||{}), opts.body||"");
-      }catch(e){ delete window.nazFetchDone; resolve({ status:0, ok:false, text:()=>Promise.resolve(e.message), json:()=>Promise.reject(e) }); }
-    });
-  }
-  return fetch(url, opts);
+  if(HAS_NATIVE) return nativeFetchOnce(url, opts);
+  const ac = new AbortController();
+  const timer = setTimeout(()=>ac.abort(), opts.timeout || NAZ_FETCH_TIMEOUT_MS);
+  try{ return await fetch(url, {...opts, signal: opts.signal || ac.signal}); }
+  finally{ clearTimeout(timer); }
 }
 
-/* Push-based native SSE iterator: yields "data: ..." lines via JS callbacks pushed by Java. */
-function nativeSSE(sid){
+/* Push-based native SSE iterator: yields "data: ..." lines via JS callbacks pushed by Java.
+   An AbortController is honoured here, so Stop really ends a native stream immediately
+   instead of waiting for the next provider chunk. */
+function nativeSSE(sid, signal){
   const queue = [];
-  let done = false, err = null, waiter = null;
+  let done = false, err = null, waiter = null, aborted = false;
   const drain = ()=>{ if(waiter){ const w = waiter; waiter = null; w(); } };
+  const onAbort = ()=>{ if(done||aborted) return; aborted = true; done = true; err = err||"aborted"; try{ NazStream.close(sid); }catch(e){} drain(); };
+  if(signal){ if(signal.aborted) onAbort(); else signal.addEventListener("abort", onAbort); }
   window.nazStreamOnLine = (id, line)=>{ if(id!==sid) return; queue.push(line); drain(); };
   window.nazStreamOnStatus = (id, code)=>{ if(id!==sid) return; /* handled by waitStreamStatus */ };
   window.nazStreamOnDone = (id, error)=>{ if(id!==sid) return; done = true; err = error||null; drain(); };
   return (async function* (){
-    while(true){
-      if(queue.length){ yield queue.shift(); continue; }
-      if(done){ if(err) throw new Error(err); return; }
-      await new Promise(r=>{ waiter = r; });
-    }
+    try{
+      while(true){
+        if(queue.length){ yield queue.shift(); continue; }
+        if(done){
+          if(signal) signal.removeEventListener("abort", onAbort);
+          if(aborted){ const e=new Error("aborted"); e.name="AbortError"; throw e; }
+          if(err) throw new Error(err);
+          return;
+        }
+        await new Promise(r=>{ waiter = r; });
+      }
+    } finally { if(signal) signal.removeEventListener("abort", onAbort); }
   })();
 }
 
@@ -2595,6 +2816,16 @@ const PHASE_KINDS = {
 function detectBuildKind(text){
   return /\b(html|css|web|page|laman|site|website|dashboard|landing)\b/i.test(String(text||"")) ? "html" : "text";
 }
+/* Incremental execution: think → execute one part → evaluate → execute next. */
+function planSystemMessage(kind){
+  return "You are a build planner for "+(kind==="html"?"a web page":"a written deliverable")+". Reply with ONLY a numbered list of parts that will be generated one at a time by separate calls. Each part must be a self-contained unit of work (for HTML: head+base styles, each section/component, scripts). No prose, no code, no explanations, no title other than the numbered list.";
+}
+function stillRelevant(fragment,plan){
+  const probe=String(fragment||"").replace(/```[\w+-]*|```/g," ").toLowerCase();
+  let hits=0;
+  for(const p of plan||[]){const words=String(p).toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>3);if(words.length&&words.some(w=>probe.includes(w)))hits++;}
+  return hits>0;
+}
 /* Turn a plan reply into a validated part list. */
 function parsePlanParts(planText, kind){
   const src=String(planText||"");
@@ -2609,7 +2840,7 @@ function parsePlanParts(planText, kind){
   return items;
 }
 function planPrompt(text, kind){
-  return "Break this task into "+PHASE_BUILD.minParts+" to "+PHASE_BUILD.maxParts+" self-contained parts that will each be generated separately and then assembled: \""+String(text).slice(0,500)+"\"\n\nReply with ONLY a numbered list of part titles (one line each, no prose, no code). Each part must be small enough to write in about 60-100 lines. For HTML, include head+styles, hero, each content section, footer and scripts as separate parts. Reply in the user's language.";
+  return "Break this task into "+PHASE_BUILD.minParts+" to "+PHASE_BUILD.maxParts+" self-contained parts that will each be generated separately and then assembled: \"\"+String(text).slice(0,500)+\"\"\n\nReply with ONLY a numbered list of part titles (one line each, no prose, no code). Each part must be small enough to write in about 60-100 lines. For HTML, include head+styles, hero, each content section, footer and scripts as separate parts. Reply in the user's language.";
 }
 function segmentPrompt(kind, part, i, n, text, plan){
   const K=PHASE_KINDS[kind]||PHASE_KINDS.text;
@@ -2707,7 +2938,7 @@ async function collectStream(model, url, body, hooks){
     if(HAS_NATIVE){
       prepareProviderSecret(p);
       sid = NazStream.openSecret ? NazStream.openSecret(url, JSON.stringify(buildHeaders(p)), JSON.stringify(body), p.secretRef) : NazStream.open(url, JSON.stringify(buildHeaders(p)), JSON.stringify(body));
-      SSE_ITER = nativeSSE(sid);
+      SSE_ITER = nativeSSE(sid, currentAbortSignal());
       const st = await waitStreamStatus(sid);
       if(st >= 400){
         let err = "";
@@ -2851,7 +3082,7 @@ async function send(text, opts){
     history.unshift({role:"system", content:"Think step by step inside "+THINK_OPEN+"..."+THINK_CLOSE+" tags first, then give your final answer after the closing tag."});
   }
 
-  abortCtl = new AbortController();
+  newAbortController();
   const p = model.provider;
   const url = p.endpointMode==="full" ? p.baseUrl :
     (p.baseUrl.replace(/\/+$/,"") + (p.apiType==="responses" ? "/responses" : "/chat/completions"));
@@ -2870,10 +3101,9 @@ async function send(text, opts){
     if(!lastMsgEl) return;
     bubble = lastMsgEl.querySelector(".bubble");
     if(!bubble) return;
+    aiMsgLive.bubble = bubble; aiMsgLive.msg = aiMsg;
     renderAssistant(bubble, aiMsg, true);
-    const tb = bubble.querySelector(".think-box");
-    if(tb && aiMsg.reasoning && !aiMsg._thinkShown){ tb.classList.add("thinking"); aiMsg._thinkShown=true; thinkStart=Date.now(); }
-    else if(tb && tb.classList.contains("thinking") && aiMsg.content){ tb.classList.remove("thinking"); tb.classList.add("collapsed"); aiMsg.thinkSecs = Math.round((Date.now()-(thinkStart||Date.now()))/1000); }
+    if(aiMsg.reasoning && !aiMsg._thinkShown){ aiMsg._thinkShown = true; thinkStart = Date.now(); }
     scrollIfNear();
   }
   function liveRender(force){
@@ -2918,65 +3148,109 @@ async function send(text, opts){
     }, 1000);
   }
 
-  // ---- Two-phase workflow: ONE thinking phase, then ONE coding phase. ----
-  // Long builds get a tiny planning (thinking) call, then a single coding call that
-  // streams into the fixed terminal frame. No multi-stage thinking/coding splits.
+  // ---- Incremental workflow: PLAN → EXECUTE (one part) → EVALUATE → next part → VALIDATE ----
+  // Every part is a real provider call; the plan and each part stream in order, and the
+  // transcript is persisted so a stopped build can be resumed instead of restarted.
   const wantsPhased = !opts.review && !opts.editing && !editingPage && PHASE_BUILD.enabled && isLongBuildRequest(text);
-  let phaseMode = null; // null | "think" | "code"
   if(wantsPhased){
     const kind = detectBuildKind(text);
-    aiMsg.phases = { kind, state:"think", parts:[], segments:[], done:0 };
+    const params0 = modelParameters(model);
+    aiMsg.phases = { kind, state:"plan", parts:[], segments:[], validation:"" };
+    setPhaseNote("Planning the build…");
     paint();
-    // Phase 1 — THINK: a small planning call (the only thinking stage).
-    setStreamNote("Thinking through the structure…");
-    const planBody = { model: model.modelId, messages: [
-        {role:"system", content:"You are a build planner. Reply with ONLY the numbered list requested. No prose, no code, no explanations."},
-        {role:"user", content: planPrompt(text, kind)}
-      ], stream:true, temperature:.3, top_p:1, max_tokens: PHASE_BUILD.planBudget };
     let planText = "";
     try{
-      planText = await collectStream(model, url, planBody, { onDelta:(t)=>{ planText=t; } });
-    }catch(e){ if(e.name==="AbortError"){ cleanupStream(); finalizeAbort(); return; } }
-    const parts = parsePlanParts(planText, kind);
-    if(parts.length < PHASE_BUILD.minParts){ aiMsg.phases=null; /* simple request: normal single answer */ }
-    else {
-      aiMsg.phases.parts = parts;
-      aiMsg.phases.state = "code";
-      aiMsg.reasoning = "Build plan:\n"+parts.map((x,i)=>(i+1)+". "+x).join("\n");
-      aiMsg._thinkShown = true;
-      thinkStart = Date.now();
-      paint();
-      // Phase 2 — CODE: one single call that writes the whole artifact into the terminal frame.
-      setStreamNote("Writing code…");
-      aiMsg.content = ""; aiMsg._thinkShown=true;
-      const codeBody = { model: model.modelId, messages: [
-          {role:"system", content:skillSystemMessage(usedSkills)+"\n\nWrite the COMPLETE artifact now, following the plan. One single "+(kind==="html"?"```html":"code")+" block containing the entire "+(kind==="html"?"document":"solution")+" — all parts in order, nothing omitted, no preamble or explanation."},
-          {role:"user", content: text+"\n\nApproved plan (follow this order, include every part in one block):\n"+parts.map((x,i)=>(i+1)+". "+x).join("\n")}
-        ], stream:true, temperature:.6, top_p:1, max_tokens: modelParameters(model).max_tokens };
-      let codeText="", codeFinish=null;
-      try{
-        codeText = await collectStream(model, url, codeBody, { onDelta:(t)=>{ codeText=t; aiMsg.content=t; paint(); }, onFinish:(fr)=>{ codeFinish=fr; } });
-      }catch(e){ if(e.name==="AbortError"){ cleanupStream(); finalizeAbort(); return; } }
-      if(!generating){ cleanupStream(); finalizeAbort(); return; }
-      if(codeFinish==="length" && codeText.trim()){
-        // the single coding call was cut off: continue it once, still one coding phase
-        let more="";
-        try{ more = await collectStream(model, url, {...codeBody, messages:[...codeBody.messages, {role:"assistant", content:codeText.slice(-6000)}, {role:"user", content:"Continue exactly where you stopped. No repeats."}]}, { onDelta:t=>{ more=t; aiMsg.content=codeText+"\n"+t; paint(); } }); }catch(e){ if(e.name==="AbortError"){ cleanupStream(); finalizeAbort(); return; } }
-        codeText = codeText + "\n" + more;
+      planText = await collectStream(model, url, { model:model.modelId, messages:[
+        {role:"system", content: planSystemMessage(kind)},
+        {role:"user", content: planPrompt(text, kind)}
+      ], stream:true, temperature:.3, top_p:1, max_tokens:PHASE_BUILD.planBudget }, { onDelta:t=>{ planText=t; setPhaseNote("Planning the build… "+t.trim().split(/\n/).filter(Boolean).length+" parts"); } });
+    }catch(e){
+      if(e.name==="AbortError" || !generating){ aiMsg.phases=null; cleanupStream(); finalizeAbort(); return; }
+      aiMsg.phases=null;
+    }
+    const planned = aiMsg.phases ? parsePlanParts(planText, kind) : [];
+    if(aiMsg.phases && planned.length >= PHASE_BUILD.minParts){
+      const plan = planned.slice(0, PHASE_BUILD.maxParts);
+      aiMsg.phases.parts = plan.map(title=>({title, status:"pending", chars:0, ms:0}));
+      aiMsg.phases.state = "execute";
+      aiMsg.reasoning = "Build plan:\n"+plan.map((x,i)=>(i+1)+". "+x).join("\n");
+      aiMsg.thinkSecs = aiMsg.thinkSecs || (thinkStart ? Math.round((Date.now()-thinkStart)/1000) : null);
+      save(); paint();
+      const baseMessages = history.filter(h=>h.role!=="system").slice(-4);
+      for(let i=0;i<plan.length && generating;i++){
+        const part = aiMsg.phases.parts[i];
+        part.status = "running"; paint();
+        setPhaseNote("Writing part "+(i+1)+" of "+plan.length+" · "+part.title);
+        const msgs = [
+          {role:"system", content: skillSystemMessage(usedSkills)+"\n\n"+(PHASE_KINDS[kind]||PHASE_KINDS.text).hint+" You are writing ONE part of a larger build. Never restate other parts."},
+          ...baseMessages,
+          {role:"user", content: segmentPrompt(kind, part.title, i, plan.length, text, plan)}
+        ];
+        const body = { model:model.modelId, messages:msgs, stream:true, temperature:.6, top_p:1, max_tokens: params0.max_tokens };
+        let out = "", fin = null;
+        const startedAt = Date.now();
+        try{
+          out = await collectStream(model, url, body, { onDelta:t=>{ out=t; part.chars=t.length; setPhaseStream(t); }, onFinish:fr=>{ fin=fr; } });
+        }catch(e){
+          if(e.name==="AbortError" || !generating){ part.status="pending"; paint(); cleanupStream(); finalizeAbort(); return; }
+          part.status = "failed"; part.error = String(e.message||e).slice(0,240); paint();
+          break; // keep the parts already written; the user can resume
+        }
+        out = String(out||"").trim();
+        part.ms = Date.now()-startedAt;
+        if(!out){ part.status = "skipped"; paint(); continue; }
+        if(fin==="length"){
+          // One continuation for a part that hit the per-call output limit — still the same part.
+          try{
+            const more = await collectStream(model, url, {...body, messages:[...msgs,
+              {role:"assistant", content:out.slice(-4000)},
+              {role:"user", content:"Continue this same part exactly where it stopped. No repetition, no other parts."}]},
+              { onDelta:t=>{ out = out+"\n"+t; part.chars=out.length; setPhaseStream(out); } });
+            out = out.trim();
+          }catch(e){ if(e.name==="AbortError" || !generating){ part.status="pending"; paint(); cleanupStream(); finalizeAbort(); return; } }
+        }
+        if(i===0 && fin==="stop" && !/[<>{}\[\]#*`]/.test(out)){
+          // The model ignored the part contract on the first call: answer normally instead.
+          aiMsg.phases = null; aiMsg.reasoning = ""; aiMsg.content = "";
+          break;
+        }
+        part.text = out;
+        part.status = "done";
+        aiMsg.phases.segments = aiMsg.phases.segments||[]; aiMsg.phases.segments[i] = out;
+        aiMsg.content = kind==="html"
+          ? assembleHtml(aiMsg.phases.parts.filter(p=>p.status==="done").map(p=>p.text||""))
+          : aiMsg.phases.parts.filter(p=>p.status==="done").map(p=>p.text||"").join("\n\n");
+        conv_.updatedAt = Date.now(); save(); paint();
+        setPhaseNote("Part "+(i+1)+" of "+plan.length+" done · "+part.ms+"ms");
       }
-      if(codeText.trim()){
-        aiMsg.content = codeText;
-        aiMsg.phases.state = "done";
-        aiMsg.thinkSecs = Math.round((Date.now()-thinkStart)/1000);
-        aiMsg.usage = aiMsg.usage||{prompt_tokens:0,completion_tokens:estimateTokens(codeText)};
+      if(aiMsg.phases && generating){
+        aiMsg.phases.state = "validate";
+        setPhaseNote("Checking the assembled result…");
+        paint();
+        const assembled = String(aiMsg.content||"");
+        const issues = [];
+        if(kind==="html"){
+          const opens=(assembled.match(/<(div|section|main|header|footer|nav|article|aside|ul|ol|form)\b/gi)||[]).length;
+          const closes=(assembled.match(/<\/(div|section|main|header|footer|nav|article|aside|ul|ol|form)>/gi)||[]).length;
+          if(opens!==closes) issues.push(Math.abs(opens-closes)+" mismatched block element(s)");
+          if(!/<body[\s>]/i.test(assembled)) issues.push("missing body");
+          if(!/<!doctype/i.test(assembled)) issues.push("missing doctype");
+        }
+        const failed = aiMsg.phases.parts.filter(p=>p.status!=="done");
+        if(failed.length) issues.push(failed.length+" part(s) not completed");
+        aiMsg.phases.validation = issues.length ? issues.join(" · ") : "All parts assembled";
+        aiMsg.phases.state = issues.length ? "incomplete" : "done";
+        aiMsg.thinkSecs = aiMsg.thinkSecs || (thinkStart ? Math.round((Date.now()-thinkStart)/1000) : null);
+        aiMsg.usage = aiMsg.usage || {prompt_tokens:0, completion_tokens:estimateTokens(assembled)};
         aiMsg.estimatedCost = estimateCost(model, 0, Number(aiMsg.usage.completion_tokens||0));
         conv_.updatedAt = Date.now();
-        cleanupStream();
-        save(); setSendMode(false); abortCtl=null;
-        renderAll();
+        cleanupStream(); setSendMode(false); abortCtl=null;
+        save(); renderAll();
         return;
       }
-      aiMsg.phases = null; // coding call produced nothing: fall through to the normal single-answer path
+      if(aiMsg.phases){ aiMsg.phases.state = "paused"; cleanupStream(); finalizeAbort(); return; }
+    } else {
+      aiMsg.phases = null; // too small or unparsable: one normal answer below
     }
   }
 
@@ -2998,7 +3272,7 @@ async function send(text, opts){
       sid = NazStream.openSecret ? NazStream.openSecret(url, JSON.stringify(buildHeaders(p)), JSON.stringify(body), p.secretRef) : NazStream.open(url, JSON.stringify(buildHeaders(p)), JSON.stringify(body));
       abortCtl.signal.addEventListener("abort", ()=>{ try{ NazStream.close(sid); }catch(e){} });
       // Install the push iterator before the network response can arrive.
-      SSE_ITER = nativeSSE(sid);
+      SSE_ITER = nativeSSE(sid, currentAbortSignal());
       const st = await waitStreamStatus(sid);
       if(st >= 400){
         // collect error body from the pushed lines
@@ -3159,12 +3433,14 @@ async function send(text, opts){
   // finalize
   cleanupStream();
   function finalizeAbort(){
-    // aborted mid-phase: keep whatever was assembled and mark it resumable
+    // Stopped mid-build: keep every finished part and mark the build resumable.
     if(aiMsg.phases && aiMsg.phases.state!=="done"){
       aiMsg.phases.state = "paused";
-      if(aiMsg.phases.segments && aiMsg.phases.segments.length && !extractHtmlBlock(aiMsg.content||"")){
-        aiMsg.content = "Built "+aiMsg.phases.segments.length+"/"+aiMsg.phases.parts.length+" parts before stopping.\n\nAsk to continue and the remaining parts will be built.";
-      }
+      const done = (aiMsg.phases.parts||[]).filter(p=>p.status==="done").length;
+      const total = (aiMsg.phases.parts||[]).length;
+      if(aiMsg.phases.state!=="incomplete") aiMsg.phases.validation = done+" of "+total+" parts kept";
+      const running = (aiMsg.phases.parts||[]).find(p=>p.status==="running");
+      if(running) running.status = "pending";
     }
     aiMsg.thinkSecs = aiMsg.thinkSecs || (thinkStart ? Math.round((Date.now()-thinkStart)/1000) : null);
     aiMsg.usage=aiMsg.usage||{prompt_tokens:aiMsg.context?.used||0,completion_tokens:estimateTokens(aiMsg.content)};
@@ -3172,6 +3448,40 @@ async function send(text, opts){
     save(); setSendMode(false); abortCtl=null;
     renderAll();
   }
+  /* Resume a stopped incremental build: only the parts without text are requested again. */
+  async function resumeBuild(msg, sourceText, usedSkills){
+    if(generating || !msg.phases || !msg.phases.parts) return;
+    const kind = msg.phases.kind||"text", plan = msg.phases.parts.map(p=>p.title);
+    const params0 = modelParameters(model);
+    msg.phases.state = "execute"; msg.phases.validation = "";
+    setSendMode(true); newAbortController(); save(); renderAll();
+    const baseMessages = [{role:"user", content:String(sourceText||"")}];
+    let stopped = false;
+    for(let i=0;i<msg.phases.parts.length && generating;i++){
+      const part = msg.phases.parts[i];
+      if(part.status==="done" && part.text) continue;
+      part.status="running"; part.error=null; paint();
+      setPhaseNote("Writing part "+(i+1)+" of "+plan.length+" · "+part.title);
+      const msgs=[{role:"system", content:skillSystemMessage(usedSkills||[])+"\n\n"+(PHASE_KINDS[kind]||PHASE_KINDS.text).hint+" You are writing ONE part of a larger build. Never restate other parts."}, ...baseMessages, {role:"user", content:segmentPrompt(kind, part.title, i, plan.length, sourceText, plan)}];
+      let out=""; const startedAt=Date.now();
+      try{ out = await collectStream(model, url, {model:model.modelId, messages:msgs, stream:true, temperature:.6, top_p:1, max_tokens:params0.max_tokens}, {onDelta:t=>{ out=t; part.chars=t.length; setPhaseStream(t); }}); }
+      catch(e){ part.status="failed"; part.error=String(e.message||e).slice(0,200); if(e.name==="AbortError"||!generating) stopped=true; paint(); break; }
+      part.ms=Date.now()-startedAt; part.text=String(out||"").trim(); part.status=part.text?"done":"skipped";
+      msg.content = kind==="html" ? assembleHtml(msg.phases.parts.filter(p=>p.status==="done").map(p=>p.text||"")) : msg.phases.parts.filter(p=>p.status==="done").map(p=>p.text||"").join("\n\n");
+      conv_.updatedAt=Date.now(); save(); paint();
+    }
+    if(stopped) msg.phases.state="paused"; else {
+      const issues = msg.phases.parts.filter(p=>p.status!=="done").length ? msg.phases.parts.filter(p=>p.status!=="done").length+" part(s) not completed" : "All parts assembled";
+      msg.phases.validation = issues; msg.phases.state = /not completed/.test(issues) ? "incomplete" : "done";
+    }
+    cleanupStream(); setSendMode(false); abortCtl=null; conv_.updatedAt=Date.now(); save(); renderAll();
+  }
+  window.kitaResumeBuild = (msgId)=>{
+    const msg = conv?.messages.find(m=>m.id===msgId);
+    if(!msg || !msg.phases) return;
+    const before = conv.messages.slice(0, conv.messages.indexOf(msg)).reverse().find(m=>m.role==="user");
+    resumeBuild(msg, before?.content||"", activeSkills()).catch(()=>{ setSendMode(false); abortCtl=null; });
+  };
   const p2 = extractThink(aiMsg.content);
   if(p2.think && !aiMsg.reasoning){ aiMsg.reasoning = p2.think; aiMsg.content = p2.content; }
   if(finishReason === "length" && !aiMsg.truncated && aiMsg.content.trim()){
@@ -3271,7 +3581,7 @@ function doSend(){
 $("#attachBtn").onclick = ()=>$("#fileInput").click();
 $("#fileInput").onchange = e=>{ handleFiles(e.target.files); e.target.value=""; };
 $("#sendBtn").onclick = ()=>{
-  if(generating){ abortCtl?.abort(); return; }
+  if(generating){ stopGeneration(); return; }
   doSend();
 };
 document.querySelectorAll(".sugg button").forEach(b=>b.onclick=()=>{ if(!generating){ input.value=b.dataset.p; doSend(); } });

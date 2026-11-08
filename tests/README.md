@@ -36,6 +36,12 @@ mask contact sheet is in `test-results/launcher-icons/studio-launcher.png`.
 `npm run icons:generate` regenerates these assets after an approved branding change.
 Launcher mask images are simulations, not Android launcher screenshots.
 
+`execution.test.js` covers the incremental build loop (1 plan call + N part calls and
+final assembly), the compact status bar (≤60px collapsed, thinking detail ≤112px with
+internal scrolling), the code viewer (line numbers, file names, tabs, download wiring),
+Stop/resume, parallel web search with partial results, and per-request native fetch
+settlement. All provider traffic is mocked. Screenshots: `test-results/execution/`.
+
 These are browser tests, not Android instrumentation tests. Native system bars,
 startup colors and preview chrome must also be checked on a device after building
 an APK. Test fixtures use an isolated browser profile; no real API keys or user

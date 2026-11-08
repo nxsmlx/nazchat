@@ -3189,3 +3189,57 @@ label.fld {
     scroll-behavior: auto !important;
   }
 }
+
+/* ===== Execution status: one compact line, never a wall of reasoning ===== */
+.run-status{margin:0 0 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg2);overflow:hidden}
+.run-summary{display:flex;align-items:center;gap:9px;width:100%;min-height:44px;padding:8px 12px;border:0;background:none;color:var(--text2);font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.run-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 auto}
+.run-dot.busy{animation:runPulse 1.3s ease-in-out infinite}
+@keyframes runPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.82)}}
+.run-label{font-weight:600;color:var(--text);white-space:nowrap}
+.run-count,.run-time{font-size:11.5px;padding:2px 7px;border-radius:999px;background:var(--bg3);color:var(--text2);font-variant-numeric:tabular-nums}
+.run-live{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text3)}
+.run-chev{margin-left:auto;color:var(--text3);transition:transform .18s}
+.run-status.open .run-chev{transform:rotate(180deg)}
+.run-detail{display:none;padding:0 12px 12px;border-top:1px solid var(--line)}
+.run-status.open .run-detail{display:block}
+.run-parts{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.run-part{display:flex;align-items:baseline;gap:8px;font-size:12.5px;color:var(--text2);padding:3px 0}
+.run-part-title{flex:1;min-width:0;overflow-wrap:anywhere}
+.run-part-ms{font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums}
+.run-part small{display:block;color:var(--danger);font-size:11.5px}
+.run-part.done .run-part-status{color:var(--success)}
+.run-part.running{color:var(--text)}
+.run-part.failed .run-part-status,.run-part.skipped .run-part-status{color:var(--warning)}
+.run-note{margin-top:8px;font-size:12px;color:var(--text3)}
+.run-think{max-height:110px;overflow-y:auto;margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--bg3);color:var(--text3);font-size:12.5px;line-height:1.55;white-space:pre-wrap;overscroll-behavior:contain}
+
+/* ===== Code viewer: line numbers, stable frame, file tabs ===== */
+.code-wrap{border-radius:12px;overflow:hidden}
+.code-head{position:sticky;top:0;z-index:1}
+.code-file{display:flex;align-items:center;gap:8px;min-width:0}
+.code-file svg{flex:0 0 auto;color:var(--text3)}
+.code-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
+.code-body{position:relative;max-height:420px;overflow:auto;overscroll-behavior:contain;background:#0d1117;scrollbar-width:thin}
+.code-wrap.expanded .code-body{max-height:none}
+.code-table{border-collapse:collapse;width:max-content;min-width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.65;tab-size:2}
+.code-table td{padding:0;vertical-align:top}
+.code-gutter{position:sticky;left:0;z-index:1;width:1%;min-width:44px;padding:0 10px 0 12px !important;text-align:right;color:#8b949e;background:#0d1117;border-right:1px solid #21262d;user-select:none;font-variant-numeric:tabular-nums}
+.code-source{padding:0 16px 0 12px !important;white-space:pre;color:#e6edf3}
+.code-source.hl{white-space:pre}
+.code-body pre{margin:0}
+.code-tabs{display:flex;gap:4px;padding:6px 8px 0;overflow-x:auto;scrollbar-width:thin;background:var(--bg3);border-bottom:1px solid var(--border)}
+.code-tab{min-height:36px;padding:6px 12px;border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;background:none;color:var(--text2);font:inherit;font-size:12px;white-space:nowrap;cursor:pointer}
+.code-tab[aria-selected="true"]{background:var(--bg2);border-color:var(--border);color:var(--text);font-weight:600}
+.code-empty{padding:14px;color:var(--text3);font-size:12.5px}
+@media (max-width:520px){
+  .code-head{flex-wrap:wrap;gap:4px}
+  .code-body{max-height:340px}
+  .code-table{font-size:11.5px}
+  .code-name{max-width:38vw}
+  .run-live{display:none}
+}
+.code-tabs-panes .code-wrap{margin:0;border-radius:0 0 12px 12px;border-top:0}
+.code-tabs-panes .code-head{border-radius:0}
+.code-tab-pane pre{margin:0}
+.code-gutter span{display:block;line-height:inherit}

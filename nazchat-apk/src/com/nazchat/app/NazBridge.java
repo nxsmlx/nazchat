@@ -13,6 +13,16 @@ import org.json.JSONObject;
  */
 public class NazBridge {
     private static int nextReqId = 1;
+    private static final java.util.concurrent.ConcurrentHashMap<Integer, java.net.HttpURLConnection> active = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.concurrent.ConcurrentHashMap<Integer, Boolean> cancelled = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Lets JS stop waiting for a native request (timeout/Stop) without leaking the socket. */
+    @JavascriptInterface
+    public void cancel(int reqId) {
+        cancelled.put(reqId, Boolean.TRUE);
+        java.net.HttpURLConnection c = active.remove(reqId);
+        if (c != null) { try { c.disconnect(); } catch (Exception ignored) {} }
+    }
 
     @JavascriptInterface
     public int fetch(final String url, final String method, final String headersJson, final String body) {
@@ -28,6 +38,7 @@ public class NazBridge {
     private int startFetch(final String url, final String method, final String headersJson, final String body, final String secretRef) {
         final int reqId;
         synchronized (NazBridge.class) { reqId = nextReqId++; }
+        if (cancelled.size() > 64) cancelled.clear();
 
         Thread t = new Thread(new Runnable() {
             public void run() {
@@ -62,6 +73,8 @@ public class NazBridge {
                         os.write(body.getBytes("UTF-8"));
                         os.close();
                     }
+                    active.put(reqId, c);
+                    if (cancelled.containsKey(reqId)) { active.remove(reqId); throw new Exception("cancelled"); }
                     status = c.getResponseCode();
                     java.io.InputStream in = status >= 400 ? c.getErrorStream() : c.getInputStream();
                     java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
@@ -70,8 +83,10 @@ public class NazBridge {
                     while (in != null && (n = in.read(buf)) > 0) out.write(buf, 0, n);
                     if (in != null) in.close();
                     text = out.toString("UTF-8");
+                    active.remove(reqId);
                     try { c.disconnect(); } catch (Exception ignored) {}
                 } catch (Exception e) {
+                    active.remove(reqId);
                     status = 0;
                     text = "Network error: " + (e.getMessage() == null ? "connection failed" : e.getMessage());
                 }

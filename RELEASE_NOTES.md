@@ -1,3 +1,14 @@
+# Kita Chat 4.4.0 — Incremental build workflow
+
+- Long coding builds are executed in stages: one planning call, then one model call per part, then a validation pass. No more single 800-line response.
+- Part progress is visible (count, per-part status and timing); finished parts are kept if you stop, and **Resume build** continues the remaining ones.
+- Thinking and tool activity are condensed into one collapsible status bar; the answer and code get the visual priority.
+- New code viewer with line numbers, file names, multi-file tabs, copy/download, expand and contained horizontal/vertical scrolling.
+- Web search fetches its sources in parallel with timeouts and keeps partial results; Stop cancels native requests and searches immediately.
+- Fixed concurrent native responses crossing over (each request is now matched by id).
+
+Version code **38**; package `com.nazchat.app` and the original signing identity are retained. Provider behaviour, attachments, skills, projects and local data are unchanged.
+
 # Kita Chat 4.3.1 — Studio launcher icon
 
 - Android home-screen/app-drawer icon now matches the folded K logo inside Kita Studio

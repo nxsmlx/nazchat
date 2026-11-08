@@ -18,6 +18,22 @@ const assert=require('assert');
    const body=JSON.parse(route.request().postData());calls.push(body);
    const last=(body.messages||[]).at(-1)||{};
    const isPlan=/Break this task into/.test(last.content||"");
+  const partRequest=/Now write ONLY part (\d+) of/.test(last.content||"");
+  if(partRequest){
+    const idx=Number((last.content.match(/Now write ONLY part (\d+) of/)||[])[1])-1;
+    const bodies=[
+      '<!doctype html><html><head><style>.hero{color:red}</style></head><body>',
+      '<section class="hero"><h2>Hero section</h2><p>kandungan halaman</p></section>',
+      '<nav><a href="#menu">Menu</a></nav><section id="menu"><h2>Menu</h2></section>',
+      '<section id="galeri"><h2>Galeri</h2></section>',
+      '</body></html><script>console.log("ok")</script>'
+    ];
+    await route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:sse([
+      {choices:[{delta:{content:bodies[idx]||'<p>extra</p>'}}]},
+      {choices:[{delta:{},finish_reason:'stop'}]}
+    ])});
+    return;
+  }
    if(isPlan){
      await route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:sse([
        {choices:[{delta:{content:'1. Head and global styles\n2. Hero section\n3. Menu and about\n4. Gallery\n5. Footer and scripts'}}]},
@@ -44,16 +60,18 @@ const assert=require('assert');
  await p.evaluate(()=>{localStorage.setItem('nazchat_v1',JSON.stringify({schemaVersion:3,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],conversations:[],projects:[],prompts:[],styles:[],artifacts:[],lastProviderId:'p',lastModelId:'m',onboardingDone:true,theme:'dark',parametersByModel:{},skillSettings:{mode:'auto',selected:[],disabled:[],custom:[]}}));location.reload()});
  await p.waitForFunction(()=>typeof currentModel==='function');
 
- // 1. A long HTML build runs ONE thinking call then ONE coding call.
+ // 1. A long HTML build runs ONE planning call, then one model call per part.
  await p.fill('#promptInput','buat landing page lengkap untuk kedai kopi dengan hero, menu, galeri dan footer');await p.click('#sendBtn');
  await p.waitForFunction(()=>!generating,{timeout:60000});
  const planCalls=calls.filter(c=>(c.messages||[]).some(m=>/Break this task into/.test(m.content||"")));
  const codeCalls=calls.filter(c=>(c.messages||[]).some(m=>/Approved plan/.test(String(m.content||""))));
- assert(planCalls.length===1,'expected exactly one thinking call, got '+planCalls.length);
- assert(codeCalls.length===1,'expected exactly one coding call, got '+codeCalls.length);
- planCalls.forEach(c=>assert(c.max_tokens<=1024,'thinking call budget too big: '+c.max_tokens));
- codeCalls.forEach(c=>assert(c.max_tokens>4096,'coding call should use the full model budget'));
- console.log('PASS two-phase build: 1 thinking call + 1 coding call');
+ const partCalls=calls.filter(c=>(c.messages||[]).some(m=>/Now write ONLY part/.test(m.content||"")));
+ assert(planCalls.length===1,'expected exactly one planning call, got '+planCalls.length);
+ assert(partCalls.length>=3,'incremental build must call the model once per part, got '+partCalls.length);
+ assert(new Set(partCalls.map(c=>c.messages.at(-1).content)).size===partCalls.length,'part prompts repeated');
+ planCalls.forEach(c=>assert(c.max_tokens<=1024,'planning call budget too big: '+c.max_tokens));
+ partCalls.forEach(c=>assert(c.max_tokens>4096,'part call should use the full model budget'));
+ console.log('PASS incremental build: 1 plan call + '+partCalls.length+' part calls');
 
  const result=await p.evaluate(()=>{
    const m=conv.messages.at(-1);
@@ -61,8 +79,9 @@ const assert=require('assert');
  });
  assert(result.phases&&result.phases.state==='done','phases not marked done');
  assert(/```html/.test(result.html)||/<[a-z]/i.test(result.html),'coding output missing');
- assert(/Build plan/.test(result.reasoning),'thinking phase not recorded as reasoning');
- console.log('PASS thinking phase + single coding phase recorded');
+ assert(/Build plan/.test(result.reasoning),'plan not recorded as reasoning');
+ assert(result.phases.parts.every(p=>p.status==='done'),'not every part completed');
+ console.log('PASS plan recorded and all parts assembled');
 
  // 2. Short questions do NOT go through phases.
  calls.length=0;

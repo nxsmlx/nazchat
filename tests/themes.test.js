@@ -112,13 +112,15 @@ const {launch, appUrl, root} = require('./browser');
           const assistant={id:'a',role:'assistant',reasoning:'Check the layout, contrast and responsive behavior before writing the page.',content:'## A clear workspace\nReadable body text with **strong emphasis**, `inline code` and a [reference link](https://example.com).\n\n> Reference material stays distinct from the answer.\n\n| Item | Status |\n| --- | --- |\n| Theme | Ready |\n\n```html\n<!doctype html>\n<html><body><h1 class="title">Hello</h1><!-- Comment --></body></html>\n```',usedSkills:['frontend-design'],sources:[{title:'Documentation',url:'https://example.com'}],timestamp:Date.now()};
           conv={id:'theme-chat',title:'Theme verification',providerId:'theme-provider',modelId:'model-one',updatedAt:Date.now(),messages:[{id:'u',role:'user',content:'Build a readable page in both themes.'},assistant]};
           db.conversations=[conv];renderAll();
-          document.querySelector('.code-wrap').classList.remove('collapsed');
+          // The viewer now renders as a tabbed code frame; open it before measuring.
+          const viewer=document.querySelector('.code-wrap');
+          if(viewer) viewer.classList.remove('collapsed');
           const wrap=document.createElement('div');wrap.className='msg assistant';
           const bubble=document.createElement('div');bubble.className='bubble';wrap.appendChild(bubble);document.querySelector('#chatInner').appendChild(wrap);
           renderLiveCode(bubble,{lang:'html',body:'<!doctype html>\n'+Array.from({length:80},(_,i)=>'<p>Section '+i+'</p>').join('\n')});
           document.querySelector('#chatScroll').scrollTop=0;
         });
-        await page.evaluate(()=>{const code=document.querySelector('.code-wrap code');for(const cls of ['hljs-title class_ inherited__','hljs-operator','hljs-selector-attr','hljs-selector-pseudo','hljs-subst','hljs-code','hljs-formula','hljs-emphasis','hljs-strong']){const span=document.createElement('span');span.className=cls;span.textContent=' token ';code.appendChild(span);}});
+        await page.evaluate(()=>{const code=document.querySelector('.code-wrap code');if(!code)return;for(const cls of ['hljs-title class_ inherited__','hljs-operator','hljs-selector-attr','hljs-selector-pseudo','hljs-subst','hljs-code','hljs-formula','hljs-emphasis','hljs-strong']){const span=document.createElement('span');span.className=cls;span.textContent=' token ';code.appendChild(span);}});
         assert(await page.locator('.code-wrap [class^="hljs-"]').count()>0,'syntax highlighting must load before testing its colors');
         await checkScreen('chat',theme); await screenshot('chat',theme);
         const terminal=await page.locator('.code-live-body').evaluate(n=>({height:n.clientHeight,scroll:n.scrollHeight}));

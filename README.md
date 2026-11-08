@@ -2,6 +2,17 @@
 
 Kita Chat is a private, local-first Android BYOK AI chat client for OpenAI-compatible providers.
 
+## v4.4.0 — Incremental execution and a professional code viewer
+
+- Long builds now plan once and then **execute one part per model call** (plan → part → evaluate → next part → validate), instead of one giant response
+- A stopped or failed build keeps finished parts and offers **Resume build**
+- Thinking/tool/build state lives in one compact status bar (collapsed by default, detail scrolls inside ~110px)
+- Code answers use a real code viewer: line numbers, file names from the fence, tabs for multi-file answers, copy, download, expand and internal scrolling
+- Web search runs its sources in parallel with per-request timeouts and keeps partial results; Stop now cancels native streams and pending searches
+- Native fetch responses are matched per request id, so concurrent requests can no longer settle each other
+
+Release target **4.4.0 / versionCode 38**, package `com.nazchat.app`, original signing identity.
+
 ## v4.3.1 — Matching Android launcher icon
 
 - Replaced both old launcher designs with the same folded K used inside Kita Studio, in iris on ink
