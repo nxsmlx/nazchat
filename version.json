@@ -1,9 +1,9 @@
 {
-  "version": "4.4.1",
-  "versionCode": 39,
+  "version": "4.4.2",
+  "versionCode": 40,
   "name": "Kita Chat",
-  "changelog": "Fixed the mobile viewport and generated HTML head. Chat, providers, projects and local data unchanged.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.4.1/NazChat.apk",
-  "sha256": "73fb729b65c67dcfb09a3a4dd7b8b5a528a8f8b0da5d24b221298ca0878a0cd9",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.4.1"
+  "changelog": "In-app updates now install through an Android PackageInstaller session and show the exact reason if Android refuses. Chat and local data unchanged.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.4.2/NazChat.apk",
+  "sha256": "de5add9a52adfb5de296571e80e47bdd287cca352859c086e8be4d0328d233b4",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.4.2"
 }
