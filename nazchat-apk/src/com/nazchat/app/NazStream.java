@@ -118,9 +118,11 @@ public class NazStream {
         // Never block the JavascriptInterface thread on a reader locked in readLine().
         final BufferedReader reader = r;
         final HttpURLConnection connection = c;
-        Thread closer = new Thread(() -> {
-            try { if (connection != null) connection.disconnect(); } catch (Exception ignored) {}
-            try { if (reader != null) reader.close(); } catch (Exception ignored) {}
+        Thread closer = new Thread(new Runnable() {
+            public void run() {
+                try { if (connection != null) connection.disconnect(); } catch (Exception ignored) {}
+                try { if (reader != null) reader.close(); } catch (Exception ignored) {}
+            }
         });
         closer.setDaemon(true);
         closer.start();
