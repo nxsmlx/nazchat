@@ -23,7 +23,7 @@ function skillData(){return require('../skills.json').skills;}
  await p.route('https://raw.githubusercontent.com/nxsmlx/nazchat/main/skills.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({packVersion:1,skills:[{id:'frontend-design',name:'Updated design',content:'Use deliberate design.'}]})}));
  await p.goto(appUrl);
  await p.evaluate(()=>{localStorage.setItem('nazchat_v1',JSON.stringify({schemaVersion:3,providers:[],conversations:[],projects:[],prompts:[],styles:[],artifacts:[],activeProjectId:null,lastProviderId:null,lastModelId:null,theme:'dark',thinking:false,search:false,reasoningEffort:'high',onboardingDone:true,parametersByModel:{},skillSettings:{mode:'auto',selected:[],disabled:[],custom:[]}}));location.reload();});
- await p.waitForTimeout(400);
+ await p.waitForFunction(()=>typeof db!=='undefined'&&typeof renderAll==='function');
  await p.evaluate(()=>{
    db.providers=[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'secret',headers:[],selectedModels:['model-a'],modelMeta:{'model-a':{context_length:8192}}}];
    db.lastProviderId='p';db.lastModelId='model-a';db.search=false;save();renderAll();
