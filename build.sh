@@ -97,7 +97,7 @@ mkdir -p "$B/obj" "$B/out"
 # Java source filenames themselves must not contain whitespace or wildcards.
 (
   cd "$B"
-  javac -source 8 -target 8 -bootclasspath "$PLAT" -d obj $(find src -name '*.java')
+  javac -encoding UTF-8 -source 8 -target 8 -bootclasspath "$PLAT" -d obj $(find src -name '*.java')
   java -cp "$BT/lib/d8.jar" com.android.tools.r8.D8 --release --min-api 24 \
     --lib "$PLAT" --output out $(find obj -name '*.class')
 )
