@@ -1,9 +1,9 @@
 {
-  "version": "4.4.0",
-  "versionCode": 38,
+  "version": "4.4.1",
+  "versionCode": 39,
   "name": "Kita Chat",
-  "changelog": "Incremental build workflow: one plan call then one model call per part, resumable, with a compact status bar, a code viewer with line numbers and file tabs, and faster, cancellable web search.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.4.0/NazChat.apk",
-  "sha256": "ff228c8b8f10a2f178c8e395c0a8c2d07fea66e22bef556de1ffebef431d9d7a",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.4.0"
+  "changelog": "Fixed the mobile viewport and generated HTML head. Chat, providers, projects and local data unchanged.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.4.1/NazChat.apk",
+  "sha256": "73fb729b65c67dcfb09a3a4dd7b8b5a528a8f8b0da5d24b221298ca0878a0cd9",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.4.1"
 }
