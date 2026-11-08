@@ -1,11 +1,11 @@
-const {chromium}=require('/tmp/node_modules/playwright-core');
+const {launch, appUrl}=require('./browser');
 const assert=require('assert');
 
 (async()=>{
-  const b=await chromium.launch({executablePath:'/usr/bin/chromium-headless-shell',args:['--no-sandbox']});
+  const b=await launch();
   const p=await b.newPage({viewport:{width:360,height:800}});
   const errors=[];p.on('pageerror',e=>errors.push(e.message));
-  await p.goto('file:///data/user/0/id.griphub.agent/files/home/workspace/build-a-web-app-116-648/nazchat/index.html');
+  await p.goto(appUrl);
   await p.waitForTimeout(250);
   const mobile=await p.evaluate(()=>{
     const root=getComputedStyle(document.documentElement), modal=getComputedStyle(document.querySelector('.modal'));

@@ -12,3 +12,5 @@ nazchat-apk/build.log
 .attachments/
 *.log
 .DS_Store
+node_modules/
+test-results/

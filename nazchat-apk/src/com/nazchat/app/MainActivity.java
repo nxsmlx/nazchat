@@ -3,9 +3,6 @@ package com.nazchat.app;
 import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
-import android.view.WindowInsets;
-import android.view.WindowInsetsController;
 import android.webkit.WebResourceRequest;import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -14,7 +11,6 @@ import android.webkit.WebChromeClient;
 import android.webkit.ConsoleMessage;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient.FileChooserParams;
-import android.graphics.Color;
 import android.net.Uri;
 import android.content.Intent;
 import java.io.ByteArrayInputStream;
@@ -26,6 +22,7 @@ public class MainActivity extends Activity {
     static WebView web;
     private ValueCallback<Uri[]> fileCallback;
     private NazVoice voice;
+    private NazTheme theme;
     private static final int FILE_PICKER = 7401;
 
     @Override
@@ -61,7 +58,10 @@ public class MainActivity extends Activity {
         }
         WebView.setWebContentsDebuggingEnabled(false);
 
-        web.setBackgroundColor(Color.parseColor("#0d0d0d"));
+        NazTheme.disableWebDarkening(web);
+        theme = new NazTheme(this, web);
+        // Palette-only bridge; never expose this on generated-HTML preview WebViews.
+        web.addJavascriptInterface(theme, "NazTheme");
 
         // Native bridges — CORS-free networking for any provider
         web.addJavascriptInterface(new NazBridge(), "NazBridge");
@@ -161,6 +161,8 @@ public class MainActivity extends Activity {
     protected void onResume() { if (web != null) web.onResume(); super.onResume(); }
     @Override
     protected void onDestroy() {
+        if (theme != null) { theme.dispose(); theme = null; }
+        if (web != null) web.removeJavascriptInterface("NazTheme");
         NazStream.cancelAll();
         if (web != null) { web.stopLoading(); web.removeAllViews(); web.destroy(); web = null; }
         NazApp.clear();
