@@ -1070,6 +1070,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 
 <script src="studio.js"></script>
 <script src="comfort.js"></script>
+<script src="provider-picker.js"></script>
 <script>
 "use strict";
 const THINK_OPEN = "\u003Cthink\u003E", THINK_CLOSE = "\u003C/think\u003E";
@@ -1374,8 +1375,8 @@ let conv = null;            // active conversation
 let generating = false;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.4.3";
-const APP_VERSION_CODE = 41;
+const APP_VERSION = "4.4.4";
+const APP_VERSION_CODE = 42;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2395,8 +2396,10 @@ function renderProvForm(){
 
   if(!f.id){
     const presetLabel=el("label","fld","Provider preset");
-    const presetSelect=el("select");presetSelect.innerHTML=`<option value="">Choose a provider…</option>`+PROVIDER_PRESETS.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} — ${esc(p.hint)}</option>`).join("");
-    presetSelect.onchange=()=>{const p=PROVIDER_PRESETS.find(x=>x.id===presetSelect.value);if(p){f.name=p.name;f.baseUrl=p.baseUrl;f.apiType=p.apiType;renderProvForm();}};presetLabel.appendChild(presetSelect);form.appendChild(presetLabel);
+    const presetButton=el('button','provider-preset-trigger');presetButton.type='button';presetButton.setAttribute('aria-haspopup','dialog');
+    presetButton.textContent=(PROVIDER_PRESETS.find(p=>p.id===f.presetId)?.name||'Choose a provider')+' ▾';
+    presetButton.onclick=()=>openProviderPresetPicker(f,presetButton);
+    presetLabel.appendChild(presetButton);form.appendChild(presetLabel);
   }
   const name = el("label","fld","Provider Name");
   const nameIn = el("input"); nameIn.value = f.name; nameIn.placeholder = "e.g. OpenRouter, DeepSeek";

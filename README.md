@@ -1,3 +1,14 @@
+## v4.4.4
+
+- In-app provider picker with search, two-line descriptions, Light/Dark styling and keyboard focus handling.
+- Appearance: conversation/code text sizes, reduced motion, autoscroll and reset.
+- Optional update banner with Later and Skip this version; no automatic installation.
+- Save-failure warning, restore confirmation, attachment size checks and retained drafts when model/key is missing.
+- Android Back closes overlays first. Updater checks approved HTTPS URLs, redirects, size/time limits, package, newer version and signing identity.
+- VersionCode 42; original package and signing certificate retained.
+
+Native device tests and Play Protect detection cause remain unverified. See docs/UPDATE_SECURITY_AUDIT.md. Do not disable device protection based on this release.
+
 ## v4.4.3 — Rendering, Stop and tool-round fixes
 
 - HTML output isolated in the code viewer; code table no longer inherits Markdown table styles

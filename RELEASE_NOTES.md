@@ -1,3 +1,14 @@
+# Kita Chat 4.4.4
+
+- In-app provider picker with search, two-line descriptions, Light/Dark styling and keyboard focus handling.
+- Appearance: conversation/code text sizes, reduced motion, autoscroll and reset.
+- Optional update banner with Later and Skip this version; no automatic installation.
+- Save-failure warning, restore confirmation, attachment size checks and retained drafts when model/key is missing.
+- Android Back closes overlays first. Updater checks approved HTTPS URLs, redirects, size/time limits, package, newer version and signing identity.
+- VersionCode 42; original package and signing certificate retained.
+
+Native device tests and Play Protect detection cause remain unverified. See docs/UPDATE_SECURITY_AUDIT.md. Do not disable device protection based on this release.
+
 # Kita Chat 4.4.3 — Chat rendering, Stop and tool fixes
 
 - Generated HTML is always shown as source in the code viewer and never rendered into the chat; line numbers no longer wrap letter by letter

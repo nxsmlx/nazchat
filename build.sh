@@ -91,7 +91,7 @@ esac
 
 mkdir -p "$B/assets"
 # Explicit frontend asset allowlist; never package design-lab or signing material.
-for asset in index.html studio.css studio.js comfort.js; do
+for asset in index.html studio.css studio.js comfort.js provider-picker.js; do
   [ -f "$ROOT/nazchat/$asset" ] || fail "Missing frontend asset: $asset"
   cp "$ROOT/nazchat/$asset" "$B/assets/$asset"
 done
