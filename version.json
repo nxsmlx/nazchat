@@ -1,9 +1,9 @@
 {
-  "version": "4.3.1",
-  "versionCode": 37,
+  "version": "4.4.0",
+  "versionCode": 38,
   "name": "Kita Chat",
-  "changelog": "Updated Android launcher icon to the Kita Studio folded K: iris on ink, adaptive and themed icon support, plus legacy density variants. Chat data and behavior unchanged.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.3.1/NazChat.apk",
-  "sha256": "47ab8ab2b442ff4326d635b54a10327ccee86db09eda6637717a75e2e59d8e36",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.3.1"
+  "changelog": "Incremental build workflow: one plan call then one model call per part, resumable, with a compact status bar, a code viewer with line numbers and file tabs, and faster, cancellable web search.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.4.0/NazChat.apk",
+  "sha256": "ff228c8b8f10a2f178c8e395c0a8c2d07fea66e22bef556de1ffebef431d9d7a",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.4.0"
 }
