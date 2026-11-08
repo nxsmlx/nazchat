@@ -1,3 +1,11 @@
+# Kita Chat 4.4.2 — In-app update fix
+
+- Fixed in-app updates failing on devices where the manual APK install worked: the app now installs the downloaded update through an Android PackageInstaller session
+- Android asks you to confirm the update; if it refuses, Kita Chat shows the exact reason and a link to install manually
+- Version code **40**; package and original signing identity unchanged, no data changes
+
+Note: this fix applies to updates installed *from* 4.4.2 onward. Updating to 4.4.2 itself may still need the manual install once.
+
 # Kita Chat 4.4.1 — Viewport and HTML head fix
 
 - The app document now keeps a valid mobile viewport (a previous escaping mistake removed the page scale)

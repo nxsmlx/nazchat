@@ -1,3 +1,11 @@
+## v4.4.2 — Reliable in-app update install
+
+- In-app updates now install through Android PackageInstaller sessions instead of handing a content URI to the system installer screen, which some devices rejected while manual installs worked
+- Android reports the exact result; failures now show the real reason plus a manual install link
+- The old installer screen remains as a fallback
+
+Release target **4.4.2 / versionCode 40**.
+
 ## v4.4.1 — Mobile viewport and HTML head fix
 
 - Fixed a double-escaped `viewport` meta in the app document, which lost the mobile page scale on some devices

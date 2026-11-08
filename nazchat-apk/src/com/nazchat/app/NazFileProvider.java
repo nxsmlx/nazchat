@@ -39,8 +39,15 @@ public class NazFileProvider extends ContentProvider {
     }
     @Override public Cursor query(Uri uri, String[] cols, String sel, String[] args, String sort) {
         File f = fileFor(uri); if (f == null) return null;
-        MatrixCursor c = new MatrixCursor(cols == null ? new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE} : cols);
-        c.addRow(new Object[]{f.getName(), f.length()});
+        // Answer exactly the columns the installer asks for; unknown columns get null.
+        String[] names = cols == null ? new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE} : cols;
+        MatrixCursor c = new MatrixCursor(names);
+        Object[] row = new Object[names.length];
+        for (int i = 0; i < names.length; i++) {
+            if (OpenableColumns.DISPLAY_NAME.equals(names[i])) row[i] = f.getName();
+            else if (OpenableColumns.SIZE.equals(names[i])) row[i] = f.length();
+        }
+        c.addRow(row);
         return c;
     }
     @Override public Uri insert(Uri uri, ContentValues v) { return null; }

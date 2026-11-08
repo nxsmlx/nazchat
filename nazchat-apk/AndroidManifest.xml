@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.nazchat.app"
-    android:versionCode="39"
-    android:versionName="4.4.1">
+    android:versionCode="40"
+    android:versionName="4.4.2">
 
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
 
@@ -36,6 +36,9 @@
             android:theme="@android:style/Theme.Black.NoTitleBar"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode"
             android:windowSoftInputMode="adjustResize" />
+        <receiver
+            android:name=".NazInstallReceiver"
+            android:exported="false" />
         <provider
             android:name=".NazFileProvider"
             android:authorities="com.nazchat.app.updateprovider"

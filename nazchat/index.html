@@ -1372,8 +1372,8 @@ let conv = null;            // active conversation
 let generating = false;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.4.1";
-const APP_VERSION_CODE = 39;
+const APP_VERSION = "4.4.2";
+const APP_VERSION_CODE = 40;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2556,9 +2556,20 @@ async function checkForUpdate(){
         btn.textContent="Preparing…"; btn.disabled=true;
         window.nazUpdateStatus = (state)=>{
           if(state==="downloading"){ btn.textContent="Preparing…"; }
+          else if(state==="installing"){ btn.textContent="Installing…"; }
+          else if(state==="confirm"){ btn.textContent="Confirm in Android…"; btn.disabled=false; }
+          else if(state==="installed"){ status.style.display="inline-flex"; status.style.color="var(--success)"; status.textContent="Update installed"; }
           else if(state==="ready"){ btn.textContent="Installing…"; btn.disabled=false; }
           else if(state==="permission"){ status.style.display="inline-flex"; status.style.color="var(--text2)"; status.textContent="Allow installs from Kita Chat, then tap Install update again"; btn.textContent="Install update"; btn.disabled=false; }
-          else if(state && state.startsWith("error:")){ status.style.display="inline-flex"; status.style.color="var(--danger)"; status.textContent="Update failed — try again"; btn.textContent="Install update"; btn.disabled=false; }
+          else if(state && state.startsWith("error:")){
+            // Show Android's actual reason and a manual fallback instead of a generic failure.
+            status.style.display="block"; status.style.color="var(--danger)";
+            status.textContent="Update failed: "+state.slice(6)+". ";
+            const manual=el("a",null,"Install manually from the release page");
+            manual.href=info.releaseUrl||`https://github.com/${UPDATE_REPO}/releases/latest`; manual.target="_blank"; manual.rel="noopener";
+            status.appendChild(manual);
+            btn.textContent="Install update"; btn.disabled=false;
+          }
         };
         if(typeof window.NazUpdater === "object" && window.NazUpdater.downloadAndInstall){
           window.NazUpdater.downloadAndInstall(apkUrl, info.sha256||"");
