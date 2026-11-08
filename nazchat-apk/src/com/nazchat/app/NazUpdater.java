@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.webkit.JavascriptInterface;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -79,9 +80,22 @@ public class NazUpdater {
 
                     String authority = activity.getPackageName() + ".updateprovider";
                     Uri uri = new Uri.Builder().scheme("content").authority(authority).path(apk.getName()).build();
-                    Intent i = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-                    i.setData(uri);
-                    i.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    // Android 8+ requires the user to allow this app to request package installs.
+                    if (Build.VERSION.SDK_INT >= 26 && !activity.getPackageManager().canRequestPackageInstalls()) {
+                        Intent permission = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                Uri.parse("package:" + activity.getPackageName()));
+                        permission.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        activity.startActivity(permission);
+                        emit("permission");
+                        busy = false;
+                        return;
+                    }
+                    // Give Package Installer both the MIME type and a readable content URI.
+                    // ACTION_VIEW is more reliable across Android vendor installers than
+                    // ACTION_INSTALL_PACKAGE with an untyped URI.
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setDataAndType(uri, "application/vnd.android.package-archive");
+                    i.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     activity.startActivity(i);
                     emit("ready");
                     busy = false;

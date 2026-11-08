@@ -1,9 +1,9 @@
 {
-  "version": "4.0.0",
-  "versionCode": 30,
+  "version": "4.0.1",
+  "versionCode": 31,
   "name": "Kita Chat",
-  "changelog": "Approved screen mockup integrated into the live app: persistent desktop rail, quiet workstation topbar, focused chat measure, Thinking panel, terminal code frame, responsive composer, and preview-ready workspace styling.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.0.0/NazChat.apk",
-  "sha256": "82cf6b9b48cc709960d462848a2aa49a347573c7cd094729ce473792d5c96031",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.0.0"
+  "changelog": "Updater reliability hotfix: Android Package Installer now receives the APK MIME type and clear content URI, with automatic handling for the Android install-permission screen.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.0.1/NazChat.apk",
+  "sha256": "9f4cbeb082a3186965e37cb5b5078edb738cf4af2525841a78a95ab157f287ea",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.0.1"
 }

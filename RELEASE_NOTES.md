@@ -1,3 +1,10 @@
+# Kita Chat 4.0.1 — Existing-app updater hotfix
+
+- Android updater now gives Package Installer an explicit APK MIME type
+- Uses `ACTION_VIEW` with a readable content URI for better vendor compatibility
+- Detects Android 8+ install-permission state and opens the correct system settings screen
+- Update UI explains when the user must allow installs from Kita Chat and then retry
+
 # Kita Chat 4.0.0 — Approved screen mockup integrated
 
 - Integrated the approved Quiet Workstation screen into the live app

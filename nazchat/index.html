@@ -1276,8 +1276,8 @@ let generating = false;
 let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.0.0"
-const APP_VERSION_CODE = 30;
+const APP_VERSION = "4.0.1"
+const APP_VERSION_CODE = 31;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2308,6 +2308,7 @@ async function checkForUpdate(){
         window.nazUpdateStatus = (state)=>{
           if(state==="downloading"){ btn.textContent="Preparing…"; }
           else if(state==="ready"){ btn.textContent="Installing…"; btn.disabled=false; }
+          else if(state==="permission"){ status.style.display="inline-flex"; status.style.color="var(--text2)"; status.textContent="Allow installs from Kita Chat, then tap Install update again"; btn.textContent="Install update"; btn.disabled=false; }
           else if(state && state.startsWith("error:")){ status.style.display="inline-flex"; status.style.color="var(--danger)"; status.textContent="Update failed — try again"; btn.textContent="Install update"; btn.disabled=false; }
         };
         if(typeof window.NazUpdater === "object" && window.NazUpdater.downloadAndInstall){
