@@ -1,3 +1,13 @@
+# Kita Chat 4.0.0 — Approved screen mockup integrated
+
+- Integrated the approved Quiet Workstation screen into the live app
+- Desktop now uses a persistent 252px conversation rail with a focused main workspace
+- Header now presents the active conversation context and model controls more like a professional workspace
+- Chat measure, user bubbles, assistant header, Thinking panel and terminal frame follow the approved mockup proportions
+- Composer is a floating workstation control with compact model/tools footer and a focused send action
+- Mobile keeps the rail as a drawer and preserves the compact one-column chat flow
+- Existing settings, model selection, tools, preview, skills and provider functionality remain wired to the live shell
+
 # Kita Chat 3.9.1 — Updater button hotfix
 
 - Fixed the About → Check for updates button after the Settings Hub-and-Spoke refactor

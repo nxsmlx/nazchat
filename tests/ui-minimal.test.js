@@ -31,8 +31,8 @@ const assert=require('assert');
   await p.setViewportSize({width:1440,height:900});await p.waitForTimeout(150);
   const desktop=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth<=innerWidth,composer:document.querySelector('#composer').getBoundingClientRect().width,chat:document.querySelector('#chatInner').getBoundingClientRect().width}));
   assert(desktop.overflow,'desktop layout has horizontal overflow');
-  assert(desktop.composer<=820,'composer exceeds desktop measure');
-  assert(desktop.chat<=820,'chat measure exceeds readable width');
+  assert(desktop.composer<=860,'composer exceeds desktop measure');
+  assert(desktop.chat<=860,'chat measure exceeds readable width');
   console.log('PASS desktop readable measure and overflow');
 
   await p.setViewportSize({width:390,height:844});

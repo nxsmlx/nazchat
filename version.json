@@ -1,9 +1,9 @@
 {
-  "version": "3.9.1",
-  "versionCode": 29,
+  "version": "4.0.0",
+  "versionCode": 30,
   "name": "Kita Chat",
-  "changelog": "Updater hotfix: the About → Check for updates button is now wired correctly after the Settings Hub-and-Spoke refactor, with a safe missing-element guard.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v3.9.1/NazChat.apk",
-  "sha256": "d08afa40fe1389c00133fe5e54481a420b5968e485594a5cdb4fa509e8d30a23",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v3.9.1"
+  "changelog": "Approved screen mockup integrated into the live app: persistent desktop rail, quiet workstation topbar, focused chat measure, Thinking panel, terminal code frame, responsive composer, and preview-ready workspace styling.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.0.0/NazChat.apk",
+  "sha256": "82cf6b9b48cc709960d462848a2aa49a347573c7cd094729ce473792d5c96031",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.0.0"
 }
