@@ -1,3 +1,16 @@
+# Kita Chat 4.2.1 — Update check fix
+
+The update check was failing to detect new versions when raw.githubusercontent.com served stale `version.json` due to CDN caching.
+
+This release adds a robust fallback:
+
+- First tries `raw.githubusercontent.com/main/version.json` (fast, cache-friendly)
+- If that fails or returns invalid data, falls back to GitHub Releases API (`/repos/{owner}/{repo}/releases/latest`) — always fresh, no CDN interference
+- Parses APK asset URL to extract version and constructs full metadata on-the-fly
+- Still respects `APP_VERSION_CODE`, native updater version, and SHA-256 verification
+
+Now reliably detects latest releases.
+
 # Kita Chat 4.2.0 — Complete theme audit
 
 The previous light/dark modes were inconsistent in spacing, typography and elevation. This release refines both themes globally:

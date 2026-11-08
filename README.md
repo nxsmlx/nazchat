@@ -2,6 +2,12 @@
 
 Kita Chat is a private, local-first Android BYOK AI chat client for OpenAI-compatible providers.
 
+## v4.2.1 — Update check fix
+
+- Added GitHub Releases API fallback to avoid stale `version.json` from raw.githubusercontent.com CDN cache
+- Now reliably detects latest APK releases even when raw content is delayed
+- Still verifies SHA-256, respects native app version, and uses the same secure install flow
+
 ## v4.2.0 — Complete theme audit
 
 - Unified light/dark surfaces, spacing, typography and elevation across header, sidebar, chat canvas, composer, terminal and sheets

@@ -1307,7 +1307,7 @@ let abortCtl = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
 const APP_VERSION = "4.1.0"
-const APP_VERSION_CODE = 33;
+const APP_VERSION_CODE = 34;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2322,9 +2322,27 @@ async function checkForUpdate(){
   if(!status||!btn){toast("Open About → Check for updates");return;}
   btn.disabled=true; btn.textContent="Checking…";
   try{
-    const res = await fetch(`https://raw.githubusercontent.com/${UPDATE_REPO}/main/version.json?ts=${Date.now()}`);
-    if(!res.ok) throw new Error("Could not reach GitHub");
-    const info = await res.json();
+    // Try raw.githubusercontent.com first — fast and cache-friendly
+    let info=null, res=null;
+    try{
+      res = await fetch(`https://raw.githubusercontent.com/${UPDATE_REPO}/main/version.json?ts=${Date.now()}`);
+      if(res.ok) info = await res.json();
+    }catch(e){}
+    // Fallback to GitHub Releases API — always fresh, no CDN cache
+    if(!info){
+      res = await fetch(`https://api.github.com/repos/${UPDATE_REPO}/releases/latest`, {headers:{"Authorization":"Bearer $GITHUB_TOKEN","Accept":"application/vnd.github+json"}});
+      if(!res.ok) throw new Error("Could not reach GitHub releases API");
+      const r = await res.json();
+      const assets=r.assets?.filter(a=>a.name==="NazChat.apk")||[];
+      if(assets.length!==1) throw new Error("No APK asset found in latest release");
+      const asset=assets[0];
+      const match=/v([\d.]+)/.exec(asset.browser_download_url);
+      if(!match) throw new Error("APK URL has no version tag");
+      info={version:match[1], versionCode:Number(match[1].replace(/\./g,"")), apkUrl:asset.browser_download_url};
+      if(r.body) info.changelog=r.body.split("\n").slice(0,3).join("\n");
+      if(r.tag_name) info.releaseUrl=`https://github.com/${UPDATE_REPO}/releases/tag/${r.tag_name}`;
+    }
+    if(!info) throw new Error("No version metadata retrieved");
     const remote = Number(info.versionCode||0);
     const nativeVer = (typeof window.NazUpdater === "object") ? window.NazUpdater.getVersion() : APP_VERSION_CODE;
     const local = Math.max(nativeVer||0, APP_VERSION_CODE);
