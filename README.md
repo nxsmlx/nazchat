@@ -2,6 +2,15 @@
 
 Kita Chat is a private, local-first Android BYOK AI chat client for OpenAI-compatible providers.
 
+## v4.3.1 — Matching Android launcher icon
+
+- Replaced both old launcher designs with the same folded K used inside Kita Studio, in iris on ink
+- Adaptive icon for Android 8+, monochrome layer for Android 13+ themed launchers, and correctly sized legacy PNGs for Android 7
+- Generated from the production mark/palette to prevent future drift (`npm run icons:generate`; verify with `npm run test:icons`)
+- Version **4.3.1 / versionCode 37**; chat behavior, package ID and storage unchanged
+
+Launcher mask previews are simulated, not a claim of installation testing on physical devices. System-themed icon colors depend on the wallpaper and launcher.
+
 ## v4.3.0 — Kita Studio
 
 - Integrated Studio layout with mist/ink palettes, iris accents, DM Sans and a quieter composer

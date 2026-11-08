@@ -114,6 +114,9 @@ jobs:
           } >> "$ART/build-metadata.txt"
           (cd "$ART" && sha256sum unsigned.apk apksigner.jar build-metadata.txt badging.txt > SHA256SUMS)
 
+      - name: Verify packaged Studio launcher resources
+        run: node scripts/verify-apk-icons.cjs nazchat-apk/unsigned.apk "$ANDROID_HOME/build-tools/36.0.0/aapt2"
+
       - name: Upload unsigned APK and local signing tool
         uses: actions/upload-artifact@v4
         with:

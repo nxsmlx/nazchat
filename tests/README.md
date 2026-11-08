@@ -29,6 +29,13 @@ are measured against a 44px target. This is not a complete accessibility audit.
 Run it independently with `npm run test:studio`; screenshots and reports go to
 ignored `test-results/studio/`.
 
+`npm run test:icons` checks generated Android resources against the production
+Studio SVG and palette: adaptive v26, monochrome v33, all five legacy PNG densities,
+and rasterized foreground containment inside the central 66dp safe circle. Its
+mask contact sheet is in `test-results/launcher-icons/studio-launcher.png`.
+`npm run icons:generate` regenerates these assets after an approved branding change.
+Launcher mask images are simulations, not Android launcher screenshots.
+
 These are browser tests, not Android instrumentation tests. Native system bars,
 startup colors and preview chrome must also be checked on a device after building
 an APK. Test fixtures use an isolated browser profile; no real API keys or user

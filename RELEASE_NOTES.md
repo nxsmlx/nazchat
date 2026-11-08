@@ -1,3 +1,13 @@
+# Kita Chat 4.3.1 — Studio launcher icon
+
+- Android home-screen/app-drawer icon now matches the folded K logo inside Kita Studio
+- Iris foreground on an ink background, replacing the old green chat-bubble and mint adaptive icons
+- Adaptive layers for Android 8+, a monochrome layer for supported Android 13+ themed launchers, and legacy icons in all five standard densities
+- Logo stays inside the central 66dp safe circle; system-themed colors are controlled by the launcher
+- Version code **37**; package `com.nazchat.app`, existing chat data and original signing identity retained
+
+No changes to chat/provider behavior. Update over the existing app; do not uninstall. Physical-device launcher/cache behavior has not been tested by the agent.
+
 # Kita Chat 4.3.0 — Kita Studio
 
 - A new calm Studio interface: mist/ink surfaces, iris accent, DM Sans, readable conversation layout and a simpler composer

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="kita_icon_background">#0D1715</color>
-    <color name="kita_icon_mint">#70E0BF</color>
+    <color name="kita_icon_background">#171920</color>
+    <color name="kita_icon_iris">#bdadff</color>
 </resources>
