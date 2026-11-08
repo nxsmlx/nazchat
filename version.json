@@ -1,9 +1,9 @@
 {
-  "version": "4.0.1",
-  "versionCode": 31,
+  "version": "4.1.0",
+  "versionCode": 32,
   "name": "Kita Chat",
-  "changelog": "Updater reliability hotfix: Android Package Installer now receives the APK MIME type and clear content URI, with automatic handling for the Android install-permission screen.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.0.1/NazChat.apk",
-  "sha256": "9f4cbeb082a3186965e37cb5b5078edb738cf4af2525841a78a95ab157f287ea",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.0.1"
+  "changelog": "Dark-mode refinement: layered graphite surfaces, clearer separation between background/surface/raised panels, calmer steel accent, and improved composer, terminal, sheets and message contrast.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.1.0/NazChat.apk",
+  "sha256": "5ca422d3bbcdb2c4120f46a529ce969602e0f041b678815a71efa5e942adb118",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.1.0"
 }

@@ -1,3 +1,13 @@
+# Kita Chat 4.1.0 — Dark mode refinement
+
+Local build — not published yet.
+
+- Dark mode now uses layered graphite surfaces: background `#111318`, surface `#181b22`, raised controls `#222730`
+- Clearer separation between header, sidebar, chat canvas, composer, sheets and terminal
+- Steel accent `#aeb9c8` replaces the muddy low-contrast treatment without becoming neon
+- User bubbles, Thinking, terminal, buttons and Settings cards gain controlled depth and contrast
+- Light mode remains unchanged and existing interactions remain covered by the full regression suite
+
 # Kita Chat 4.0.1 — Existing-app updater hotfix
 
 - Android updater now gives Package Installer an explicit APK MIME type
