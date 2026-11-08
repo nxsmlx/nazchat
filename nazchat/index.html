@@ -1372,8 +1372,8 @@ let conv = null;            // active conversation
 let generating = false;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.4.2";
-const APP_VERSION_CODE = 40;
+const APP_VERSION = "4.4.3";
+const APP_VERSION_CODE = 41;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1803,7 +1803,7 @@ function renderAssistant(bubble, msg, live){
     const box = el("div","run-status");
     const state = msg.phases ? msg.phases.state : (msg.content ? "execute" : msg.reasoning ? "think" : "waiting");
     const busy = !!live && state!=="done" && state!=="incomplete";
-    const label = msg.phases ? phaseStatusLabel(state) : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider");
+    const label = msg.phases ? phaseStatusLabel(state) : (!live ? (msg.toolCall?'Incomplete':'Completed') : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider"));
     const parts = msg.phases && msg.phases.parts && msg.phases.parts.length ? msg.phases.parts : null;
     const head = el("button","run-summary");
     head.setAttribute("aria-expanded", String(!!msg._runOpen));
@@ -3440,6 +3440,11 @@ async function send(text, opts){
       );
     }
     aiMsg.toolTrace = toolTrace.slice();
+    if(currentAbortSignal()?.aborted)break;
+    if(rounds>=MAX_TOOL_ROUNDS){
+      toolsOn=false;
+      history.push({role:'system',content:'Research budget reached. Do not call any more tools. Use the results already provided and complete the user request now. For a coding request provide the implementation, not another research plan. Disclose unavailable information honestly.'});
+    }
     continue;
   }
   if(calls.length && rounds >= MAX_TOOL_ROUNDS){

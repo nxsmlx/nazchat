@@ -1,3 +1,11 @@
+## v4.4.3 — Rendering, Stop and tool-round fixes
+
+- HTML output isolated in the code viewer; code table no longer inherits Markdown table styles
+- Stop cancels pre-response waits, streams, searches and pending build parts
+- Tool-round limit now leads to a final tools-free answer
+
+Release target **4.4.3 / versionCode 41**.
+
 ## v4.4.2 — Reliable in-app update install
 
 - In-app updates now install through Android PackageInstaller sessions instead of handing a content URI to the system installer screen, which some devices rejected while manual installs worked

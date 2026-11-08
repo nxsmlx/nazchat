@@ -29,6 +29,10 @@ const assert=require('assert');
      ])});
      return;
    }
+   if(mode==='exhaust-tools'){
+     const content=body.tools?null:'Completed using the research already available.';
+     await route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:sse(content?[{choices:[{delta:{content},finish_reason:'stop'}]}]:[{choices:[{delta:{tool_calls:[{index:0,id:'research_'+requests.length,type:'function',function:{name:'fetch_url',arguments:'{"url":"https://example.com/docs"}'}}]},finish_reason:'tool_calls'}]}])});return;
+   }
    if(mode==='toomany'){
      const err='{"error":{"message":"max_tokens is too large: 65536. This model supports at most 16384 completion tokens.","type":"invalid_request_error"}}';
      await route.fulfill({status:400,headers:{'content-type':'application/json'},body:err});
@@ -58,6 +62,17 @@ const assert=require('assert');
  await p.evaluate(()=>{localStorage.setItem('nazchat_v1',JSON.stringify({schemaVersion:3,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],conversations:[],projects:[],prompts:[],styles:[],artifacts:[],lastProviderId:'p',lastModelId:'m',onboardingDone:true,theme:'dark',parametersByModel:{},skillSettings:{mode:'auto',selected:[],disabled:[],custom:[]}}));location.reload()});
  await p.waitForFunction(()=>typeof db!=='undefined'&&typeof currentModel==='function',{timeout:15000});
 
+ // Exhausted research must switch to a final answer instead of stopping empty.
+ mode='exhaust-tools';
+ await p.route('https://example.com/docs',r=>r.fulfill({status:200,body:'Neutral documentation fixture'}));
+ await p.fill('#promptInput','Explain a documented feature');await p.click('#sendBtn');
+ await p.waitForFunction(()=>!generating,null,{timeout:30000});
+ assert(requests.length===4,'expected three research calls and one tools-disabled answer');
+ assert(!requests.at(-1).tools,'tools must be removed on the final request');
+ assert((await p.evaluate(()=>conv.messages.at(-1).content)).includes('Completed using the research'));
+ assert.equal(await p.locator('.msg.assistant').last().locator('.run-label',{hasText:'Writing the answer'}).count(),0,'completed answer still says Writing the answer');
+ console.log('PASS three tool rounds followed by a real final answer request');
+ requests.length=0;mode='tool';await p.evaluate(()=>{conv=null;renderAll();});
  // 1. Budget is derived from the model and needs no manual tuning.
  const budget=await p.evaluate(()=>({auto:autoMaxTokens(currentModel()),used:modelParameters(currentModel()).max_tokens}));
  assert(budget.auto>=8192,'auto budget too small: '+budget.auto);

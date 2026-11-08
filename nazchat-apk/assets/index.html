@@ -1372,8 +1372,8 @@ let conv = null;            // active conversation
 let generating = false;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.4.2";
-const APP_VERSION_CODE = 40;
+const APP_VERSION = "4.4.3";
+const APP_VERSION_CODE = 41;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1436,6 +1436,10 @@ try{
     const lang = infoText.split(/\s+/)[0] || '';
     const cls = (infoText || lang).trim().replace(/["]/g, '&quot;');
     return '<pre><code class="'+cls+'">'+esc(String(code||''))+'</code></pre>\n';
+  },html(html){
+    // Model HTML is source, never live application DOM (including partial streams).
+    const source=typeof html==='object'?html.text:html;
+    return '<pre><code class="html">'+esc(String(source||''))+'</code></pre>\n';
   }}});
 }catch(e){}
 function extractThink(text){
@@ -1450,7 +1454,12 @@ function extractThink(text){
   return {think, content};
 }
 function renderMarkdown(src){
-  const raw = marked.parse(src || "");
+  const source=String(src||'');
+  // Incremental assembly and some providers return a bare HTML document.
+  // Keep the WHOLE document in a single viewer, not a mix of Markdown and HTML.
+  if(/^\s*(?:<!doctype\s+html|<html\b|<head\b|<body\b)/i.test(source))
+    return '<pre><code class="html">'+esc(source)+'</code></pre>';
+  const raw = marked.parse(source);
   let html = DOMPurify.sanitize(raw, {ADD_ATTR:["target"]});
   return html;
 }
@@ -1794,7 +1803,7 @@ function renderAssistant(bubble, msg, live){
     const box = el("div","run-status");
     const state = msg.phases ? msg.phases.state : (msg.content ? "execute" : msg.reasoning ? "think" : "waiting");
     const busy = !!live && state!=="done" && state!=="incomplete";
-    const label = msg.phases ? phaseStatusLabel(state) : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider");
+    const label = msg.phases ? phaseStatusLabel(state) : (!live ? (msg.toolCall?'Incomplete':'Completed') : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider"));
     const parts = msg.phases && msg.phases.parts && msg.phases.parts.length ? msg.phases.parts : null;
     const head = el("button","run-summary");
     head.setAttribute("aria-expanded", String(!!msg._runOpen));
@@ -1848,8 +1857,12 @@ function renderAssistant(bubble, msg, live){
   let src = (live ? msg.content : (extractThink(msg.content).content || msg.content)) || "";
   let liveCode = null, liveTail = "";
   if(live){
-    const split = splitLiveCode(src);
-    if(split.code){ liveCode = split.code; src = split.prose; liveTail = split.tail; }
+    if(/^\s*(?:<!doctype\s+html|<html\b|<head\b|<body\b)/i.test(src)){
+      liveCode={lang:'html',body:src};src='';
+    }else{
+      const split = splitLiveCode(src);
+      if(split.code){ liveCode = split.code; src = split.prose; liveTail = split.tail; }
+    }
   }
   if(live && src.length > 12000){
     // Very long streams render as plain text to keep the UI responsive; the final pass renders markdown.
@@ -2768,9 +2781,9 @@ function nativeSSE(sid, signal){
   const queue = [];
   let done = false, err = null, waiter = null, aborted = false;
   const drain = ()=>{ if(waiter){ const w = waiter; waiter = null; w(); } };
-  const onAbort = ()=>{ if(done||aborted) return; aborted = true; done = true; err = err||"aborted"; try{ NazStream.close(sid); }catch(e){} drain(); };
+  const onAbort = ()=>{ if(aborted) return; aborted = true; done = true; queue.length=0; err="aborted"; try{ NazStream.close(sid); }catch(e){} drain(); };
   if(signal){ if(signal.aborted) onAbort(); else signal.addEventListener("abort", onAbort); }
-  window.nazStreamOnLine = (id, line)=>{ if(id!==sid) return; queue.push(line); drain(); };
+  window.nazStreamOnLine = (id, line)=>{ if(id!==sid||done||aborted) return; queue.push(line); drain(); };
   window.nazStreamOnStatus = (id, code)=>{ if(id!==sid) return; /* handled by waitStreamStatus */ };
   window.nazStreamOnDone = (id, error)=>{ if(id!==sid) return; done = true; err = error||null; drain(); };
   return (async function* (){
@@ -2794,14 +2807,17 @@ function nativeSSE(sid, signal){
    so the backstop must be generous: Java's connect timeout (15s) surfaces real
    connection failures long before this fires. */
 const STREAM_STATUS_TIMEOUT_MS = 150000;
-function waitStreamStatus(sid){
-  return new Promise((resolve)=>{
-    let settled = false;
-    const prevStatus = window.nazStreamOnStatus;
-    const prevDone = window.nazStreamOnDone;
-    window.nazStreamOnStatus = (id, code)=>{ if(id===sid && !settled){ settled = true; resolve(code); } if(prevStatus) prevStatus(id,code); };
-    window.nazStreamOnDone = (id, error)=>{ if(id===sid && !settled){ settled = true; resolve(0); } if(prevDone) prevDone(id,error); };
-    setTimeout(()=>{ if(!settled){ settled=true; resolve(0); } }, window.__streamStatusTimeoutMs || STREAM_STATUS_TIMEOUT_MS);
+function cancellationError(){const error=new Error('Stopped by user');error.name='AbortError';return error;}
+function waitStreamStatus(sid, signal=currentAbortSignal()){
+  return new Promise((resolve,reject)=>{
+    let settled=false,timer;
+    const prevStatus=window.nazStreamOnStatus,prevDone=window.nazStreamOnDone;
+    const finish=(code,aborted=false)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',onAbort);if(aborted)reject(cancellationError());else resolve(code);};
+    const onAbort=()=>finish(0,true);
+    window.nazStreamOnStatus=(id,code)=>{if(id===sid)finish(code);prevStatus?.(id,code);};
+    window.nazStreamOnDone=(id,error)=>{if(id===sid)finish(0);prevDone?.(id,error);};
+    timer=setTimeout(()=>finish(0),window.__streamStatusTimeoutMs||STREAM_STATUS_TIMEOUT_MS);
+    if(signal?.aborted)onAbort();else signal?.addEventListener('abort',onAbort,{once:true});
   });
 }
 
@@ -2920,7 +2936,7 @@ function toolsToResponses(tools){
 async function runKitaTool(name,args){
   if(name==="web_search"){
     const q=String(args.query||"").slice(0,300);
-    const r=await webSearch(q);
+    const r=await webSearch(q,{signal:currentAbortSignal()});
     return {query:q, results:r.slice(0,6).map(x=>({title:x.title,url:x.url,snippet:(x.content||x.snippet||"").slice(0,900)}))};
   }
   if(name==="fetch_url"){
@@ -3051,6 +3067,7 @@ async function send(text, opts){
   conv_.messages.push(aiMsg);
   renderAll();
   setSendMode(true);
+  newAbortController();
 
   // Build a bounded request history. Active skills affect this request only and remain visible on the answer.
   const prevHtml = opts.review ? "" : lastHtmlArtifact();
@@ -3077,7 +3094,7 @@ async function send(text, opts){
     searchUI = el("div","search-status", `<span class="spin"></span><span>Searching the web for “${esc(text.slice(0,60))}”…</span>`);
     bubble.prepend(searchUI);
     try{
-      const results = await webSearch(text);
+      const results = await webSearch(text,{signal:currentAbortSignal()});
       if(results.length){
         aiMsg.sources = results.map(r=>({title:r.title,url:r.url}));
         const ctx = results.map((r,i)=>`[${i+1}] ${r.title}\nURL: ${r.url}\n${r.content ? "Content: "+r.content : "Summary: "+(r.snippet||"")}`).join("\n\n");
@@ -3094,7 +3111,7 @@ async function send(text, opts){
     history.unshift({role:"system", content:"Think step by step inside "+THINK_OPEN+"..."+THINK_CLOSE+" tags first, then give your final answer after the closing tag."});
   }
 
-  newAbortController();
+  if(currentAbortSignal()?.aborted){setSendMode(false);save();renderAll();return;}
   const p = model.provider;
   const url = p.endpointMode==="full" ? p.baseUrl :
     (p.baseUrl.replace(/\/+$/,"") + (p.apiType==="responses" ? "/responses" : "/chat/completions"));
@@ -3189,7 +3206,7 @@ async function send(text, opts){
       aiMsg.thinkSecs = aiMsg.thinkSecs || (thinkStart ? Math.round((Date.now()-thinkStart)/1000) : null);
       save(); paint();
       const baseMessages = history.filter(h=>h.role!=="system").slice(-4);
-      for(let i=0;i<plan.length && generating;i++){
+      for(let i=0;i<plan.length && generating && !currentAbortSignal()?.aborted;i++){
         const part = aiMsg.phases.parts[i];
         part.status = "running"; paint();
         setPhaseNote("Writing part "+(i+1)+" of "+plan.length+" · "+part.title);
@@ -3423,6 +3440,11 @@ async function send(text, opts){
       );
     }
     aiMsg.toolTrace = toolTrace.slice();
+    if(currentAbortSignal()?.aborted)break;
+    if(rounds>=MAX_TOOL_ROUNDS){
+      toolsOn=false;
+      history.push({role:'system',content:'Research budget reached. Do not call any more tools. Use the results already provided and complete the user request now. For a coding request provide the implementation, not another research plan. Disclose unavailable information honestly.'});
+    }
     continue;
   }
   if(calls.length && rounds >= MAX_TOOL_ROUNDS){

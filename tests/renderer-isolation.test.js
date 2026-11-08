@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const {launch,appUrl}=require('./browser');
 (async()=>{const b=await launch();try{const p=await b.newPage({viewport:{width:390,height:844}});await p.route('https://raw.githubusercontent.com/**',r=>r.abort());await p.goto(appUrl,{waitUntil:'domcontentloaded',timeout:60000});
+await p.evaluate(()=>{db.onboardingDone=true;document.querySelector('#onboardingScrim').classList.remove('open');});await p.waitForTimeout(550);await p.evaluate(()=>document.querySelector('#onboardingScrim').classList.remove('open'));
 fs.mkdirSync('test-results/renderer',{recursive:true});
 for(const theme of ['light','dark'])for(const live of [false,true])for(const fenced of [false,true]){
 const result=await p.evaluate(({theme,live,fenced})=>{

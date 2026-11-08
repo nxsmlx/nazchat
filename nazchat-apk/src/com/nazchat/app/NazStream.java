@@ -28,6 +28,7 @@ public class NazStream {
     private static final Map<Integer, HttpURLConnection> conns = new HashMap<>();
     private static final Map<Integer, BufferedReader> readers = new HashMap<>();
     private static int nextId = 1;
+    private static final java.util.Set<Integer> active = new java.util.HashSet<>();
 
     @JavascriptInterface
     public int open(final String urlStr, final String headersJson, final String bodyJson) {
@@ -42,7 +43,7 @@ public class NazStream {
 
     private int openInternal(final String urlStr, final String headersJson, final String bodyJson, final String secretRef) {
         final int id;
-        synchronized (NazStream.class) { id = nextId++; }
+        synchronized (NazStream.class) { id = nextId++; active.add(id); }
 
         Thread t = new Thread(new Runnable() {
             public void run() {
@@ -50,6 +51,10 @@ public class NazStream {
                 try {
                     URL u = new URL(urlStr);
                     c = (HttpURLConnection) u.openConnection();
+                    synchronized (NazStream.class) {
+                        if (!active.contains(id)) { c.disconnect(); return; }
+                        conns.put(id, c);
+                    }
                     c.setConnectTimeout(15000);
                     c.setReadTimeout(180000);
                     c.setRequestMethod("POST");
@@ -71,7 +76,7 @@ public class NazStream {
                     int code = c.getResponseCode();
                     emitStatus(id, code);
 
-                    synchronized (NazStream.class) { conns.put(id, c); }
+                    synchronized (NazStream.class) { if (!active.contains(id)) return; }
                     InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
                     synchronized (NazStream.class) { readers.put(id, reader); }
@@ -98,7 +103,7 @@ public class NazStream {
 
     public static void cancelAll() {
         Integer[] ids;
-        synchronized (NazStream.class) { ids = conns.keySet().toArray(new Integer[0]); }
+        synchronized (NazStream.class) { ids = active.toArray(new Integer[0]); }
         for (Integer id : ids) if (id != null) closeStored(id);
     }
 
@@ -106,28 +111,28 @@ public class NazStream {
         BufferedReader r;
         HttpURLConnection c;
         synchronized (NazStream.class) {
+            active.remove(id);
             r = readers.remove(id);
             c = conns.remove(id);
         }
-        try { if (r != null) r.close(); } catch (Exception ignored) {}
-        try { if (c != null) c.disconnect(); } catch (Exception ignored) {}
+        // Never block the JavascriptInterface thread on a reader locked in readLine().
+        final BufferedReader reader = r;
+        final HttpURLConnection connection = c;
+        Thread closer = new Thread(() -> {
+            try { if (connection != null) connection.disconnect(); } catch (Exception ignored) {}
+            try { if (reader != null) reader.close(); } catch (Exception ignored) {}
+        });
+        closer.setDaemon(true);
+        closer.start();
     }
 
     @JavascriptInterface
-    public void close(int id) {
-        BufferedReader r;
-        HttpURLConnection c;
-        synchronized (NazStream.class) {
-            r = readers.remove(id);
-            c = conns.remove(id);
-        }
-        try { if (r != null) r.close(); } catch (Exception ignored) {}
-        try { if (c != null) c.disconnect(); } catch (Exception ignored) {}
-    }
+    public void close(int id) { closeStored(id); }
 
     private static void cleanup(int id, HttpURLConnection c) {
         BufferedReader r;
         synchronized (NazStream.class) {
+            active.remove(id);
             r = readers.remove(id);
             conns.remove(id);
         }

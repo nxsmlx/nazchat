@@ -3243,3 +3243,18 @@ label.fld {
 .code-tabs-panes .code-head{border-radius:0}
 .code-tab-pane pre{margin:0}
 .code-gutter span{display:block;line-height:inherit}
+
+/* Code is not a Markdown table. Explicitly override the inherited .md table/td/pre
+   rules: their display:block, minimum widths and wrapping corrupt the code gutter. */
+.md table.code-table{display:table;table-layout:auto;width:max-content;min-width:100%;max-width:none;margin:0;border:0;border-spacing:0;border-collapse:collapse;border-radius:0;overflow:visible;white-space:pre}
+.md table.code-table tbody{display:table-row-group}
+.md table.code-table tr{display:table-row}
+.md table.code-table td{display:table-cell;min-width:0;border:0;font:inherit;line-height:inherit;text-align:left;vertical-align:top;white-space:pre;word-break:normal;overflow-wrap:normal}
+.md table.code-table td.code-gutter{position:sticky;left:0;z-index:1;min-width:44px;width:1%;padding:0 10px 0 12px!important;text-align:right;background:var(--code-bg);color:var(--text3);border-right:1px solid var(--border);user-select:none}
+.md table.code-table td.code-source{padding:0 16px 0 12px!important;color:var(--code-text)}
+.md table.code-table .code-source pre{display:block;margin:0;padding:0!important;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;line-height:inherit;white-space:pre;word-break:normal;overflow-wrap:normal;overflow:visible;max-height:none}
+.md table.code-table .code-gutter span{display:block;font:inherit;line-height:inherit}
+.md .code-body{max-width:100%;overflow:auto;background:var(--code-bg)}
+.md .code-wrap.collapsed .code-body{display:none}
+.md .code-wrap:not(.collapsed) .code-body{display:block}
+.code-live-body{white-space:pre!important;word-break:normal!important;overflow-wrap:normal!important;overflow-x:auto!important;overscroll-behavior:contain}

@@ -1,3 +1,11 @@
+# Kita Chat 4.4.3 — Chat rendering, Stop and tool fixes
+
+- Generated HTML is always shown as source in the code viewer and never rendered into the chat; line numbers no longer wrap letter by letter
+- Stop now cancels while waiting for the provider, during streaming, during web search and between build parts; late data is ignored
+- After three tool rounds the model is asked for a real final answer with tools disabled, instead of ending with "Stopped after 3 tool rounds"
+- Finished answers no longer show "Writing the answer"
+- Version code **41**; data and signing identity unchanged. Native Stop was verified with mocked bridges, not yet on a physical device.
+
 # Kita Chat 4.4.2 — In-app update fix
 
 - Fixed in-app updates failing on devices where the manual APK install worked: the app now installs the downloaded update through an Android PackageInstaller session
