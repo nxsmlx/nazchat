@@ -1,3 +1,11 @@
+# Kita Chat 4.4.1 — Viewport and HTML head fix
+
+- The app document now keeps a valid mobile viewport (a previous escaping mistake removed the page scale)
+- Assembled HTML builds and the plan prompt no longer contain doubled quotes
+- New browser regression case checks the parsed viewport meta and the assembled document head
+
+Version code **39**. Install over the existing app; no data changes.
+
 # Kita Chat 4.4.0 — Incremental build workflow
 
 - Long coding builds are executed in stages: one planning call, then one model call per part, then a validation pass. No more single 800-line response.

@@ -214,6 +214,25 @@ async function mockIncremental(page, parts){
     assert.equal(out.calls,2);
   });
 
+  await test('document-head-is-not-double-escaped', async page=>{
+    // A bulk escape pass once left \" inside the real HTML head, which silently disabled
+    // the mobile viewport. Assert the parsed attribute, not the raw source text.
+    const head=await page.evaluate(()=>{
+      const meta=document.querySelector('meta[name="viewport"]');
+      return {content:meta?meta.getAttribute('content'):null,
+              sources:[...document.querySelectorAll('meta[name]')].length,
+              width:innerWidth};
+    });
+    assert.match(String(head.content),/width=device-width/, 'viewport meta is missing or escaped');
+    assert(!String(head.content).includes('\\'), 'viewport content contains a literal backslash');
+    const plan=await page.evaluate(()=>planPrompt('buat landing page','html'));
+    assert(plan.includes('buat landing page'),'plan prompt lost the task text');
+    assert(!plan.includes('"'+'"'),'plan prompt contains doubled quotes');
+    const assembled=await page.evaluate(()=>assembleHtml(['<head><title>T</title><style>a{color:red}</style></head>','<section><h1>H</h1></section>']));
+    assert(/<meta name="viewport" content="width=device-width/.test(assembled),'assembled HTML has a broken head: '+assembled.slice(0,120));
+    assert(!assembled.includes('\\"'),'assembled HTML contains escaped quotes');
+  });
+
   fs.writeFileSync(path.join(output,'results.json'),JSON.stringify(results,null,2));
   await browser.close();
   const failed=results.filter(r=>r.status!=='passed');

@@ -1,3 +1,11 @@
+## v4.4.1 — Mobile viewport and HTML head fix
+
+- Fixed a double-escaped `viewport` meta in the app document, which lost the mobile page scale on some devices
+- Fixed the same escaping in generated HTML assembly and in the build-plan prompt
+- Added a regression guard that asserts the parsed viewport content and assembled document head
+
+Release target **4.4.1 / versionCode 39**.
+
 # Kita Chat
 
 Kita Chat is a private, local-first Android BYOK AI chat client for OpenAI-compatible providers.

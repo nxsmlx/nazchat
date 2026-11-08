@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <meta charset="UTF-8">
-<meta name=\"viewport\" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#171920">
 <meta name="color-scheme" content="dark light">
 <script>
@@ -1372,8 +1372,8 @@ let conv = null;            // active conversation
 let generating = false;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.4.0";
-const APP_VERSION_CODE = 38;
+const APP_VERSION = "4.4.1";
+const APP_VERSION_CODE = 39;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2005,12 +2005,12 @@ function buildPreviewDoc(html, runJs){
     let doc = html;
     const security = runJs ? "" : `<script>window.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('script').forEach(s=>s.type='text/blocked')},true)<\/script>`;
     if(!/<meta[^>]+name=["']viewport/i.test(doc) && /<head/i.test(doc))
-      doc = doc.replace(/<head([^>]*)>/i, '<head$1><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">');
+      doc = doc.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width, initial-scale=1">');
     if(/<\/head>\s*<body/i.test(doc)) doc = doc.replace(/<\/head>\s*<body/i, bridge + "</head><body");
     else if(/<\/head>/i.test(doc)) doc = doc.replace(/<\/head>/i, bridge + "</head>");
     return doc;
   }
-  return `<!doctype html><html lang="ms"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><style>html,body{margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:0}</style>${bridge}</head><body>${html}</body></html>`;
+  return `<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>html,body{margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:0}</style>${bridge}</head><body>${html}</body></html>`;
 }
 function showPreviewTab(name){
   document.querySelectorAll(".preview-tab").forEach(t=>t.classList.toggle("active", t.dataset.tab===name));
@@ -2840,7 +2840,8 @@ function parsePlanParts(planText, kind){
   return items;
 }
 function planPrompt(text, kind){
-  return "Break this task into "+PHASE_BUILD.minParts+" to "+PHASE_BUILD.maxParts+" self-contained parts that will each be generated separately and then assembled: \"\"+String(text).slice(0,500)+\"\"\n\nReply with ONLY a numbered list of part titles (one line each, no prose, no code). Each part must be small enough to write in about 60-100 lines. For HTML, include head+styles, hero, each content section, footer and scripts as separate parts. Reply in the user's language.";
+  const task=String(text||"").slice(0,500);
+  return "Break this task into "+PHASE_BUILD.minParts+" to "+PHASE_BUILD.maxParts+" self-contained parts that will each be generated separately and then assembled: "+String.fromCharCode(34)+task+String.fromCharCode(34)+"\n\nReply with ONLY a numbered list of part titles (one line each, no prose, no code). Each part must be small enough to write in about 60-100 lines. For HTML, include head+styles, hero, each content section, footer and scripts as separate parts. Reply in the user's language.";
 }
 function segmentPrompt(kind, part, i, n, text, plan){
   const K=PHASE_KINDS[kind]||PHASE_KINDS.text;
