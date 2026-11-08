@@ -1069,6 +1069,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <div class="modal-scrim" id="onboardingScrim"><div class="modal onboarding-modal"><div class="onboarding-mark">K</div><h3>Welcome to Kita Chat</h3><p>Your models, your keys, your conversations. Connect a provider to start chatting directly with your chosen AI service.</p><div class="settings-card"><p><strong>Private by design</strong><br>Keys stay in protected app storage on Android. Kita Chat does not operate a proxy or add a markup.</p></div><button class="btn" id="onboardingConnect">Connect a provider</button><button class="btn secondary" id="onboardingSkip">Explore first</button></div></div>
 
 <script src="studio.js"></script>
+<script src="comfort.js"></script>
 <script>
 "use strict";
 const THINK_OPEN = "\u003Cthink\u003E", THINK_CLOSE = "\u003C/think\u003E";
@@ -1259,7 +1260,8 @@ function save(){
     const snapshot=JSON.parse(JSON.stringify(db));
     if(hasNativeSecrets()) (snapshot.providers||[]).forEach(p=>{ delete p.apiKey; });
     localStorage.setItem(LS_KEY, JSON.stringify(snapshot));
-  }catch(e){ console.warn("Kita Chat state save failed",e); }
+    return true;
+  }catch(e){ console.warn("Kita Chat state save failed",e);setTimeout(()=>{if(!document.querySelector('#storageWarning')){const warning=document.createElement('aside');warning.id='storageWarning';warning.setAttribute('role','alert');warning.textContent='Changes could not be saved. Free some storage and export a backup before closing the app.';document.body.appendChild(warning);}},0);return false; }
 }
 function normalizeSkillPack(pack){
   if(!pack || !Array.isArray(pack.skills)) throw new Error("Invalid skill pack");
@@ -1681,13 +1683,16 @@ function prettyModel(id){
   return (id||"Model").replace(/[-_]+/g," ").replace(/\b\w/g,c=>c.toUpperCase()).replace(/\b(1017|abliterated|flash)\b/gi,c=>c.toLowerCase());
 }
 function renderChat(){
-  const inner = $("#chatInner"); inner.innerHTML = "";
+  const inner = $("#chatInner"),scroller=$("#chatScroll");
+  const same=inner.dataset.conversationId===(conv?.id||'');
+  const top=scroller.scrollTop,near=scroller.scrollHeight-top-scroller.clientHeight<260;
+  inner.dataset.conversationId=conv?.id||'';inner.innerHTML = "";
   const has = conv && conv.messages.length;
   $("#empty").style.display = has ? "none" : "flex";
   $("#chatScroll").style.display = has ? "" : "none";
   if(!has) return;
   conv.messages.forEach(msg=>inner.appendChild(msgEl(msg)));
-  scrollBottom();
+  if(!same||(db.autoScroll!==false&&near))scrollBottom();else scroller.scrollTop=top;
 }
 function renderAll(){ renderHeader(); renderSidebar(); renderChat(); renderStudioView(); }
 
@@ -2357,7 +2362,7 @@ function renderSettingsHub(){
 }
 function renderSettingsAppearance(){renderStudioAppearance();}
 function renderSettingsAbout(){
-  renderSettingsPage("About",null,null,list=>{const card=el("div","settings-card");card.innerHTML=`<h4>Kita Chat ${APP_VERSION}</h4><p>Private, local-first Android BYOK chat for OpenAI-compatible providers.</p><p style="margin-top:10px">API keys stay in Android Keystore storage. Conversations and workspaces remain on this device.</p>`;list.appendChild(card);const update=el("button","btn secondary","Check for updates");update.id="checkUpdateBtn";update.onclick=checkForUpdate;list.appendChild(update);const status=el("div","update-badge");status.id="updateStatus";status.style.display="none";list.appendChild(status);});
+  renderSettingsPage("About",null,null,list=>{const card=el("div","settings-card");card.innerHTML=`<h4>Kita Chat ${APP_VERSION}</h4><p>Private, local-first Android BYOK chat for OpenAI-compatible providers.</p><p style="margin-top:10px">API keys stay in Android Keystore storage. Conversations and workspaces remain on this device.</p>`;list.appendChild(card);const update=el("button","btn secondary","Check for updates");update.id="checkUpdateBtn";update.onclick=checkForUpdate;list.appendChild(update);const status=el("div","update-badge");status.id="updateStatus";status.style.display="none";list.appendChild(status);const diagnostics=el('button','btn secondary','Copy safe diagnostics');diagnostics.dataset.safeDiagnostics='true';list.appendChild(diagnostics);});
 }
 function renderProvidersSubView(){
   renderSettingsPage("Providers","Add",()=>openProvForm(null),list=>{
@@ -2611,7 +2616,7 @@ function b64ToBytes(s){const bin=atob(s),out=new Uint8Array(bin.length);for(let 
 async function deriveBackupKey(pass,salt){const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pass),"PBKDF2",false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:150000,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);}
 async function exportEncryptedBackup(){if(!crypto?.subtle){toast("Encrypted backup unavailable");return;}const pass=await promptDialog("Create a passphrase with at least 8 characters", "", {title:"Encrypted backup",mode:"input",confirmText:"Create"});if(!pass||pass.length<8){toast("Use at least 8 characters");return;}const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await deriveBackupKey(pass,salt),data=new TextEncoder().encode(JSON.stringify(db));const cipher=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,data);const envelope={format:"kita-chat-encrypted-v1",salt:bytesToB64(salt),iv:bytesToB64(iv),ciphertext:bytesToB64(new Uint8Array(cipher)),createdAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(envelope)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="kita-chat-encrypted-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("Encrypted backup exported");}
 async function decodeBackup(text){const parsed=JSON.parse(text);if(parsed.format!=="kita-chat-encrypted-v1")return parsed;const pass=await promptDialog("Enter the passphrase used for this backup", "", {title:"Unlock backup",mode:"input",confirmText:"Unlock"});if(!pass)throw new Error("Passphrase required");const key=await deriveBackupKey(pass,b64ToBytes(parsed.salt));const plain=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64ToBytes(parsed.iv)},key,b64ToBytes(parsed.ciphertext));return JSON.parse(new TextDecoder().decode(plain));}
-function importBackup(){const inp=document.createElement("input");inp.type="file";inp.accept="application/json";inp.onchange=async()=>{try{const d=await decodeBackup(await inp.files[0].text());if(!d.providers||!d.conversations)throw new Error();db=migrateDb({...db,...d});(db.providers||[]).forEach(p=>{if(p.apiKey&&hasNativeSecrets()){try{window.NazSecrets.put(p.secretRef||("provider:"+p.id),p.apiKey);delete p.apiKey;}catch(e){}}});applyTheme();save();renderAll();renderProvList();toast("Backup restored");}catch(e){toast("That backup file is not valid or passphrase was wrong");}};inp.click();}
+function importBackup(){const inp=document.createElement("input");inp.type="file";inp.accept="application/json";inp.onchange=async()=>{try{const d=await decodeBackup(await inp.files[0].text());if(!Array.isArray(d.providers)||!Array.isArray(d.conversations))throw new Error();if(generating){toast('Stop the response before restoring a backup');return;}if(!await confirmDialog('Restore will replace existing conversations and settings. Export a backup first. Continue?',{title:'Restore backup',danger:true,confirmText:'Restore'}))return;db=migrateDb({...db,...d});(db.providers||[]).forEach(p=>{if(p.apiKey&&hasNativeSecrets()){try{window.NazSecrets.put(p.secretRef||("provider:"+p.id),p.apiKey);delete p.apiKey;}catch(e){}}});applyTheme();save();renderAll();renderProvList();toast("Backup restored");}catch(e){toast("That backup file is not valid or passphrase was wrong");}};inp.click();}
 
 function buildHeaders(p){
   const h = {"Content-Type":"application/json"};
@@ -3037,6 +3042,7 @@ function setSendMode(gen){
   $("#stopIcon").style.display = gen?"":"none";
 }
 function scrollIfNear(){
+  if(db.autoScroll===false)return;
   const s = $("#chatScroll");
   if(s.scrollHeight - s.scrollTop - s.clientHeight < 260) s.scrollTop = s.scrollHeight;
 }
@@ -3593,7 +3599,10 @@ async function handleFiles(files){
   for(const file of Array.from(files||[]).slice(0,8)){
     try{
       if(file.type.startsWith("image/")||/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name)){toast("Image attachments are not supported");continue;}
+      if(file.size>20*1024*1024){toast('File too large: '+file.name+' (maximum 20 MB)');continue;}
+      toast('Reading '+file.name+'…');
       const attachment={name:file.name,type:file.type||"text/plain",text:await extractFileText(file)};
+      if(/^\[(?:PDF text extraction failed|DOCX text extraction failed|Could not read)/.test(attachment.text)){toast(attachment.text);continue;}
       pendingAttachments.push(attachment);indexProjectDocument(attachment);
     }catch(e){ toast("Could not attach "+file.name); }
   }
@@ -3607,6 +3616,9 @@ input.addEventListener("keydown", e=>{ if(e.key==="Enter" && (e.ctrlKey||e.metaK
 function doSend(){
   const t = input.value.trim();
   if((!t && !pendingAttachments.length) || generating) return;
+  const selected=currentModel();
+  if(!selected){toast('Add a provider and select a model before sending');openSidebar();return;}
+  if(HAS_NATIVE&&!hasProviderSecret(selected.provider)){toast('Provider key missing. Your draft is kept.');return;}
   const attachments = pendingAttachments.slice();
   pendingAttachments = []; renderAttachments();
   input.value=""; input.style.height="auto";
@@ -3673,7 +3685,7 @@ function applyTheme(){
 
 $("#onboardingConnect").onclick=()=>{db.onboardingDone=true;save();$("#onboardingScrim").classList.remove("open");openSidebar();setTimeout(()=>$("#settingsBtn").click(),180);};
 $("#onboardingSkip").onclick=()=>{db.onboardingDone=true;save();$("#onboardingScrim").classList.remove("open");};
-initializeStudio(); applyTheme(); migrateLegacySecrets(); syncToggles(); renderAll();
+initializeStudio(); initializeComfort(); applyTheme(); migrateLegacySecrets(); syncToggles(); renderAll();
 if(!db.onboardingDone && !db.providers.length) setTimeout(()=>$("#onboardingScrim").classList.add("open"),450);
 refreshSkillPack(true);
 </script>

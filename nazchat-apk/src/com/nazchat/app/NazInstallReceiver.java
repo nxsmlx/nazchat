@@ -35,7 +35,7 @@ public class NazInstallReceiver extends BroadcastReceiver {
     static String describe(int status) {
         switch (status) {
             case PackageInstaller.STATUS_FAILURE_ABORTED: return "Install cancelled";
-            case PackageInstaller.STATUS_FAILURE_BLOCKED: return "Install blocked by the device or Play Protect";
+            case PackageInstaller.STATUS_FAILURE_BLOCKED: return "Install blocked by Android or device policy";
             case PackageInstaller.STATUS_FAILURE_CONFLICT: return "Conflicts with the installed app (different signature or package)";
             case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE: return "Not compatible with this device";
             case PackageInstaller.STATUS_FAILURE_INVALID: return "The downloaded APK is invalid";

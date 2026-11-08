@@ -22,15 +22,17 @@ public class NazFileProvider extends ContentProvider {
         return true;
     }
     private File fileFor(Uri uri) {
-        String name = Uri.decode(uri.getPathSegments().get(0));
+        if (uri == null || uri.getPathSegments().size() != 1) return null;
+        String name = uri.getPathSegments().get(0);
+        if (!"update.apk".equals(name)) return null;
         File f = new File(getContext().getCacheDir(), "update" + File.separator + name);
-        try { if (f.getCanonicalPath().startsWith(new File(getContext().getCacheDir(), "update").getCanonicalPath())) return f; } catch (Exception ignored) {}
+        try { if (f.getCanonicalPath().startsWith(new File(getContext().getCacheDir(), "update").getCanonicalPath() + File.separator)) return f; } catch (Exception ignored) {}
         return null;
     }
     @Override public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
         File f = fileFor(uri);
-        if (f == null || !f.exists()) throw new FileNotFoundException(uri.toString());
-        return ParcelFileDescriptor.open(f, mode.contains("w") ? ParcelFileDescriptor.MODE_WRITE_ONLY : ParcelFileDescriptor.MODE_READ_ONLY);
+        if (!"r".equals(mode) || f == null || !f.isFile()) throw new FileNotFoundException("Read-only update APK unavailable");
+        return ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
     }
     @Override public String getType(Uri uri) {
         if (uri.getLastPathSegment() != null && uri.getLastPathSegment().endsWith(".apk"))

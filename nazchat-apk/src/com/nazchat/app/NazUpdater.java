@@ -52,12 +52,33 @@ public class NazUpdater {
             public void run() {
                 try {
                     emit("downloading");
+                    if (expectedSha256 == null || !expectedSha256.matches("[a-fA-F0-9]{64}")) throw new Exception("Missing verified update checksum");
                     URL u = new URL(apkUrl);
+                    if (!"https".equals(u.getProtocol()) || !"github.com".equals(u.getHost())
+                            || !u.getPath().matches("/nxsmlx/nazchat/releases/download/v[0-9]+\\.[0-9]+\\.[0-9]+/NazChat\\.apk")
+                            || u.getUserInfo() != null || u.getPort() != -1) throw new Exception("Unapproved update source");
                     HttpURLConnection c = (HttpURLConnection) u.openConnection();
                     c.setConnectTimeout(20000);
+                    c.setReadTimeout(30000);
                     c.setRequestProperty("User-Agent", "NazChat-Updater");
-                    c.setInstanceFollowRedirects(true);
+                    c.setInstanceFollowRedirects(false);
                     c.connect();
+                    int redirects = 0;
+                    while (c.getResponseCode() >= 300 && c.getResponseCode() < 400) {
+                        if (++redirects > 4) throw new Exception("Too many update redirects");
+                        String location = c.getHeaderField("Location");
+                        URL next = new URL(c.getURL(), location);
+                        String host = next.getHost();
+                        if (!"https".equals(next.getProtocol()) || next.getUserInfo() != null
+                                || !("github.com".equals(host) || "release-assets.githubusercontent.com".equals(host)
+                                || "objects.githubusercontent.com".equals(host))) throw new Exception("Unapproved update redirect");
+                        c.disconnect();
+                        c = (HttpURLConnection) next.openConnection();
+                        c.setConnectTimeout(20000); c.setReadTimeout(30000);
+                        c.setInstanceFollowRedirects(false);
+                        c.setRequestProperty("User-Agent", "NazChat-Updater");
+                        c.connect();
+                    }
                     int code = c.getResponseCode();
                     if (code != 200) throw new Exception("HTTP " + code);
 
@@ -71,7 +92,12 @@ public class NazUpdater {
                     OutputStream out = new FileOutputStream(apk);
                     InputStream in = c.getInputStream();
                     byte[] buf = new byte[8192]; int n;
-                    while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+                    long bytes = 0;
+                    while ((n = in.read(buf)) > 0) {
+                        bytes += n;
+                        if (bytes > 50L * 1024 * 1024) { in.close(); out.close(); c.disconnect(); apk.delete(); throw new Exception("Update exceeds 50 MB limit"); }
+                        out.write(buf, 0, n);
+                    }
                     out.flush(); out.close(); in.close(); c.disconnect();
 
                     if (apk.length() < 1000) throw new Exception("empty download");
@@ -80,6 +106,7 @@ public class NazUpdater {
                         if (!actual.equalsIgnoreCase(expectedSha256.trim())) throw new Exception("checksum mismatch");
                     }
 
+                    verifyUpdateIdentity(apk);
                     String authority = activity.getPackageName() + ".updateprovider";
                     Uri uri = new Uri.Builder().scheme("content").authority(authority).path(apk.getName()).build();
                     // Android 8+ requires the user to allow this app to request package installs.
@@ -115,6 +142,26 @@ public class NazUpdater {
                 }
             }
         }).start();
+    }
+
+    @SuppressWarnings("deprecation")
+    private static void verifyUpdateIdentity(File apk) throws Exception {
+        android.content.pm.PackageManager pm = activity.getPackageManager();
+        int flags = Build.VERSION.SDK_INT >= 28 ? android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES : android.content.pm.PackageManager.GET_SIGNATURES;
+        PackageInfo candidate = pm.getPackageArchiveInfo(apk.getAbsolutePath(), flags);
+        PackageInfo installed = pm.getPackageInfo(activity.getPackageName(), flags);
+        if (candidate == null || !activity.getPackageName().equals(candidate.packageName)) throw new Exception("Update package identity mismatch");
+        long next = Build.VERSION.SDK_INT >= 28 ? candidate.getLongVersionCode() : candidate.versionCode;
+        long current = Build.VERSION.SDK_INT >= 28 ? installed.getLongVersionCode() : installed.versionCode;
+        if (next <= current) throw new Exception("Update is not newer than the installed app");
+        android.content.pm.Signature[] a = Build.VERSION.SDK_INT >= 28 && candidate.signingInfo != null ? candidate.signingInfo.getApkContentsSigners() : candidate.signatures;
+        android.content.pm.Signature[] b = Build.VERSION.SDK_INT >= 28 && installed.signingInfo != null ? installed.signingInfo.getApkContentsSigners() : installed.signatures;
+        if (a == null || b == null || a.length == 0 || a.length != b.length) throw new Exception("Update signing certificate unavailable");
+        java.util.Set<String> expected = new java.util.HashSet<String>();
+        for (android.content.pm.Signature signature : b) expected.add(signature.toCharsString());
+        java.util.Set<String> actual = new java.util.HashSet<String>();
+        for (android.content.pm.Signature signature : a) actual.add(signature.toCharsString());
+        if (!actual.equals(expected)) throw new Exception("Update signing certificate does not match this app");
     }
 
     private static void installWithSession(File apk) throws Exception {

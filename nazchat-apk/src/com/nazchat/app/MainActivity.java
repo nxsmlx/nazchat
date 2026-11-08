@@ -176,7 +176,13 @@ public class MainActivity extends Activity {
     }
     @Override
     public void onBackPressed() {
-        if (web != null && web.canGoBack()) web.goBack();
-        else super.onBackPressed();
+        if (web == null) { super.onBackPressed(); return; }
+        web.evaluateJavascript("(function(){if(window.kitaHandleBack)return window.kitaHandleBack();return false;})()", new ValueCallback<String>() {
+            @Override public void onReceiveValue(String handled) {
+                if ("true".equals(handled) || isFinishing() || isDestroyed()) return;
+                if (web != null && web.canGoBack()) web.goBack();
+                else MainActivity.super.onBackPressed();
+            }
+        });
     }
 }
