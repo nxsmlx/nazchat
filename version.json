@@ -1,9 +1,9 @@
 {
-  "version": "4.4.2",
-  "versionCode": 40,
+  "version": "4.4.3",
+  "versionCode": 41,
   "name": "Kita Chat",
-  "changelog": "In-app updates now install through an Android PackageInstaller session and show the exact reason if Android refuses. Chat and local data unchanged.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.4.2/NazChat.apk",
-  "sha256": "de5add9a52adfb5de296571e80e47bdd287cca352859c086e8be4d0328d233b4",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.4.2"
+  "changelog": "Fixes broken HTML rendering in chat, makes Stop cancel waits, streams and searches, and turns the tool-round limit into a real final answer.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.4.3/NazChat.apk",
+  "sha256": "2adcdd3d7d3b2d767beca93cb0a815d347952c4958e27ffd2e3379a837e34fb5",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.4.3"
 }
