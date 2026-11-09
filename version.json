@@ -1,9 +1,9 @@
 {
-  "version": "4.5.2",
-  "versionCode": 45,
+  "version": "4.5.3",
+  "versionCode": 46,
   "name": "Kita Chat",
-  "changelog": "Conversation text sizes: Small 12px, Default 14px and Large 16px.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.2/NazChat.apk",
-  "sha256": "bbf9a2f9c8c8797521b6a5d3d28771c37ea330232e7cf78c23cd3b2a29b6511e",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.2"
+  "changelog": "Fix oversized Appearance settings cards, compact dropdowns and overlapping Back navigation.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.3/NazChat.apk",
+  "sha256": "f9380fd394e38f26de560b5c42042c1c8f6abe12b6a6acb7eeab57c7c92c6365",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.3"
 }
