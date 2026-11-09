@@ -1,15 +1,16 @@
 {
   "name": "kita-chat-checks",
-  "version": "4.5.0",
+  "version": "4.5.1",
   "private": true,
   "scripts": {
     "icons:generate": "node scripts/generate-launcher-icons.cjs",
     "test:icons": "node scripts/generate-launcher-icons.cjs --check",
     "test:themes": "node tests/themes.test.js",
     "test:studio": "node tests/studio.test.js",
-    "test": "node scripts/generate-launcher-icons.cjs --check && node tests/updater.test.js && node tests/themes.test.js && node tests/ui-minimal.test.js && node tests/phased-building.test.js && node tests/skills-browser.test.js && node tests/streaming-long-answers.test.js && node tests/tools-and-budget.test.js && node tests/studio.test.js && node tests/execution.test.js && node tests/renderer-isolation.test.js && node tests/stop-native.test.js && node tests/comfort.test.js && node tests/provider-picker.test.js && node tests/steer-memory-mcp.test.js && node tests/skill-editor-browser.test.js && node tests/skill-pack-v2.test.js && node tests/mcp-client.test.js",
+    "test": "node scripts/generate-launcher-icons.cjs --check && node tests/updater.test.js && node tests/themes.test.js && node tests/ui-minimal.test.js && node tests/phased-building.test.js && node tests/skills-browser.test.js && node tests/streaming-long-answers.test.js && node tests/tools-and-budget.test.js && node tests/studio.test.js && node tests/execution.test.js && node tests/renderer-isolation.test.js && node tests/stop-native.test.js && node tests/comfort.test.js && node tests/provider-picker.test.js && node tests/steer-memory-mcp.test.js && node tests/skill-editor-browser.test.js && node tests/skill-pack-v2.test.js && node tests/mcp-client.test.js && node tests/provider-delete.test.js",
     "test:execution": "node tests/execution.test.js",
-    "test:oauth": "node --test tests/native-oauth.test.cjs"
+    "test:oauth": "node --test tests/native-oauth.test.cjs",
+    "test:provider-delete": "node tests/provider-delete.test.js"
   },
   "devDependencies": {
     "playwright-core": "^1.58.0"

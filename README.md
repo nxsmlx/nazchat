@@ -1,4 +1,14 @@
-## Latest: Kita Chat 4.5.0
+## Latest: Kita Chat 4.5.1
+
+- Add Delete provider at the bottom of Edit Provider, with explicit confirmation.
+- Remove only that provider and its per-model parameters and local saved API key. Shared secret references used by remaining providers are retained.
+- Preserve conversations, messages, artifacts, projects, Memory and MCP configuration.
+- Use another available provider/model, or show Select a model when none remain.
+- Block deletion while generating or handing off a steer. Keep the provider if storage or native key removal fails.
+
+This removes a key from this device only. It does not revoke it remotely or erase older exported backups. VersionCode 44, same com.nazchat.app package and original signing identity. Browser/native-interface mock tests are not real-device installation or upgrade tests.
+
+## Kita Chat 4.5.0
 
 - Steer messages while answering, with a separate Stop button, preserved partial responses and safe cancellation handoff. New pending steers replace rather than queue.
 - Opt-in local Memory with editable notes and user-confirmed suggestions.

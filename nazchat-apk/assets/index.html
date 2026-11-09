@@ -1451,8 +1451,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.5.0";
-const APP_VERSION_CODE = 43;
+const APP_VERSION = "4.5.1";
+const APP_VERSION_CODE = 44;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2575,6 +2575,42 @@ function renderProvidersSubView(){
 function renderProvList(){renderSettingsHub();}
 
 let provFormState = null;
+let providerDeletionBusy = false;
+async function deleteProvider(id){
+  if(providerDeletionBusy)return false;
+  const busy=()=>generating||!!activeRun||!!steerHandoff;
+  if(busy()){toast('Stop the current response before deleting a provider.');return false;}
+  const provider=db.providers.find(p=>p.id===id);if(!provider)return false;
+  providerDeletionBusy=true;
+  try{
+    if(!await confirmDialog('Delete '+provider.name+' and its saved API key from this device?\n\nAll conversations and messages will be kept. This does not revoke the key at the provider or remove it from older exported backups.',{title:'Delete provider',danger:true,confirmText:'Delete provider'}))return false;
+    if(busy()){toast('Stop the current response before deleting a provider.');return false;}
+    if(!db.providers.includes(provider))return false;
+    const previous={providers:db.providers,parameters:db.parametersByModel,lastProviderId:db.lastProviderId,lastModelId:db.lastModelId};
+    const restore=()=>{db.providers=previous.providers;db.parametersByModel=previous.parameters;db.lastProviderId=previous.lastProviderId;db.lastModelId=previous.lastModelId;};
+    db.providers=db.providers.filter(p=>p.id!==id);
+    db.parametersByModel=Object.fromEntries(Object.entries(db.parametersByModel||{}).filter(([key])=>!key.startsWith(id+':')));
+    const fallback=db.providers.find(p=>p.id===db.lastProviderId&&p.selectedModels?.length)||db.providers.find(p=>p.selectedModels?.length);
+    db.lastProviderId=fallback?.id||null;
+    db.lastModelId=fallback?(fallback.selectedModels.includes(previous.lastModelId)?previous.lastModelId:fallback.selectedModels[0]):null;
+    if(!save()){restore();toast('Provider was not deleted because changes could not be saved.');return false;}
+    const ref=provider.secretRef||('provider:'+id);
+    const shared=db.providers.some(p=>(p.secretRef||('provider:'+p.id))===ref);
+    if(hasNativeSecrets()&&!shared){
+      try{
+        if(typeof window.NazSecrets.remove!=='function')throw new Error('Secret removal unavailable');
+        const removed=window.NazSecrets.remove(ref);
+        if(!removed||(window.NazSecrets.has&&window.NazSecrets.has(ref)))throw new Error('Secret removal failed');
+      }catch(e){
+        restore();save();toast('Provider was kept because its saved key could not be removed.');return false;
+      }
+    }
+    // No conversation IDs, messages, artifacts or unrelated settings are changed.
+    delete provider.apiKey;provider.headers=[];
+    provFormState=null;closeSheet('provSheet');renderAll();renderProvidersSubView();openSheet('setSheet');
+    toast('Provider deleted. Conversations kept.');return true;
+  }finally{providerDeletionBusy=false;}
+}
 function openProvForm(p, preset){
   const base=p ? {...p} : {...(preset||{}),id:null, name:preset?.name||"", baseUrl:preset?.baseUrl||"", endpointMode:"base", apiType:preset?.apiType||"chat_completions", apiKey:"", headers:[], selectedModels:[], capabilities:{}, secretRef:"draft:"+uid()};
   provFormState = base;
@@ -2722,6 +2758,12 @@ function renderProvForm(){
     save(); closeSheet("provSheet"); renderProvList(); renderHeader(); openSheet("setSheet"); toast("Provider saved ✓");
   };
   form.appendChild(saveBtn);
+  if(f.id){
+    const remove=el('button','btn danger','Delete provider');remove.type='button';remove.id='deleteProviderBtn';
+    remove.onclick=async()=>{remove.disabled=true;try{await deleteProvider(f.id);}finally{remove.disabled=false;}};
+    form.appendChild(remove);
+    form.appendChild(el('p','hint','Deleting a provider keeps your conversations and removes its settings and local saved key.'));
+  }
 }
 function validUpdateInfo(info){
   return !!info && typeof info.version==="string" && /^\d+\.\d+\.\d+$/.test(info.version)

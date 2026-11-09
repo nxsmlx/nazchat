@@ -11,7 +11,7 @@ const {launch,appUrl} = require('./browser');
     const result=await p.evaluate(async()=>{
       const original=window.fetch, calls=[];
       const make=(version,versionCode)=>({version,versionCode,sha256:'a'.repeat(64),apkUrl:`https://github.com/nxsmlx/nazchat/releases/download/v${version}/NazChat.apk`});
-      const current=make(APP_VERSION,APP_VERSION_CODE),next=make('4.5.1',APP_VERSION_CODE+1);
+      const current=make(APP_VERSION,APP_VERSION_CODE),next=make('4.5.2',APP_VERSION_CODE+1);
       let raw=current,latest=next,failRaw=false,failApi=false,noMarker=false;
       const request=async(url,opts)=>{
         calls.push({url,headers:opts?.headers});
