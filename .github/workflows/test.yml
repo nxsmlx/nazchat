@@ -1,0 +1,43 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Set up JDK 17 (native host tests)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install test dependencies and Chromium
+        run: |
+          npm ci
+          npx playwright-core install --with-deps chromium
+
+      # Libraries and fonts are bundled, so the browser suites need no CDN access.
+      - name: Browser and launcher-icon suites
+        run: npm test
+
+      - name: Native OAuth host tests
+        run: npm run test:oauth
