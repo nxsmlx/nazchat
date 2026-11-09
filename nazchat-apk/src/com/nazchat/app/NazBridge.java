@@ -13,6 +13,7 @@ import org.json.JSONObject;
  */
 public class NazBridge {
     private static int nextReqId = 1;
+    private static final int MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
     private static final java.util.concurrent.ConcurrentHashMap<Integer, java.net.HttpURLConnection> active = new java.util.concurrent.ConcurrentHashMap<>();
     private static final java.util.concurrent.ConcurrentHashMap<Integer, Boolean> cancelled = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -53,38 +54,65 @@ public class NazBridge {
                 String text;
                 try {
                     String key = "";
-                    if (secretRef != null && secretRef.length() > 0) {
+                    // Plain fetches (web pages, skill imports) carry no key: they may reach public
+                    // hosts only, and every redirect hop is checked again.
+                    final boolean plain = secretRef == null || secretRef.length() == 0;
+                    if (!plain) {
                         // Refuses non-provider refs, non-HTTPS and hosts the key is not bound to.
                         key = NazSecrets.keyForRequest(NazApp.activity, secretRef, url);
                         if (key.length() > 0) headers.put("Authorization", "Bearer " + key);
                     }
-                    java.net.URL u = new java.net.URL(url);
-                    java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
-                    // Never let a redirect carry the key to another host.
-                    if (key.length() > 0) c.setInstanceFollowRedirects(false);
-                    c.setConnectTimeout(15000);
-                    c.setReadTimeout(30000);
-                    c.setRequestMethod(method);
-                    c.setRequestProperty("User-Agent",
-                        "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Mobile Safari/537.36 NazChat/1.3");
-                    for (Map.Entry<String, String> e : headers.entrySet()) {
-                        if (e.getKey() == null || e.getKey().isEmpty()) continue;
-                        c.setRequestProperty(e.getKey(), e.getValue());
+                    String current = url, currentMethod = method, currentBody = body;
+                    java.net.HttpURLConnection c;
+                    for (int hop = 0; ; hop++) {
+                        java.net.URL u = new java.net.URL(current);
+                        if (plain) {
+                            String scheme = u.getProtocol().toLowerCase(java.util.Locale.US);
+                            if (!"https".equals(scheme) && !"http".equals(scheme)) throw new java.io.IOException("Only http(s) URLs are allowed");
+                            if (u.getUserInfo() != null) throw new java.io.IOException("URLs with embedded credentials are refused");
+                            McpHttp.requirePublicHost(u.getHost());
+                        }
+                        c = (java.net.HttpURLConnection) u.openConnection();
+                        // Plain requests follow redirects here, after the host check; a key never follows one.
+                        if (plain || key.length() > 0) c.setInstanceFollowRedirects(false);
+                        c.setConnectTimeout(15000);
+                        c.setReadTimeout(30000);
+                        c.setRequestMethod(currentMethod);
+                        c.setRequestProperty("User-Agent",
+                            "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Mobile Safari/537.36 NazChat/1.3");
+                        for (Map.Entry<String, String> e : headers.entrySet()) {
+                            if (e.getKey() == null || e.getKey().isEmpty()) continue;
+                            c.setRequestProperty(e.getKey(), e.getValue());
+                        }
+                        if (currentBody != null && !currentBody.isEmpty() && !currentMethod.equals("GET")) {
+                            c.setDoOutput(true);
+                            java.io.OutputStream os = c.getOutputStream();
+                            os.write(currentBody.getBytes("UTF-8"));
+                            os.close();
+                        }
+                        active.put(reqId, c);
+                        if (cancelled.containsKey(reqId)) { active.remove(reqId); throw new Exception("cancelled"); }
+                        int code = c.getResponseCode();
+                        String location = c.getHeaderField("Location");
+                        if (plain && code >= 300 && code < 400 && location != null) {
+                            if (hop >= 5) throw new java.io.IOException("Too many redirects");
+                            current = new java.net.URL(u, location).toString();
+                            if (code != 307 && code != 308) { currentMethod = "GET"; currentBody = ""; }
+                            active.remove(reqId);
+                            try { c.disconnect(); } catch (Exception ignored) {}
+                            continue;
+                        }
+                        break;
                     }
-                    if (body != null && !body.isEmpty() && !method.equals("GET")) {
-                        c.setDoOutput(true);
-                        java.io.OutputStream os = c.getOutputStream();
-                        os.write(body.getBytes("UTF-8"));
-                        os.close();
-                    }
-                    active.put(reqId, c);
-                    if (cancelled.containsKey(reqId)) { active.remove(reqId); throw new Exception("cancelled"); }
                     status = c.getResponseCode();
                     java.io.InputStream in = status >= 400 ? c.getErrorStream() : c.getInputStream();
                     java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
                     byte[] buf = new byte[8192];
                     int n;
-                    while (in != null && (n = in.read(buf)) > 0) out.write(buf, 0, n);
+                    while (in != null && (n = in.read(buf)) > 0) {
+                        out.write(buf, 0, n);
+                        if (out.size() > MAX_RESPONSE_BYTES) { in.close(); throw new java.io.IOException("Response is larger than 8 MB"); }
+                    }
                     if (in != null) in.close();
                     text = out.toString("UTF-8");
                     active.remove(reqId);

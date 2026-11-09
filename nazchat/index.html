@@ -3211,6 +3211,37 @@ async function confirmMcpCall(name,args){
  try{return !!await confirmDialog('Allow an external tool to run?\n\nServer: '+target.server.name+'\nEndpoint: '+target.server.url+'\nTool: '+target.tool.name+'\nArguments: '+JSON.stringify(args).slice(0,1200)+'\n\nThis tool may change remote data. Stopping a request cannot undo changes.',{title:'Confirm MCP tool call',confirmText:'Allow once'});}
  finally{signal?.removeEventListener('abort',abort);}
 }
+/* fetch_url opens a page without asking only when the user typed or pasted that exact
+   address, or a web search in this answer returned it. Any other URL was composed by the
+   model (possibly following instructions inside a fetched page or tool result) and could
+   carry conversation data out in its path or query, so the user approves it once. */
+function normalizeToolUrl(u){ try{ const x=new URL(String(u||"")); x.hash=""; return x.href.replace(/\/$/,""); }catch(e){ return ""; } }
+function isPrivateHostName(hostname){
+  const h=String(hostname||"").toLowerCase().replace(/^\[|\]$/g,"").replace(/\.$/,"");
+  return !h || h==="localhost" || /\.(local|localhost|internal)$/.test(h) || h==="::" || h==="::1"
+    || /^(0|10|127)\./.test(h) || /^169\.254\./.test(h) || /^192\.168\./.test(h)
+    || /^172\.(1[6-9]|2\d|3[01])\./.test(h) || /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(h)
+    || /^(22[4-9]|2[3-5]\d)\./.test(h) || /^f[cd][0-9a-f]{0,2}:/.test(h) || /^fe[89ab][0-9a-f]?:/.test(h) || /^::ffff:/.test(h);
+}
+function userProvidedUrls(){
+  const set=new Set();
+  for(const m of (conv?.messages||[])){
+    if(m.role!=="user") continue;
+    const text=typeof m.content==="string"?m.content:JSON.stringify(m.content||"");
+    for(const u of text.match(/https?:\/\/[^\s<>"'`]+/gi)||[]) set.add(normalizeToolUrl(u.replace(/[)\].,;:!?]+$/,"")));
+  }
+  return set;
+}
+async function confirmFetchUrl(url, msg){
+  const wanted=normalizeToolUrl(url); if(!wanted) return false;
+  if(userProvidedUrls().has(wanted)) return true;
+  if((msg?.sources||[]).some(s=>normalizeToolUrl(s.url)===wanted)) return true;
+  const signal=currentAbortSignal(); if(signal?.aborted) return false;
+  const abort=()=>$('#customDialogCancel')?.click(); signal?.addEventListener('abort',abort,{once:true});
+  const shown=wanted.length>600 ? wanted.slice(0,600)+"… ("+wanted.length+" characters)" : wanted;
+  try{ return !!await confirmDialog('The assistant wants to open a page you did not type and no search returned.\n\n'+shown+'\n\nA page address can carry text from this chat to that website. Only allow it if you expect this page.',{title:'Open this page?',confirmText:'Open once'}); }
+  finally{ signal?.removeEventListener('abort',abort); }
+}
 /* The Search chip controls whether the web_search tool is offered; fetch_url stays available. */
 function toolsSupported(model){
   const p=model&&model.provider; if(!p) return false;
@@ -3243,6 +3274,9 @@ async function runKitaTool(name,args){
   if(name==="fetch_url"){
     const u=String(args.url||"");
     if(!/^https?:\/\//i.test(u)) return {error:"Only http(s) URLs are allowed"};
+    let parsed; try{ parsed=new URL(u); }catch(e){ return {error:"Invalid URL"}; }
+    if(parsed.username||parsed.password) return {error:"URLs with credentials are not allowed"};
+    if(isPrivateHostName(parsed.hostname)) return {error:"Private network addresses are not allowed"};
     try{
       const res=await netFetch(u,{headers:{"Accept":"text/html,application/json,text/plain"}});
       const raw=await res.text();
@@ -3761,6 +3795,9 @@ async function sendResponse(text, opts, run){
       let args = {}; try{ args = c.args?JSON.parse(c.args):{}; }catch(e){ args = {}; }
       if(c.name.startsWith('mcp_')&&!await confirmMcpCall(c.name,args)){
         results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined or cancelled this MCP tool call.'}});continue;
+      }
+      if(c.name==="fetch_url"&&!await confirmFetchUrl(args.url,aiMsg)){
+        results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined opening this page.'}});continue;
       }
       if(currentAbortSignal()?.aborted)break;
       const label = c.name==="web_search" ? `Searching the web for “${args.query||""}”` : `Reading ${args.url||"a page"}`;
