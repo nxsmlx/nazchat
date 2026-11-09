@@ -1451,8 +1451,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.4.4";
-const APP_VERSION_CODE = 42;
+const APP_VERSION = "4.5.0";
+const APP_VERSION_CODE = 43;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -3166,7 +3166,7 @@ async function confirmMcpCall(name,args){
  const target=mcpToolTarget(name);if(!target)return false;
  const signal=currentAbortSignal();if(signal?.aborted)return false;
  const abort=()=>$('#customDialogCancel')?.click();signal?.addEventListener('abort',abort,{once:true});
- try{return await confirmDialog('Allow an external tool to run?\n\nServer: '+target.server.name+'\nEndpoint: '+target.server.url+'\nTool: '+target.tool.name+'\nArguments: '+JSON.stringify(args).slice(0,1200)+'\n\nThis tool may change remote data. Stopping a request cannot undo changes.',{title:'Confirm MCP tool call',confirmText:'Allow once'});}
+ try{return !!await confirmDialog('Allow an external tool to run?\n\nServer: '+target.server.name+'\nEndpoint: '+target.server.url+'\nTool: '+target.tool.name+'\nArguments: '+JSON.stringify(args).slice(0,1200)+'\n\nThis tool may change remote data. Stopping a request cannot undo changes.',{title:'Confirm MCP tool call',confirmText:'Allow once'});}
  finally{signal?.removeEventListener('abort',abort);}
 }
 /* The Search chip controls whether the web_search tool is offered; fetch_url stays available. */

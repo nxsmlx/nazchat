@@ -88,7 +88,7 @@ public final class NazOAuth {
         synchronized(NazOAuth.class){if(!startedGeneration.equals(generation(id))||!config(activity,id).optString("generation").equals(cfg.optString("generation")))throw new Exception("Sign-in was cancelled");store(activity,id,cfg);}event(id,"authorized","Signed in. Refreshing tools.");
     }catch(Exception e){event(id,"error",safe(e));}}},"mcp-oauth-callback").start();}
     private static final java.util.concurrent.ConcurrentHashMap<String,Object> refreshLocks=new java.util.concurrent.ConcurrentHashMap<String,Object>();
-    static String access(Activity a,String id,String endpoint,boolean force) throws Exception {
+    static String access(Activity a,String id,String endpoint,boolean force,McpHttp.Control control) throws Exception {
         Object candidate=new Object(),old=refreshLocks.putIfAbsent(id,candidate),lock=old==null?candidate:old;
         synchronized(lock){
         String startedGeneration=generation(id);
@@ -96,7 +96,7 @@ public final class NazOAuth {
         if(!endpoint.equals(cfg.optString("endpoint")))throw new Exception("Token is bound to another MCP endpoint");
         if((force||cfg.optLong("expires",0)<System.currentTimeMillis()+30000)&&!cfg.optString("refresh_token").isEmpty()){
             JSONObject form=new JSONObject();form.put("grant_type","refresh_token");form.put("refresh_token",cfg.getString("refresh_token"));form.put("client_id",cfg.getString("clientId"));form.put("resource",cfg.getString("resource"));
-            applyTokens(cfg,McpHttp.postForm(cfg.getString("tokenEndpoint"),form));
+            applyTokens(cfg,McpHttp.postForm(cfg.getString("tokenEndpoint"),form,control));
             synchronized(NazOAuth.class){if(!startedGeneration.equals(generation(id))||!config(a,id).optString("generation").equals(cfg.optString("generation")))throw new Exception("Authorization changed while refreshing");store(a,id,cfg);}
         }return cfg.optString("access_token");
         }

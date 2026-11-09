@@ -34,15 +34,16 @@ public final class NazMcp {
         }catch(Exception e){try{send(request,new JSONObject().put("error",cancelled.contains(request)?"Request cancelled":safe(e)));}catch(Exception ignored){}
         }finally{sockets.remove(request);cancelled.remove(request);}}});
     }
+    private McpHttp.Control control(final String req){return new McpHttp.Control(){public void opened(HttpURLConnection c)throws Exception{sockets.put(req,c);if(cancelled.contains(req))throw new IOException("Request cancelled");}};}
     private JSONObject perform(String req,String server,Session s,String method,JSONObject params)throws Exception {
         if(cancelled.contains(req))throw new IOException("Request cancelled");
-        String token=NazOAuth.access(activity,server,s.endpoint,false);
+        String token=NazOAuth.access(activity,server,s.endpoint,false,control(req));
         if(cancelled.contains(req))throw new IOException("Request cancelled");
         if(!s.ready&&!MODERN.equals(s.version))initialize(req,s,token);
         McpHttp.Response response=rpc(req,s,method,params,token,false);
         if(response.status==401&&!token.isEmpty()){
             if(cancelled.contains(req))throw new IOException("Request cancelled");
-            token=NazOAuth.access(activity,server,s.endpoint,true);response=rpc(req,s,method,params,token,false);
+            token=NazOAuth.access(activity,server,s.endpoint,true,control(req));response=rpc(req,s,method,params,token,false);
         }
         if(response.status==401)throw new IOException("Sign in to this MCP server first, or sign in again for required scopes");
         if(response.status==403)throw new IOException("MCP permission denied. Sign in again to grant required scopes.");

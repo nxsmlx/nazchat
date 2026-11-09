@@ -87,9 +87,10 @@ final class McpHttp {
         StringBuilder s=new StringBuilder();Iterator<String> keys=data.keys();
         while(keys.hasNext()){String k=keys.next();if(s.length()>0)s.append('&');s.append(URLEncoder.encode(k,"UTF-8")).append('=').append(URLEncoder.encode(data.getString(k),"UTF-8"));}return s.toString();
     }
-    static JSONObject postForm(String url,JSONObject data) throws Exception {
+    static JSONObject postForm(String url,JSONObject data) throws Exception {return postForm(url,data,null);}
+    static JSONObject postForm(String url,JSONObject data,Control control) throws Exception {
         Map<String,String> h=jsonHeaders();h.put("Content-Type","application/x-www-form-urlencoded");
-        Response r=request(url,"POST",h,form(data),null);
+        Response r=request(url,"POST",h,form(data),control);
         if(r.status/100!=2)throw new IOException("Authorization token request failed (HTTP "+r.status+"). Sign in again.");
         return new JSONObject(r.body);
     }

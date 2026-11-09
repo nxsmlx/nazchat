@@ -1,3 +1,17 @@
+## Latest: Kita Chat 4.5.0
+
+- Steer messages while answering, with a separate Stop button, preserved partial responses and safe cancellation handoff. New pending steers replace rather than queue.
+- Opt-in local Memory with editable notes and user-confirmed suggestions.
+- Skill pack v2: 15 skills, expanded visual-design guidance, Art Direction, Interface Copy and Design Critique.
+- Accessible Skill Library actions, custom editing and reviewed file/HTTPS imports.
+- MCP Streamable HTTPS tools with browser OAuth/PKCE, public client registration, encrypted native token storage, refresh, per-call approval and cancellation.
+- Both stateless modern MCP and supported legacy initialization/session revisions.
+- Android previews remain in the separate bridge-free native screen.
+
+Package com.nazchat.app, versionCode 43, original signing identity. Conversations, providers and nazchat_v1 storage remain unchanged by the upgrade. A private exported backup is recommended.
+
+MCP support is a tools-only public-native-client subset. The user's actual endpoint and real-device OAuth flow have not been tested. Native installation/upgrade and the cause of any Play Protect warning remain unverified. See docs/V4_5_FEATURES.md for exact behavior and limitations.
+
 ## v4.4.4
 
 - In-app provider picker with search, two-line descriptions, Light/Dark styling and keyboard focus handling.
