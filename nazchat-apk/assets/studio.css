@@ -3259,6 +3259,14 @@ label.fld {
 .md .code-wrap:not(.collapsed) .code-body{display:block}
 .code-live-body{white-space:pre!important;word-break:normal!important;overflow-wrap:normal!important;overflow-x:auto!important;overscroll-behavior:contain}
 
+/* Keep reading controls compact even when WebView expands native selects. */
+.settings-row.appearance-size-row{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:10px;height:auto;min-height:0;padding:16px}
+.appearance-size-row .sr-text{flex:none;min-height:0}
+.appearance-size-row select{display:block;box-sizing:border-box;width:100%;height:44px;min-height:44px;max-height:44px;margin:0;padding:8px 12px;flex:none}
+#provList:has(.appearance-size-row) .settings-subnav{position:static;top:auto;margin:0;padding:0;min-height:44px}
+#provList:has(.appearance-size-row) > label.settings-row{display:grid;grid-template-columns:minmax(0,1fr) auto;min-height:56px;gap:12px}
+#provList:has(.appearance-size-row) > label.settings-row select{width:130px;height:44px;min-height:44px;padding:8px}
+#provList:has(.appearance-size-row) > label.settings-row input[type="checkbox"]{width:22px;height:22px;min-height:0;margin:0;padding:0}
 /* Reading preferences */
 [data-text-size="default"] .md,[data-text-size="default"] .msg.user .bubble{font-size:14px}
 [data-text-size="small"] .md{font-size:12px}[data-text-size="extra"] .md{font-size:21px}[data-text-size="small"] .msg.user .bubble{font-size:12px}[data-text-size="extra"] .msg.user .bubble{font-size:20px}

@@ -1,3 +1,10 @@
+# Kita Chat 4.5.3
+
+- Keep Appearance conversation-size controls compact with the label above a fixed-height dropdown.
+- Prevent the Back row from overlapping theme choices; constrain code-size and checkbox controls.
+- Conversation text remains Small 12px, Default 14px and Large 16px.
+- VersionCode 46, same package and original signing identity. Browser checks are not real-device verification.
+
 # Kita Chat 4.5.2
 
 - Conversation text: Small 12px, Default 14px, Large 16px for assistant and user messages.
