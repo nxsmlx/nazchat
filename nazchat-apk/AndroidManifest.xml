@@ -13,6 +13,7 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
+        android:allowBackup="false"
         android:label="Kita Chat"
         android:icon="@mipmap/ic_launcher"
         android:theme="@android:style/Theme.Black.NoTitleBar"
@@ -21,12 +22,19 @@
         <activity
             android:name=".MainActivity"
             android:label="Kita Chat"
+            android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode"
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.nazchat.app" />
             </intent-filter>
         </activity>
         <activity

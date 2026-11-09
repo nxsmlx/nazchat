@@ -3,6 +3,7 @@ const assert=require('assert');
 function skillData(){return require('../skills.json').skills;}
 (async()=>{
  const b=await launch();
+ try{
  const p=await b.newPage({viewport:{width:390,height:844}});const errors=[];p.on('pageerror',e=>errors.push(e.message));
  let requests=[];
  await p.route('https://api.test/v1/chat/completions',async route=>{
@@ -45,14 +46,20 @@ function skillData(){return require('../skills.json').skills;}
  assert(systems.every(x=>x.role==='system'&&x.content.includes('You are Kita Chat')));
  assert(systems[2].content.includes('Active expert guidance')&&!systems[2].content.includes('[Skill:'));
  // every part call carries the routed skills
- assert(partCalls.every(r=>r.messages[0].content.includes('design lead')),'landing page skills missing in part system prompts');
+ const designSkill=skillData().find(s=>s.id==='frontend-design');
+ assert(partCalls.every(r=>r.messages[0].content.includes('[Skill: '+designSkill.name+']\n'+designSkill.content)),'landing page skill content missing in part system prompts');
  assert(requests.every(r=>JSON.stringify(r).length<100000));
  console.log('PASS system prompts and budget');
  await p.evaluate(()=>{db.skillSettings.mode='manual';db.skillSettings.selected=['security'];save();syncToggles();});
  await p.fill('#promptInput','buat landing page');await p.click('#sendBtn');await p.waitForFunction(()=>!generating);
- assert(requests.at(-1).messages[0].content.includes('defense in depth'));assert(!requests.at(-1).messages[0].content.includes('design lead'));
+ const security=skillData().find(s=>s.id==='security');
+ const manualSystem=requests.at(-1).messages[0].content;
+ assert(manualSystem.includes('[Skill: '+security.name+']\n'+security.content),'manual security instructions not sent');
+ assert(!manualSystem.includes('[Skill: Frontend Design]'),'auto design must not override manual selection');
+ assert.deepStrictEqual(await p.evaluate(()=>conv.messages.at(-1).usedSkills),['security']);
  console.log('PASS manual override');
  await p.setInputFiles('#fileInput',{name:'notes.txt',mimeType:'text/plain',buffer:Buffer.from('Important document facts')});
+ await p.waitForFunction(()=>document.querySelector('#attachmentInline').textContent.includes('notes.txt'));
  assert((await p.locator('#attachmentInline').innerText()).includes('notes.txt'));
  await p.fill('#promptInput','Summarize');await p.click('#sendBtn');await p.waitForFunction(()=>!generating);
  const attachBody=requests.at(-1);const lastUser=attachBody.messages.filter(x=>x.role==='user').at(-1).content;
@@ -60,15 +67,20 @@ function skillData(){return require('../skills.json').skills;}
  console.log('PASS document attachment, no vision payload');
  const parsed=await p.evaluate(()=>parseSkillMarkdown('---\nname: Laravel Expert\ndescription: PHP and Laravel\n---\nUse service classes.'));
  assert.strictEqual(parsed.name,'Laravel Expert');
- await p.evaluate(()=>importSkillText('---\nname: Laravel Expert\ndescription: PHP and Laravel\n---\nUse service classes.'));
+ await p.evaluate(()=>{skillLibraryOpen=true;renderSkillSheet();openSheet('skillSheet');});
+ await p.getByRole('button',{name:'Import SKILL.md / URL',exact:true}).click();
+ await p.setInputFiles('#skillFileInput',{name:'SKILL.md',mimeType:'text/markdown',buffer:Buffer.from('---\nname: Laravel Expert\ndescription: PHP and Laravel\n---\nUse service classes.')});
+ await p.waitForFunction(()=>document.querySelector('#skillSheetTitle').textContent==='Review skill import');
+ assert(!(await p.evaluate(()=>db.skillSettings.custom.some(x=>x.name==='Laravel Expert'))),'import must be reviewed before saving');
+ await p.getByRole('button',{name:'Import skill',exact:true}).click();
  assert(await p.evaluate(()=>db.skillSettings.custom.some(x=>x.name==='Laravel Expert')));
  await p.reload();await p.waitForTimeout(250);
  assert(await p.evaluate(()=>db.skillSettings.custom.some(x=>x.name==='Laravel Expert')));
  console.log('PASS custom SKILL.md import and reload persistence');
  await p.unroute('https://raw.githubusercontent.com/nxsmlx/nazchat/main/skills.json*');
- await p.route('https://raw.githubusercontent.com/nxsmlx/nazchat/main/skills.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({packVersion:2,skills:skillData()})}));
- const pack=await p.evaluate(()=>refreshSkillPack(false));assert.strictEqual(pack.packVersion,2);
- assert(await p.evaluate(()=>db.skillPackCache.packVersion===2));console.log('PASS background pack update');
+ await p.route('https://raw.githubusercontent.com/nxsmlx/nazchat/main/skills.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({packVersion:3,skills:skillData()})}));
+ const pack=await p.evaluate(()=>refreshSkillPack(false));assert.strictEqual(pack.packVersion,3);
+ assert(await p.evaluate(()=>db.skillPackCache.packVersion===3));console.log('PASS background pack update');
  await p.evaluate(()=>{db.skillSettings.mode='auto';db.skillSettings.selected=[];conv=null;renderAll();});
  await p.fill('#promptInput','buat landing page');await p.click('#sendBtn');await p.waitForFunction(()=>!generating);
  // The multi-file build renders in one tabbed code viewer; it starts collapsed and expands.
@@ -77,9 +89,11 @@ function skillData(){return require('../skills.json').skills;}
  assert(await answerBubble.locator('.md').count()>0,'answer body missing');
 
  assert(await answerBubble.locator('.skill-badge').count()>0,'skill badge missing');
- await p.click('text=Review & Improve');await p.waitForFunction(()=>!generating);
- assert(requests.at(-1).messages[0].content.includes('Review against the stated requirements'));
- assert(await p.evaluate(()=>conv.messages.at(-1).usedSkills.includes('code-review')));
+ await p.getByRole('button',{name:'Review & Improve',exact:true}).last().click();await p.waitForFunction(()=>!generating);
+ const reviewSystem=requests.at(-1).messages[0].content;
+ for(const id of ['design-critique','code-review','testing']){const s=skillData().find(s=>s.id===id);assert(reviewSystem.includes('[Skill: '+s.name+']\n'+s.content),'review missing '+id);}
+ assert.deepStrictEqual((await p.evaluate(()=>conv.messages.at(-1).usedSkills)).sort(),['code-review','design-critique','testing']);
+ assert(requests.at(-1).messages.at(-1).content.includes('complete corrected answer or artifact'),'review must request a corrected deliverable');
  console.log('PASS code collapse, skill badges, and Review & Improve');
  await p.click('#menuBtn');await p.click('#settingsBtn');await p.waitForTimeout(100);assert(await p.locator('#setSheet.open').count());assert((await p.locator('#provList').innerText()).includes('Skill Library'));
  await p.locator('.settings-hub-row').filter({hasText:'Skill Library'}).click();assert(await p.locator('#skillSheet.open').count());
@@ -105,5 +119,5 @@ function skillData(){return require('../skills.json').skills;}
  await p.click('#bottomModelBtn');await p.waitForTimeout(150);assert((await p.locator('.model-item.sel').innerText()).includes('b2'),'selected model not marked in picker');await p.click('[data-close="modelSheet"]');
  console.log('PASS model selection across multiple providers');
  assert.deepStrictEqual(errors,[]);console.log('PASS no page errors');
- await b.close();
-})().catch(e=>{console.error(e);process.exit(1)});
+ }finally{await b.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

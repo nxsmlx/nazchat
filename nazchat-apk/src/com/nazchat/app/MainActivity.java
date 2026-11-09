@@ -24,6 +24,8 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> fileCallback;
     private NazVoice voice;
     private NazTheme theme;
+    private NazOAuth oauth;
+    private NazMcp mcp;
     private static final int FILE_PICKER = 7401;
 
     @Override
@@ -72,6 +74,10 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NazSecrets(this), "NazSecrets");
         web.addJavascriptInterface(new NazPreview(), "NazPreview");
         web.addJavascriptInterface(voice, "NazVoice");
+        mcp = new NazMcp(this);
+        web.addJavascriptInterface(mcp, "NazMcp");
+        oauth = new NazOAuth(this);
+        web.addJavascriptInterface(oauth, "NazOAuth");
 
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -79,15 +85,9 @@ public class MainActivity extends Activity {
                 Uri u = Uri.parse(url);
                 String host = u.getHost() == null ? "" : u.getHost();
                 String scheme = u.getScheme() == null ? "" : u.getScheme().toLowerCase();
-                // Never hijack in-page renderers or embedded artifacts.
-                if ("data".equals(scheme) || "blob".equals(scheme) || "about".equals(scheme)
-                        || "javascript".equals(scheme)) return false;
-                if ("file".equals(scheme)) return false;
-                if (("https".equals(scheme) || "http".equals(scheme)) && host.equals("appassets.androidplatform.net")) return false;
-                if (host.endsWith("duckduckgo.com") || host.endsWith("jina.ai")
-                        || host.equals("localhost") || host.equals("127.0.0.1")) {
-                    return false; // in-app fetch targets
-                }
+                // Bridges belong only to our bundled shell, never to browsed documents.
+                if ("file:///android_asset/index.html".equals(url)) return false;
+                if (!"https".equals(scheme) && !"http".equals(scheme)) return true;
                 try {
                     android.content.Intent i = new android.content.Intent(android.content.Intent.ACTION_VIEW, u);
                     startActivity(i);
@@ -98,8 +98,8 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 if (request == null) return false;
-                // Sub-frame navigations always stay inside the app.
-                if (!request.isForMainFrame()) return false;
+                // Untrusted documents run in PreviewActivity with no native interfaces.
+                if (!request.isForMainFrame()) return true;
                 return shouldOverrideUrlLoading(view, request.getUrl() == null ? "" : request.getUrl().toString());
             }
 
@@ -130,7 +130,8 @@ public class MainActivity extends Activity {
             }
         });
 
-        web.loadUrl("file:///android_asset/index.html"); // bundled Kita Chat shell; keep file origin for update compatibility
+        web.loadUrl("file:///android_asset/index.html"); // preserve storage origin across upgrades
+        if (getIntent() != null && NazOAuth.isRedirect(getIntent().getData())) oauth.handleRedirect(getIntent().getData());
     }
 
     @Override
@@ -159,6 +160,15 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() { if (web != null) web.onPause(); super.onPause(); }
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        Uri u = intent != null ? intent.getData() : null;
+        if (NazOAuth.isRedirect(u) && oauth != null) {
+            oauth.handleRedirect(u);
+        }
+    }
+    @Override
     protected void onResume() { super.onResume(); if (web != null) web.onResume(); if (theme != null) theme.refreshSystemTheme(); }
     @Override
     public void onConfigurationChanged(Configuration configuration) {
@@ -170,6 +180,7 @@ public class MainActivity extends Activity {
         if (theme != null) { theme.dispose(); theme = null; }
         if (web != null) web.removeJavascriptInterface("NazTheme");
         NazStream.cancelAll();
+        if (mcp != null) mcp.dispose();
         if (web != null) { web.stopLoading(); web.removeAllViews(); web.destroy(); web = null; }
         NazApp.clear();
         super.onDestroy();

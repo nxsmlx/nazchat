@@ -3274,3 +3274,16 @@ label.fld {
 .preset-picker-list{overflow:auto;overscroll-behavior:contain;padding:0 10px 12px}.preset-picker-item{display:flex;width:100%;gap:12px;align-items:center;min-height:76px;padding:12px 10px;border:1px solid transparent;border-radius:14px;background:transparent;color:var(--text);text-align:left;cursor:pointer}.preset-picker-item:hover{background:var(--hover)}.preset-picker-item[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--selected-border)}
 .preset-picker-badge{display:grid;place-items:center;flex:0 0 38px;height:38px;border:1px solid var(--border);background:var(--bg3);border-radius:12px;font-weight:700;font-size:16px;color:var(--accent)}.preset-picker-text{flex:1;min-width:0}.preset-picker-text strong{display:block;font-size:14px;font-weight:600}.preset-picker-text small{display:block;font-size:12px;line-height:1.5;margin-top:4px;color:var(--text2);overflow-wrap:anywhere}.preset-picker-check{flex:0 0 20px;color:var(--accent)}
 @media(max-width:520px){.preset-picker-scrim{align-items:flex-end;padding:10px 10px max(10px,var(--safe-b))}.preset-picker{max-height:calc(100dvh - 70px);border-radius:24px}}
+
+.steer-tag{display:inline-block;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid var(--selected-border);padding:2px 8px;border-radius:999px;margin-bottom:6px}
+#steerBtn{min-height:44px;min-width:52px;padding:0 10px;flex-shrink:0;border:1px solid var(--selected-border);border-radius:10px;background:var(--accent-soft);color:var(--accent);font:inherit;font-size:12px;font-weight:600}
+#steerBtn[hidden],#steerStatus[hidden]{display:none}
+#sendBtn{min-width:44px;min-height:44px}
+#steerStatus{padding:8px 4px 2px;line-height:1.5;color:var(--text2)}
+.skill-library-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.skill-library-actions button{min-height:44px}.skill-library-actions button:last-child{grid-column:1/-1}
+.skill-editor-preview,.skill-import-preview{white-space:pre-wrap;overflow-wrap:anywhere;max-height:45dvh;overflow:auto;font:inherit;font-size:13px}
+.memory-suggest button{min-height:44px}
+#promptInput::placeholder{opacity:1;color:var(--text2)}
+
+.memory-suggest{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border:1px dashed var(--selected-border);background:var(--accent-soft);border-radius:12px;font-size:13px;color:var(--text)}
+.memory-suggest span{flex:1;min-width:0}
