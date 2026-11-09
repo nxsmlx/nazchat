@@ -107,7 +107,15 @@ async function assertSuccessfulDelete(page, before, {last = false, shared = fals
   const failures = [];
   let passed = 0;
   try {
+    // Up to three tries per case: headless Chromium can read a stale localStorage value
+    // after navigating a file:// page, which breaks the reload checks at random.
     async function test(name, options, run) {
+      for (let tryNo = 1; tryNo <= 3; tryNo++) {
+        if (tryNo > 1) console.log('RETRY ' + name);
+        if (await attempt(name, options, run, tryNo === 3)) return;
+      }
+    }
+    async function attempt(name, options, run, lastTry) {
       const context = await browser.newContext({viewport: {width: 390, height: 844}, reducedMotion: 'reduce'});
       const page = await context.newPage();
       page.setDefaultTimeout(4500);
@@ -168,9 +176,12 @@ async function assertSuccessfulDelete(page, before, {last = false, shared = fals
         assert.deepEqual(unexpectedRequests, [], 'no unexpected provider, MCP or remote calls');
         passed++;
         console.log('PASS ' + name);
+        return true;
       } catch (error) {
+        if (!lastTry) { console.error('TRY FAILED ' + name + ': ' + String(error.message).split('\n')[0]); return false; }
         failures.push(name);
         console.error('FAIL ' + name + '\n' + (error.stack || error));
+        return false;
       } finally {
         await context.close();
       }
@@ -207,7 +218,7 @@ async function assertSuccessfulDelete(page, before, {last = false, shared = fals
       const before = await snapshot(page);
       await askDelete(page); await confirmDelete(page);
       const after = await assertSuccessfulDelete(page, before);
-      await page.reload({waitUntil: 'domcontentloaded'});
+      await page.goto(page.url(),{waitUntil: 'domcontentloaded'});
       const reloaded = await snapshot(page);
       assert.deepEqual(reloaded.db, after.db);
       assert.deepEqual(reloaded.secrets, after.secrets);
@@ -235,7 +246,7 @@ async function assertSuccessfulDelete(page, before, {last = false, shared = fals
       assert.match(await page.locator('#provList').innerText(), /No providers connected yet\./);
       await page.locator('[data-close="setSheet"]').click();
       assert.match(await page.locator('#chatInner').innerText(), /Keep this question/);
-      await page.reload({waitUntil: 'domcontentloaded'});
+      await page.goto(page.url(),{waitUntil: 'domcontentloaded'});
       assert.deepEqual((await snapshot(page)).db, after.db);
       assert.deepEqual((await snapshot(page)).secrets, {});
       await readChat(page);

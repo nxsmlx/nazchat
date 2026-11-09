@@ -74,7 +74,7 @@ function skillData(){return require('../skills.json').skills;}
  assert(!(await p.evaluate(()=>db.skillSettings.custom.some(x=>x.name==='Laravel Expert'))),'import must be reviewed before saving');
  await p.getByRole('button',{name:'Import skill',exact:true}).click();
  assert(await p.evaluate(()=>db.skillSettings.custom.some(x=>x.name==='Laravel Expert')));
- await p.reload();await p.waitForTimeout(250);
+ await p.goto(p.url());await p.waitForTimeout(250);
  assert(await p.evaluate(()=>db.skillSettings.custom.some(x=>x.name==='Laravel Expert')));
  console.log('PASS custom SKILL.md import and reload persistence');
  await p.unroute('https://raw.githubusercontent.com/nxsmlx/nazchat/main/skills.json*');

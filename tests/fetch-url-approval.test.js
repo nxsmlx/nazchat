@@ -29,7 +29,7 @@ const assert=require('assert');
  });
  await p.goto(appUrl);
  await p.evaluate(()=>{localStorage.setItem('nazchat_v1',JSON.stringify({schemaVersion:3,onboardingDone:true,search:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],conversations:[],projects:[],lastProviderId:'p',lastModelId:'m'}));});
- await p.reload();
+ await p.goto(p.url());
  await p.waitForFunction(()=>typeof db!=='undefined'&&typeof currentModel==='function',{timeout:15000});
  const ask=async(prompt,url)=>{toolUrl=url;await p.evaluate(()=>{conv=null;renderAll();});await p.fill('#promptInput',prompt);await p.click('#sendBtn');};
  const done=()=>p.waitForFunction(()=>!generating,null,{timeout:30000});

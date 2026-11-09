@@ -60,7 +60,7 @@ const {launch,appUrl}=require('./browser');
   await p.waitForFunction(()=>skillPack.packVersion===4);
   assert.equal(await p.evaluate(()=>db.skillSettings.custom.length),4,'pack update preserves customs');
   assert.equal(await p.evaluate(()=>db.memory.items[0].text),'Keep my memory');
-  await p.reload({waitUntil:'domcontentloaded'});
+  await p.goto(p.url(),{waitUntil:'domcontentloaded'});
   assert.equal(await p.evaluate(()=>db.skillSettings.custom.length),4);assert.equal(await p.evaluate(()=>skillPack.packVersion),4);
   assert.equal(await p.evaluate(()=>db.skillSettings.custom.find(s=>s.id==='legacy').content),kept.content);
   await openLibrary();

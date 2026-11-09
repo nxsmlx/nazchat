@@ -167,7 +167,7 @@ const {launch, appUrl, root} = require('./browser');
         await page.evaluate(()=>document.querySelector('#themeBtn').click());
         const sync=await page.evaluate(()=>window.themeSyncs.at(-1));
         assert.equal(sync[0],theme==='light');assert(sync.slice(1).every(c=>/^#[0-9a-f]{6}$/i.test(c)));
-        await page.reload();await page.waitForFunction(()=>typeof db!=='undefined');
+        await page.goto(page.url());await page.waitForFunction(()=>typeof db!=='undefined');
         assert.equal(await page.evaluate(()=>document.documentElement.dataset.theme),theme,'theme must persist after reload');
       }
       assert.deepEqual(errors,[],`page errors: ${errors.join('; ')}`);
