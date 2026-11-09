@@ -1,9 +1,9 @@
 {
-  "version": "4.5.1",
-  "versionCode": 44,
+  "version": "4.5.2",
+  "versionCode": 45,
   "name": "Kita Chat",
-  "changelog": "Delete providers with confirmation and local key cleanup while keeping conversations and choosing a remaining model.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.1/NazChat.apk",
-  "sha256": "2d00357f320a9b31608c42ab544376f66ad3bb708f8978c81f060babbd112e68",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.1"
+  "changelog": "Conversation text sizes: Small 12px, Default 14px and Large 16px.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.2/NazChat.apk",
+  "sha256": "bbf9a2f9c8c8797521b6a5d3d28771c37ea330232e7cf78c23cd3b2a29b6511e",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.2"
 }
