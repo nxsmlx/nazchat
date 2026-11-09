@@ -2429,7 +2429,8 @@ input[type="range"] {
   padding-inline: 0;
 }
 
-label.fld {
+label.fld,
+div.fld {
   gap: 8px;
   font-size: 13px;
   font-weight: 500;
@@ -3296,3 +3297,94 @@ label.fld {
 
 .memory-suggest{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border:1px dashed var(--selected-border);background:var(--accent-soft);border-radius:12px;font-size:13px;color:var(--text)}
 .memory-suggest span{flex:1;min-width:0}
+
+/* ---------------------------------------------------------------------------
+   4.5.4 UI refinements
+   ------------------------------------------------------------------------- */
+
+/* Tools sheet: on/off tools read as switches (same look as Skill Library),
+   not as buttons whose state is only a faint outline. aria-pressed stays the
+   source of truth; the composer shortcuts keep their icon form. */
+#studioChatControls :is(#tglSearch, #tglThink) {
+  position: relative;
+  flex: 0 0 48px;
+  width: 48px;
+  min-width: 48px;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+}
+#studioChatControls :is(#tglSearch, #tglThink) > * { display: none; }
+#studioChatControls :is(#tglSearch, #tglThink)::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 5px;
+  width: 38px;
+  height: 24px;
+  border-radius: 24px;
+  background: var(--switch-track);
+  transition: background-color .18s ease;
+}
+#studioChatControls :is(#tglSearch, #tglThink)::after {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--switch-thumb);
+  transition: transform .18s ease;
+}
+#studioChatControls :is(#tglSearch, #tglThink)[aria-pressed="true"] { background: transparent; border: 0; }
+#studioChatControls :is(#tglSearch, #tglThink)[aria-pressed="true"]::before { background: var(--switch-on); }
+#studioChatControls :is(#tglSearch, #tglThink)[aria-pressed="true"]::after {
+  background: var(--switch-on-thumb);
+  transform: translateX(14px);
+}
+#studioChatControls :is(#tglSearch, #tglThink):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Keep a switch beside its label even on narrow phones. */
+.studio-tool-row:has(> :is(#tglSearch, #tglThink)) { flex-wrap: nowrap; }
+.studio-tool-row:has(> :is(#tglSearch, #tglThink)) > div { flex-basis: auto; }
+@media (prefers-reduced-motion: reduce) {
+  #studioChatControls :is(#tglSearch, #tglThink)::before,
+  #studioChatControls :is(#tglSearch, #tglThink)::after { transition: none; }
+}
+
+/* Markdown tables: the frame scrolls sideways; the table fills the message width
+   and long cells wrap instead of forcing a very wide row. */
+.md .md-table {
+  max-width: 100%;
+  margin: 16px 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.md .md-table:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.md .md-table > table {
+  display: table;
+  width: 100%;
+  min-width: 100%;
+  max-width: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  white-space: normal;
+}
+.md .md-table :is(th, td) { min-width: 88px; max-width: 320px; overflow-wrap: anywhere; }
+.md .md-table tr:last-child > td { border-bottom: 0; }
+
+/* Model picker: names read left to right like every other list; the context
+   size already appears in the subtitle, so no duplicate pill. */
+#modelList .model-item { text-align: left; justify-content: flex-start; }
+#modelList .model-item .nm { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+#modelList .model-item .nm :is(strong, small) { display: block; max-width: 100%; overflow-wrap: anywhere; }
+#modelList .model-item .check { margin-left: auto; color: var(--accent); }
+
+/* Keep a user message's actions attached to the bubble they act on. */
+.msg.user > .action-bar { margin-top: 0; }

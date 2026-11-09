@@ -312,7 +312,7 @@ header .menu-btn{background:var(--bg3);}
 .model-item .check{color:var(--accent); flex-shrink:0;}
 
 /* Provider form */
-label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text2); font-weight:600;}
+label.fld,div.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text2); font-weight:600;}
 .radio-row{display:flex; gap:8px;}
 .radio-row button{flex:1; padding:11px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); font-size:13.5px; font-weight:600;}
 .radio-row button.sel{border-color:var(--accent); color:var(--accent); background:rgba(16,163,127,.12);}
@@ -707,7 +707,7 @@ input,textarea,select{background:var(--bg);}
 .settings-back{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--text2);font-size:12.5px;font-weight:700;padding:5px 0;min-height:34px;}.settings-back:active{color:var(--text);}
 .provider-card{width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border:0;border-bottom:1px solid rgba(255,255,255,.04);background:transparent;color:var(--text);text-align:left;min-height:72px;cursor:pointer;}.provider-card:last-child{border-bottom:0;}.provider-card:active{background:var(--hover);}
 .provider-main{min-width:0;flex:1;}.provider-title{display:flex;align-items:center;gap:8px;min-width:0;}.provider-title strong{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.provider-main small{display:block;margin-top:5px;color:#a1a1aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px;max-width:100%;}.key-status{display:inline-flex;align-items:center;gap:4px;color:#a1a1aa;font-size:10px;white-space:nowrap;}.key-status i{width:6px;height:6px;border-radius:50%;background:#71717a;}.key-status.stored i{background:#8f9a8d;}.key-status.missing{color:#b08b8b;}.key-status.missing i{background:#b08b8b;}.model-count{padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.06);color:#a1a1aa;font-size:10.5px;white-space:nowrap;}
-.settings-empty{padding:18px 16px;color:#a1a1aa;font-size:12.5px;}.skill-search{position:sticky;top:0;z-index:2;background:var(--bg2)!important;}
+.settings-empty{padding:18px 16px;color:#a1a1aa;font-size:12.5px;}.skill-search{position:sticky;top:0;z-index:2;background-color:var(--bg2)!important;}
 .switch{position:relative;width:44px;height:24px;min-height:24px;padding:0;border:0;border-radius:999px;background:#3f3f46;flex:none;transition:background .18s;}.switch:after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#d4d4d8;transition:transform .18s;box-shadow:0 1px 2px rgba(0,0,0,.28);}.switch.on{background:#71717a;}.switch.on:after{transform:translateX(20px);background:#fafafa;}
 .provider-card+.provider-card,.skill-row+.skill-row{border-top:0;}
 .model-filters{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;padding:2px 0 9px;background:var(--bg2);scrollbar-width:none;}.model-filters::-webkit-scrollbar{display:none;}.model-filter{flex:none;min-height:32px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg3);color:var(--text2);font-size:11.5px;font-weight:700;white-space:nowrap;}.model-filter.active{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);color:#fafafa;}.model-filter span{color:var(--text3);margin-left:3px;}.model-section-label{padding:10px 12px 5px;color:var(--text3);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}.model-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid transparent;}.model-item.sel{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 12px rgba(0,0,0,.3);}.model-item .nm{min-width:0;flex:1;}.model-item .nm strong{display:block;font-size:15px;font-weight:600;color:#f4f4f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.model-item .nm small{display:block;margin-top:3px;font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.model-meta-pill{flex:none;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.06);color:#a1a1aa;font-size:10.5px;white-space:nowrap;}.model-search input,.skill-search,#convSearch{background-color:var(--input);background-position:14px center;background-repeat:no-repeat;background-size:17px 17px;padding-left:38px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%2371717a' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='8' cy='8' r='5.5'/%3E%3Cpath d='M12 12l4 4'/%3E%3C/svg%3E");}.conv-search:before{display:none;}.skill-search{width:100%;position:sticky;top:0;z-index:2;}.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:12px;border-radius:12px;}.settings-row .sr-text{min-width:0;flex:1;}.settings-row .sr-text strong{display:block;font-size:15px;font-weight:600;color:#f4f4f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.settings-row .sr-text small{display:block;margin-top:3px;font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.settings-hub-group>.settings-row{border-bottom:1px solid rgba(255,255,255,.04);}.settings-hub-group>.settings-row:last-child{border-bottom:0;}
@@ -1030,9 +1030,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
   </div>
   <div class="preview-toolbar">
     <div class="vp-seg" role="group" aria-label="Preview width">
-      <button class="vp-btn" data-vp="mobile" title="Mobile width">📱</button>
-      <button class="vp-btn" data-vp="tablet" title="Tablet width">▭</button>
-      <button class="vp-btn active" data-vp="full" title="Full width" aria-label="Full width"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="14" rx="1"/></svg></button>
+      <button class="vp-btn" data-vp="mobile" title="Mobile width" aria-label="Mobile width" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg></button>
+      <button class="vp-btn" data-vp="tablet" title="Tablet width" aria-label="Tablet width" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M11 18h2"/></svg></button>
+      <button class="vp-btn active" data-vp="full" title="Full width" aria-label="Full width" aria-pressed="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="1.5"/><path d="M8 20.5h8M12 17v3.5"/></svg></button>
     </div>
     <label class="js-toggle"><input type="checkbox" id="previewJs" checked><span>Run JS</span></label>
   </div>
@@ -1596,6 +1596,12 @@ function enhance(container, opts){
     decorateCodeBlock(pre, code, {});
   });
   container.querySelectorAll("a").forEach(a=>{ a.target="_blank"; a.rel="noopener"; });
+  // Tables scroll inside their own frame and fill the message width.
+  container.querySelectorAll("table:not(.code-table)").forEach(t=>{
+    if(t.parentElement && t.parentElement.classList.contains("md-table")) return;
+    const frame=el("div","md-table"); frame.tabIndex=0; frame.setAttribute("role","region"); frame.setAttribute("aria-label","Table");
+    t.replaceWith(frame); frame.appendChild(t);
+  });
   container.querySelectorAll("code:not(pre code)").forEach(c=>{ if(!c.classList.contains("inline-code")) c.classList.add("inline-code"); });
   if(light) return;
   try{
@@ -1646,7 +1652,8 @@ function decorateCodeBlock(pre, code, opts){
   body.innerHTML = lineTable(highlighted, count);
   pre.replaceWith(wrap);
   wrap.appendChild(head); wrap.appendChild(body);
-  if(opts.defaultOpen){ wrap.classList.remove("collapsed"); toggle.textContent="Collapse"; }
+  // Short snippets are easier to read than to unfold: show up to 12 lines straight away.
+  if(opts.defaultOpen || count <= 12){ wrap.classList.remove("collapsed"); toggle.textContent="Collapse"; toggle.setAttribute("aria-label","Collapse code"); }
   return wrap;
 }
 function buildCodeTabs(container, blocks){
@@ -1889,7 +1896,7 @@ function renderAssistant(bubble, msg, live){
     const box = el("div","run-status");
     const state = msg.phases ? msg.phases.state : (msg.content ? "execute" : msg.reasoning ? "think" : "waiting");
     const busy = !!live && state!=="done" && state!=="incomplete";
-    const label = msg.phases ? phaseStatusLabel(state) : (!live ? (msg.stopped?'Stopped':msg.toolCall?'Incomplete':'Completed') : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider"));
+    const label = msg.phases ? phaseStatusLabel(state) : (!live ? (msg.stopped?'Stopped':msg.toolCall?'Incomplete':'Reasoning') : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider"));
     const parts = msg.phases && msg.phases.parts && msg.phases.parts.length ? msg.phases.parts : null;
     const head = el("button","run-summary");
     head.setAttribute("aria-expanded", String(!!msg._runOpen));
@@ -2226,7 +2233,7 @@ $("#previewRun").onclick = ()=>{ renderPreview(); showPreviewTab("preview"); hap
 $("#previewRefresh").onclick = ()=>{ renderPreview(); haptic(); };
 $("#previewJs").onchange = ()=>renderPreview();
 document.querySelectorAll(".vp-btn").forEach(b=>b.onclick = ()=>{
-  document.querySelectorAll(".vp-btn").forEach(x=>x.classList.toggle("active", x===b));
+  document.querySelectorAll(".vp-btn").forEach(x=>{x.classList.toggle("active", x===b);x.setAttribute("aria-pressed",String(x===b));});
   const wrap = $("#previewFrameWrap");
   wrap.classList.toggle("vp-mobile", b.dataset.vp==="mobile");
   wrap.classList.toggle("vp-tablet", b.dataset.vp==="tablet");
@@ -2290,7 +2297,7 @@ function renderModelSheet(){
     db.providers.filter(p=>modelProviderFilter==="all"||p.id===modelProviderFilter).forEach(p=>{
       const models=p.selectedModels.filter(id=>!q||id.toLowerCase().includes(q)||prettyModel(id).toLowerCase().includes(q)||p.name.toLowerCase().includes(q));if(!models.length)return;
       list.appendChild(el("div","model-section-label",esc(p.name)));
-      models.forEach(mid=>{visible++;const it=el("button","model-item"+(cur&&cur.provider.id===p.id&&cur.modelId===mid?" sel":""));const context=p.modelMeta?.[mid]?.context_length||p.modelMeta?.[mid]?.contextLength;it.innerHTML=`<span class="nm"><strong>${esc(prettyModel(mid))}</strong><small>${esc(mid)}${context?` · ${Math.round(context/1000)}k context`:""}</small></span><span class="model-meta-pill">${context?Math.round(context/1000)+"k":"Model"}</span>`;if(cur&&cur.provider.id===p.id&&cur.modelId===mid)it.innerHTML+=`<svg class="check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;it.onclick=()=>{db.lastProviderId=p.id;db.lastModelId=mid;if(conv){conv.providerId=p.id;conv.modelId=mid;}save();renderHeader();renderModelSheet();closeSheet("modelSheet");if(conv)renderAll();haptic("success");};list.appendChild(it);});
+      models.forEach(mid=>{visible++;const it=el("button","model-item"+(cur&&cur.provider.id===p.id&&cur.modelId===mid?" sel":""));const context=p.modelMeta?.[mid]?.context_length||p.modelMeta?.[mid]?.contextLength;it.innerHTML=`<span class="nm"><strong>${esc(prettyModel(mid))}</strong><small>${esc(mid)}${context?` · ${Math.round(context/1000)}k context`:""}</small></span>`;if(cur&&cur.provider.id===p.id&&cur.modelId===mid)it.innerHTML+=`<svg class="check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;it.onclick=()=>{db.lastProviderId=p.id;db.lastModelId=mid;if(conv){conv.providerId=p.id;conv.modelId=mid;}save();renderHeader();renderModelSheet();closeSheet("modelSheet");if(conv)renderAll();haptic("success");};list.appendChild(it);});
     });
     if(!visible){const anyModels=db.providers.some(p=>Array.isArray(p.selectedModels)&&p.selectedModels.length);const msg=anyModels?"No matching models":"No models selected yet. Open Settings → provider → Edit and choose models.";list.appendChild(el("div","model-empty",`<div style="color:var(--text2);font-size:13px;padding:15px 3px;line-height:1.5">${esc(msg)}</div>`));}
   };search.oninput=draw;draw();
@@ -2461,7 +2468,7 @@ function startVoiceInput(){
 function openToolsSheet(){syncToggles();renderToolsSheet();openSheet("toolsSheet");}
 
 function settingsIcon(kind){
-  const paths={providers:'<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 5V3h8v2M8 10h8M8 14h5"/>',workspace:'<path d="M4 5h6l2 2h8v12H4z"/><path d="M8 12h8M8 16h5"/>',skills:'<path d="M12 3l1.8 5.2L19 10l-4 3.5 1.1 5.2L12 16l-4.1 2.7L9 13.5 5 10l5.2-1.8L12 3z"/>',appearance:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5v.2h-4v-.2a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 005.6 15a1.6 1.6 0 00-1.5-1H4v-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1L8 4.3l.1.1a1.6 1.6 0 001.8.3 1.6 1.6 0 001-1.5V3h4v.2a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 00-.3 1.8 1.6 1.6 0 001.5 1h.2v4h-.2a1.6 1.6 0 00-1.5 1z"/>',about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'};
+  const paths={providers:'<circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16 7l3 3M14 9l2 2"/>',memory:'<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 11h4"/>',mcp:'<path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5"/>',workspace:'<path d="M4 5h6l2 2h8v12H4z"/><path d="M8 12h8M8 16h5"/>',skills:'<path d="M12 3l1.8 5.2L19 10l-4 3.5 1.1 5.2L12 16l-4.1 2.7L9 13.5 5 10l5.2-1.8L12 3z"/>',appearance:'<path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/>',appearanceGear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5v.2h-4v-.2a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 005.6 15a1.6 1.6 0 00-1.5-1H4v-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1L8 4.3l.1.1a1.6 1.6 0 001.8.3 1.6 1.6 0 001-1.5V3h4v.2a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 00-.3 1.8 1.6 1.6 0 001.5 1h.2v4h-.2a1.6 1.6 0 00-1.5 1z"/>',about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'};
   return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths[kind]||paths.about}</svg>`;
 }
 function settingsChevron(){return '<svg class="settings-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';}
@@ -2481,18 +2488,17 @@ function settingsHubRow(kind,title,subtitle,onclick){
 }
 function renderSettingsHub(){
   $("#setSheetTitle").textContent="Settings";const list=$("#provList");list.innerHTML="";
-  const intro=el("div","settings-hub-intro","Choose a workspace area");list.appendChild(intro);
+  const intro=el("div","settings-hub-intro","Connections, tools and how Kita looks.");list.appendChild(intro);
   const group=el("div","settings-hub-group");
   const models=(db.providers||[]).reduce((n,p)=>n+(p.selectedModels||[]).length,0);
   group.appendChild(settingsHubRow("providers","Providers",`${db.providers.length} active provider${db.providers.length===1?"":"s"} · ${models} models`,renderProvidersSubView));
   group.appendChild(settingsHubRow("workspace","Workspace",`${db.projects.length} projects · ${db.prompts.length} prompts · ${db.artifacts.length} artifacts`,renderStudioWorkspaceSettings));
   group.appendChild(settingsHubRow("skills","Skill Library",`${activeSkills().length} active skills · Pack v${skillPack.packVersion}`,()=>{closeSheet("setSheet");skillLibraryOpen=true;renderSkillSheet();openSheet("skillSheet");}));
-  group.appendChild(settingsHubRow("workspace","Memory",db.memory.enabled?`${db.memory.items.length} saved notes`:"Off · nothing is remembered",renderMemorySettings));
-  group.appendChild(settingsHubRow("providers","MCP Servers",`${mcpEnabledServers().length} enabled | ${mcpToolDefs().length} tools`,renderMcpSettings));
+  group.appendChild(settingsHubRow("memory","Memory",db.memory.enabled?`${db.memory.items.length} saved notes`:"Off · nothing is remembered",renderMemorySettings));
+  group.appendChild(settingsHubRow("mcp","MCP Servers",`${mcpEnabledServers().length} enabled · ${mcpToolDefs().length} tools`,renderMcpSettings));
   group.appendChild(settingsHubRow("appearance","Appearance",`${studioThemeName()} theme · ${db.textSize==="large"?"Larger":"Default"} conversation text`,()=>renderSettingsAppearance()));
   group.appendChild(settingsHubRow("about","About",`Kita Chat ${APP_VERSION} · Private BYOK`,()=>renderSettingsAbout()));
   list.appendChild(group);
-  const note=el("div","settings-hub-note","Providers, skills and workspace tools open in their own focused views.");list.appendChild(note);
 }
 function renderSettingsAppearance(){renderStudioAppearance();}
 function renderMcpSettings(){
@@ -2502,7 +2508,7 @@ function renderMcpSettings(){
   if(!mcpServers().length)list.appendChild(el('div','settings-empty','No servers. Add your MCP endpoint to get started.'));
   for(const s of mcpServers()){
    const connected=!!window.NazOAuth?.hasToken(s.id),row=el('div','settings-row'),text=el('div','sr-text');
-   const title=el('strong');title.textContent=s.name;const subtitle=el('small');subtitle.textContent=s.url+' | '+(s.tools?.length||0)+' tools | '+(connected?'Signed in':'Not signed in');text.append(title,subtitle);
+   const title=el('strong');title.textContent=s.name;const subtitle=el('small');subtitle.textContent=s.url+' · '+(s.tools?.length||0)+' tools · '+(connected?'Signed in':'Not signed in');text.append(title,subtitle);
    const toggle=el('button','switch'+(s.enabled!==false?' on':''));toggle.setAttribute('role','switch');toggle.setAttribute('aria-label','Enable '+s.name);toggle.setAttribute('aria-checked',String(s.enabled!==false));toggle.onclick=()=>{s.enabled=s.enabled===false;save();renderMcpSettings();};row.append(text,toggle);list.appendChild(row);
    const actions=el('div','toolbar-row');
    const refresh=el('button','','Refresh tools');refresh.onclick=async()=>{refresh.disabled=true;try{toast((await mcpRefreshTools(s)).length+' tools available');}catch(e){toast(e.message);}finally{renderMcpSettings();}};
@@ -2616,6 +2622,10 @@ async function deleteProvider(id){
 }
 function openProvForm(p, preset){
   const base=p ? {...p} : {...(preset||{}),id:null, name:preset?.name||"", baseUrl:preset?.baseUrl||"", endpointMode:"base", apiType:preset?.apiType||"chat_completions", apiKey:"", headers:[], selectedModels:[], capabilities:{}, secretRef:"draft:"+uid()};
+  // Match how requests are built: only "full" / "responses" are special, so a provider
+  // saved without these fields (older backups) must show Base URL / Chat Completions.
+  base.endpointMode = base.endpointMode==="full" ? "full" : "base";
+  base.apiType = base.apiType==="responses" ? "responses" : "chat_completions";
   provFormState = base;
   renderProvForm();
   closeSheet("setSheet");
@@ -2633,51 +2643,56 @@ function renderProvForm(){
     presetButton.onclick=()=>openProviderPresetPicker(f,presetButton);
     presetLabel.appendChild(presetButton);form.appendChild(presetLabel);
   }
-  const name = el("label","fld","Provider Name");
+  const name = el("label","fld","Provider name");
   const nameIn = el("input"); nameIn.value = f.name; nameIn.placeholder = "e.g. OpenRouter, DeepSeek";
   nameIn.oninput = ()=>f.name = nameIn.value;
   name.appendChild(nameIn); form.appendChild(name);
 
-  const mode = el("label","fld","Endpoint Mode");
-  const mrow = el("div","radio-row");
+  const mode = el("div","fld","Endpoint");
+  const mrow = el("div","radio-row"); mrow.setAttribute("role","group"); mrow.setAttribute("aria-label","Endpoint");
   const mb = el("button", f.endpointMode==="base"?"sel":"","Base URL");
-  const mf = el("button", f.endpointMode==="full"?"sel":"","Full Endpoint URL");
+  const mf = el("button", f.endpointMode==="full"?"sel":"","Full endpoint URL");
+  [mb,mf].forEach(b=>{b.type="button";b.setAttribute("aria-pressed",String(b.classList.contains("sel")));});
   mb.onclick = ()=>{ f.endpointMode="base"; renderProvForm(); };
   mf.onclick = ()=>{ f.endpointMode="full"; renderProvForm(); };
   mrow.appendChild(mb); mrow.appendChild(mf); mode.appendChild(mrow);
-  mode.appendChild(el("div","hint", f.endpointMode==="base" ? "System appends /models and /chat/completions automatically" : "You give the full URL manually"));
+  mode.appendChild(el("div","hint", f.endpointMode==="base" ? "Kita adds /models and /chat/completions (or /responses) for you." : "Enter the exact URL to call, for example …/v1/chat/completions."));
   form.appendChild(mode);
 
-  const url = el("label","fld", f.endpointMode==="base" ? "Base URL" : "Full Endpoint URL");
+  const url = el("label","fld", f.endpointMode==="base" ? "Base URL" : "Full endpoint URL");
   const urlIn = el("input"); urlIn.value = f.baseUrl; urlIn.placeholder = f.endpointMode==="base" ? "https://api.example.com/v1" : "https://api.example.com/v1/chat/completions";
   urlIn.oninput = ()=>f.baseUrl = urlIn.value;
   url.appendChild(urlIn); form.appendChild(url);
 
-  const api = el("label","fld","API Type");
-  const arow = el("div","radio-row");
+  const api = el("div","fld","API type");
+  const arow = el("div","radio-row"); arow.setAttribute("role","group"); arow.setAttribute("aria-label","API type");
   const ab = el("button", f.apiType==="chat_completions"?"sel":"","Chat Completions");
   const ar = el("button", f.apiType==="responses"?"sel":"","Responses API");
+  [ab,ar].forEach(b=>{b.type="button";b.setAttribute("aria-pressed",String(b.classList.contains("sel")));});
   ab.onclick = ()=>{ f.apiType="chat_completions"; renderProvForm(); };
   ar.onclick = ()=>{ f.apiType="responses"; renderProvForm(); };
   arow.appendChild(ab); arow.appendChild(ar); api.appendChild(arow);
-  api.appendChild(el("div","hint","/v1/chat/completions or /v1/responses"));
+  api.appendChild(el("div","hint", f.apiType==="responses" ? "Uses /v1/responses (OpenAI Responses API)." : "Uses /v1/chat/completions, supported by most providers."));
   form.appendChild(api);
 
-  const key = el("label","fld","API Key");
+  const key = el("label","fld","API key");
   const pw = el("div","pw-wrap");
   const keyIn = el("input"); keyIn.type="password"; keyIn.value = f.apiKey||""; keyIn.placeholder = hasNativeSecrets() && f.id && hasProviderSecret(f) ? "Stored securely — enter a new key to replace" : "sk-...";
   keyIn.oninput = ()=>f.apiKey = keyIn.value;
-  const eye = el("button","eye","👁");
-  eye.onclick = ()=>{ keyIn.type = keyIn.type==="password" ? "text":"password"; };
+  const eyeIcon = open=>open
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0112 6c5 0 8.5 4.5 9.5 6-.5.8-1.6 2.3-3.2 3.6M6.4 7.6C4.6 8.9 3.2 10.7 2.5 12c1 1.5 4.5 6 9.5 6 1.5 0 2.9-.4 4.1-1M9.9 9.9a3 3 0 004.2 4.2"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12C3.5 10.5 7 6 12 6s8.5 4.5 9.5 6c-1 1.5-4.5 6-9.5 6s-8.5-4.5-9.5-6z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const eye = el("button","eye",eyeIcon(false)); eye.type="button"; eye.setAttribute("aria-label","Show API key"); eye.setAttribute("aria-pressed","false");
+  eye.onclick = (e)=>{ e.preventDefault(); const show = keyIn.type==="password"; keyIn.type = show ? "text":"password"; eye.innerHTML = eyeIcon(show); eye.setAttribute("aria-label", show ? "Hide API key" : "Show API key"); eye.setAttribute("aria-pressed", String(show)); };
   pw.appendChild(keyIn); pw.appendChild(eye); key.appendChild(pw); form.appendChild(key);
 
-  const hd = el("label","fld","Custom Headers (optional)");
-  const addH = el("button","secondary btn","+ Add Header"); addH.className="btn secondary"; addH.style.padding="9px";
+  const hd = el("div","fld","Custom headers (optional)");
+  const addH = el("button","secondary btn","+ Add header"); addH.type="button"; addH.className="btn secondary"; addH.style.padding="9px";
   hd.appendChild(addH);
   f.headers.forEach((h,i)=>{
     const row = el("div",""); row.style.cssText="display:flex;gap:6px;margin-top:6px";
-    const k = el("input"); k.placeholder="Header"; k.value=h.key; k.style.flex="1";
-    const v = el("input"); v.placeholder="Value"; v.value=h.value; v.style.flex="1";
+    const k = el("input"); k.placeholder="Header"; k.setAttribute("aria-label","Header name"); k.value=h.key; k.style.flex="1";
+    const v = el("input"); v.placeholder="Value"; v.setAttribute("aria-label","Header value"); v.value=h.value; v.style.flex="1";
     const x = el("button","icon-btn",`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`); x.style.cssText="flex-shrink:0";
     k.oninput=()=>h.key=k.value; v.oninput=()=>h.value=v.value;
     x.onclick=()=>{ f.headers.splice(i,1); renderProvForm(); };
@@ -2686,7 +2701,7 @@ function renderProvForm(){
   addH.onclick = ()=>{ f.headers.push({key:"",value:""}); renderProvForm(); };
   form.appendChild(hd);
 
-  const test = el("button","btn secondary","Test Connection & Fetch Models");
+  const test = el("button","btn secondary","Test connection & fetch models"); test.type="button";
   const status = el("div","status-line");
   test.onclick = async ()=>{
     prepareProviderSecret(f);
@@ -2744,7 +2759,7 @@ function renderProvForm(){
   // if previously fetched models exist (editing), show picker
   if(f.fetchedModels && f.fetchedModels.length) renderModelPick();
 
-  const saveBtn = el("button","btn","💾 Save Provider");
+  const saveBtn = el("button","btn","Save provider"); saveBtn.type="button";
   saveBtn.onclick = ()=>{
     if(!f.name || !f.baseUrl){ toast("Name and URL are required"); return; }
     prepareProviderSecret(f);
