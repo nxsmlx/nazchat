@@ -69,7 +69,7 @@ public class PreviewActivity extends Activity {
 
         web = new WebView(this);
         WebSettings s = web.getSettings();
-        s.setJavaScriptEnabled(true);
+        s.setJavaScriptEnabled(getIntent().getBooleanExtra("runJs", true));
         s.setDomStorageEnabled(true);
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);

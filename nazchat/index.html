@@ -1440,7 +1440,7 @@ function learnTokenCeiling(model,errorMsg,attempted){
 }
 function contextStats(model,history,extra){const max=Number(model?.provider?.modelMeta?.[model.modelId]?.context_length||model?.provider?.modelMeta?.[model.modelId]?.contextLength)||8192;const used=history.reduce((n,m)=>n+estimateTokens(typeof m.content==="string"?m.content:JSON.stringify(m.content)),0)+estimateTokens(extra||"");return {max,used,pct:Math.min(100,Math.round(used/max*100))};}
 function indexProjectDocument(a){const project=currentProject();if(!project||!a?.text)return;project.sources=Array.isArray(project.sources)?project.sources:[];const chunkSize=1800;for(let i=0;i<a.text.length;i+=chunkSize){const text=a.text.slice(i,i+chunkSize);project.sources.push({id:uid(),name:a.name,text,terms:text.toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>2).slice(0,500)});}project.updatedAt=Date.now();save();}
-function retrieveProjectContext(query){const project=currentProject();if(!project?.sources?.length)return "";const terms=String(query||"").toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>2);return project.sources.map(s=>({s,score:terms.reduce((n,t)=>n+(s.terms||[]).includes(t)?1:0,0)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>0).slice(0,5).map((x,i)=>`[Project source ${i+1}: ${x.s.name}]\n${x.s.text}`).join("\n\n").slice(0,12000);}
+function retrieveProjectContext(query){const project=currentProject();if(!project?.sources?.length)return "";const terms=String(query||"").toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>2);return project.sources.map(s=>({s,score:terms.reduce((n,t)=>n+((s.terms||[]).includes(t)?1:0),0)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>0).slice(0,5).map((x,i)=>`[Project source ${i+1}: ${x.s.name}]\n${x.s.text}`).join("\n\n").slice(0,12000);}
 function modelPricing(model){return model?.provider?.modelMeta?.[model.modelId]?.pricing||model?.provider?.modelMeta?.[model.modelId]?.pricing_metadata||{};}
 function estimateCost(model,inputTokens,outputTokens){const p=modelPricing(model);const inPrice=Number(p.prompt||p.input||p.input_per_million||0),outPrice=Number(p.completion||p.output||p.output_per_million||0);return (inputTokens*inPrice+outputTokens*outPrice)/1000000;}
 
@@ -2112,7 +2112,6 @@ function buildPreviewDoc(html, runJs){
   const bridge = `<script>try{const _l=console.log,_w=console.warn,_e=console.error;const send=(t,a)=>{try{parent.postMessage({__naz:'console',nonce:'${previewNonce}',type:t,text:[...a].map(String).join(' ')},'*')}catch(e){}};console.log=(...a)=>{_l.apply(console,a);send('log',a)};console.warn=(...a)=>{_w.apply(console,a);send('warn',a)};console.error=(...a)=>{_e.apply(console,a);send('error',a)};window.addEventListener('error',e=>{try{parent.postMessage({__naz:'console',type:'error',nonce:'${previewNonce}',text:e.message||String(e.error||'error'),src:(e.filename||'')+':'+(e.lineno||'')},'*')}catch(_){}});}catch(e){}<\/script>`;
   if(isFull){
     let doc = html;
-    const security = runJs ? "" : `<script>window.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('script').forEach(s=>s.type='text/blocked')},true)<\/script>`;
     if(!/<meta[^>]+name=["']viewport/i.test(doc) && /<head/i.test(doc))
       doc = doc.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width, initial-scale=1">');
     if(/<\/head>\s*<body/i.test(doc)) doc = doc.replace(/<\/head>\s*<body/i, bridge + "</head><body");
@@ -2155,7 +2154,8 @@ async function renderPreview(){
   if(hasNativePreview()){
     const code=$('#previewCode').value;
     if(!code.trim())return;
-    window.NazPreview.open(buildPreviewDoc(code,$('#previewJs').checked),'Kita Chat Preview');
+    const runJs=$('#previewJs').checked;
+    window.NazPreview.open(buildPreviewDoc(code,runJs),'Kita Chat Preview',runJs);
     return;
   }
   const code = $("#previewCode").value;
@@ -2165,6 +2165,8 @@ async function renderPreview(){
   hidePreviewDiag();
   $("#previewEmpty").style.display = "none";
   const doc = buildPreviewDoc(code, runJs);
+  // "Run JS" off: the sandbox drops allow-scripts, so no script in the page runs at all.
+  frame.setAttribute("sandbox", runJs ? "allow-scripts allow-modals allow-popups allow-downloads" : "allow-popups allow-downloads");
   const candidates = [];
   try{ candidates.push({name:"blob", url:URL.createObjectURL(new Blob([doc],{type:"text/html"}))}); }catch(e){}
   candidates.push({name:"data", url:"data:text/html;charset=utf-8,"+encodeURIComponent(doc)});
@@ -2180,7 +2182,8 @@ async function renderPreview(){
 }
 function openNativePreview(){
   if(!hasNativePreview()) return false;
-  try{ window.NazPreview.open(buildPreviewDoc(previewOriginal, $("#previewJs").checked), "Kita Chat Preview"); haptic("light"); return true; }catch(e){ return false; }
+  const runJs=$("#previewJs").checked;
+  try{ window.NazPreview.open(buildPreviewDoc(previewOriginal, runJs), "Kita Chat Preview", runJs); haptic("light"); return true; }catch(e){ return false; }
 }
 function openPreview(html, opts){
   opts = opts || {};

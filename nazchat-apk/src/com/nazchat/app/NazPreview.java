@@ -13,12 +13,17 @@ import android.webkit.JavascriptInterface;
 public final class NazPreview {
 
     @JavascriptInterface
-    public void open(final String html, final String title) {
+    public void open(final String html, final String title) { open(html, title, true); }
+
+    /** runJs=false renders the page with JavaScript disabled (the "Run JS" switch is off). */
+    @JavascriptInterface
+    public void open(final String html, final String title, final boolean runJs) {
         if (NazApp.activity == null || html == null || html.length() == 0) return;
         try {
             PreviewActivity.pendingHtml = html;
             android.content.Intent i = new android.content.Intent(NazApp.activity, PreviewActivity.class);
             i.putExtra("title", title == null || title.length() == 0 ? "Preview" : title);
+            i.putExtra("runJs", runJs);
             NazApp.activity.startActivity(i);
         } catch (Exception ignored) {
         }
