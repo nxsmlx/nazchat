@@ -167,6 +167,10 @@ async function target(page, selector, scroll = false) {
         return route.abort();
       });
       await page.route('https://raw.githubusercontent.com/**', route => route.abort());
+      // Expected background updater traffic is mocked, not counted as an unexpected API call.
+      // All other GitHub/provider/search requests remain caught by the strict guard above.
+      await page.route('https://api.github.com/repos/nxsmlx/nazchat/releases/latest', route =>
+        route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({draft:false,prerelease:false,tag_name:'v0.0.0',assets:[],body:''})}));
       await page.addInitScript(seed => {
         // A reload must test persistence, not silently reinstall the old snapshot.
         // Preview srcdoc/blank frames must never seed or access storage.
