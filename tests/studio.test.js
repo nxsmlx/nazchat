@@ -178,7 +178,7 @@ async function target(page, selector, scroll = false) {
         sessionStorage.setItem('studio-regression-seeded','1');
         localStorage.setItem('nazchat_v1',JSON.stringify(seed));
       }, fixture);
-      await page.goto(appUrl);
+      await page.goto(appUrl, {waitUntil:'domcontentloaded',timeout:60000});
       await ready(page);
       await run(page);
       assert.deepEqual(errors, [], 'uncaught application errors');
