@@ -1,9 +1,9 @@
 {
-  "version": "4.5.0",
-  "versionCode": 43,
+  "version": "4.5.1",
+  "versionCode": 44,
   "name": "Kita Chat",
-  "changelog": "Steer instead of queue, opt-in Memory, design skill pack v2, skill editor, and MCP HTTPS tools with OAuth.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.0/NazChat.apk",
-  "sha256": "22e2950346d7bcef2a0122a3ee109bf0b50e69760042c71bcdd00883340413ba",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.0"
+  "changelog": "Delete providers with confirmation and local key cleanup while keeping conversations and choosing a remaining model.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.1/NazChat.apk",
+  "sha256": "2d00357f320a9b31608c42ab544376f66ad3bb708f8978c81f060babbd112e68",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.1"
 }
