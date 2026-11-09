@@ -7,6 +7,9 @@ Security and reliability fixes from a code review.
 - The assistant asks before opening a web page you did not type and no search returned, and never opens private network addresses (router, localhost, LAN).
 - Project documents are ranked by how many search terms they match.
 - Turning off Run JS now really stops scripts in previews, in the app and in the full-screen Android preview.
+- Edit Provider shows which endpoint and API type are selected, including for providers restored from older backups.
+- Search and Thinking in Tools are on/off switches; Settings rows have distinct icons; model names are left-aligned.
+- Tables fill the message width, short code blocks open by default, and preview size buttons use proper icons.
 - VersionCode 47, same com.nazchat.app package and original signing identity. The APK is larger (about 1.2 MB) because the libraries are bundled.
 
 If you changed a provider's URL to another host without re-entering its key, open Edit Provider and enter the key again. Browser checks are not real-device verification.
