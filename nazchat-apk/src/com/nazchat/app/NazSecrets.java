@@ -16,33 +16,82 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-/** Keystore-backed provider secret storage. Raw keys never enter localStorage or backups. */
+/** Keystore-backed secret storage. Raw keys never enter localStorage, backups or JavaScript. */
 public final class NazSecrets {
     private static final String KEY_ALIAS = "KitaChatSecretsKeyV1";
     private static final String PREFS = "kita_secrets_v1";
     private static final String PREFIX = "v1:";
+    private static final String ORIGIN_PREFS = "kita_secret_origins_v1";
     private final Context context;
 
     public NazSecrets(Context context) { this.context = context.getApplicationContext(); }
 
+    // JavaScript can reach provider references only. Native namespaces such as
+    // "mcp:" (OAuth tokens) are never readable, writable or removable from JS.
     @JavascriptInterface
-    public synchronized boolean put(String ref, String value) { return putStored(context, ref, value); }
-
-    @JavascriptInterface
-    public synchronized String get(String ref) { return ""; }
-
-    @JavascriptInterface
-    public synchronized boolean has(String ref) { return getStored(context, ref).length() > 0; }
-
-    @JavascriptInterface
-    public synchronized boolean remove(String ref) {
-        if (ref == null || ref.length() == 0) return false;
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(PREFIX + ref).apply();
-        return true;
+    public boolean put(String ref, String value) {
+        if (!NazSecretPolicy.isProviderRef(ref)) return false;
+        synchronized (NazSecrets.class) {
+            if (!putStored(context, ref, value)) return false;
+            // A new key value is the only way to move a key to another host.
+            origins(context).edit().remove(ref).commit();
+            return true;
+        }
     }
 
     @JavascriptInterface
-    public synchronized void clearAll() { context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply(); }
+    public String get(String ref) { return ""; }
+
+    @JavascriptInterface
+    public boolean has(String ref) {
+        return NazSecretPolicy.isProviderRef(ref) && getStored(context, ref).length() > 0;
+    }
+
+    @JavascriptInterface
+    public boolean remove(String ref) {
+        if (!NazSecretPolicy.isProviderRef(ref)) return false;
+        synchronized (NazSecrets.class) {
+            boolean ok = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(PREFIX + ref).commit();
+            origins(context).edit().remove(ref).commit();
+            return ok;
+        }
+    }
+
+    /** Removes provider keys only; MCP credentials are managed by NazOAuth. */
+    @JavascriptInterface
+    public void clearAll() {
+        synchronized (NazSecrets.class) {
+            SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            SharedPreferences.Editor edit = prefs.edit();
+            for (String key : prefs.getAll().keySet()) {
+                if (key.startsWith(PREFIX) && NazSecretPolicy.isProviderRef(key.substring(PREFIX.length()))) edit.remove(key);
+            }
+            edit.commit();
+            origins(context).edit().clear().commit();
+        }
+    }
+
+    /**
+     * The provider key to attach to a request for {@code url}, or "" when none is
+     * stored. Throws (and attaches nothing) for non-provider refs, non-HTTPS URLs
+     * and hosts other than the one the key is bound to.
+     */
+    static synchronized String keyForRequest(Context context, String ref, String url) throws java.io.IOException {
+        if (!NazSecretPolicy.isProviderRef(ref)) throw new java.io.IOException("Secret reference refused");
+        String key = getStored(context, ref);
+        if (key.length() == 0) return "";
+        String origin = NazSecretPolicy.originOf(url);
+        SharedPreferences bindings = origins(context);
+        String bound = bindings.getString(ref, null);
+        String allowed = NazSecretPolicy.authorize(bound, origin);
+        if (bound == null && !bindings.edit().putString(ref, allowed).commit())
+            throw new java.io.IOException("Could not record the API key's host");
+        return key;
+    }
+
+    private static SharedPreferences origins(Context context) {
+        return context.getSharedPreferences(ORIGIN_PREFS, Context.MODE_PRIVATE);
+    }
 
     public static synchronized boolean putStored(Context context, String ref, String value) {
         if (ref == null || ref.length() == 0 || value == null) return false;

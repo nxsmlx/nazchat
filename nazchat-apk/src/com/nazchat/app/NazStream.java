@@ -49,8 +49,15 @@ public class NazStream {
             public void run() {
                 HttpURLConnection c = null;
                 try {
+                    String key = "";
+                    if (secretRef != null && secretRef.length() > 0) {
+                        // Refuses non-provider refs, non-HTTPS and hosts the key is not bound to.
+                        key = NazSecrets.keyForRequest(NazApp.activity, secretRef, urlStr);
+                    }
                     URL u = new URL(urlStr);
                     c = (HttpURLConnection) u.openConnection();
+                    // Never let a redirect carry the key to another host.
+                    if (key.length() > 0) c.setInstanceFollowRedirects(false);
                     synchronized (NazStream.class) {
                         if (!active.contains(id)) { c.disconnect(); return; }
                         conns.put(id, c);
@@ -60,10 +67,7 @@ public class NazStream {
                     c.setRequestMethod("POST");
                     try {
                         JSONObject h = new JSONObject(headersJson == null ? "{}" : headersJson);
-                        if (secretRef != null && secretRef.length() > 0) {
-                            String key = NazSecrets.getStored(NazApp.activity, secretRef);
-                            if (key != null && key.length() > 0) h.put("Authorization", "Bearer " + key);
-                        }
+                        if (key.length() > 0) h.put("Authorization", "Bearer " + key);
                         Iterator<String> it = h.keys();
                         while (it.hasNext()) { String k = it.next(); c.setRequestProperty(k, h.getString(k)); }
                     } catch (Exception ignored) {}
@@ -78,6 +82,7 @@ public class NazStream {
 
                     synchronized (NazStream.class) { if (!active.contains(id)) return; }
                     InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
+                    if (in == null) { emitDone(id, "HTTP " + code); return; }
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
                     synchronized (NazStream.class) { readers.put(id, reader); }
 

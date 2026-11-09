@@ -52,12 +52,16 @@ public class NazBridge {
                 int status;
                 String text;
                 try {
+                    String key = "";
                     if (secretRef != null && secretRef.length() > 0) {
-                        String key = NazSecrets.getStored(NazApp.activity, secretRef);
-                        if (key != null && key.length() > 0) headers.put("Authorization", "Bearer " + key);
+                        // Refuses non-provider refs, non-HTTPS and hosts the key is not bound to.
+                        key = NazSecrets.keyForRequest(NazApp.activity, secretRef, url);
+                        if (key.length() > 0) headers.put("Authorization", "Bearer " + key);
                     }
                     java.net.URL u = new java.net.URL(url);
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection) u.openConnection();
+                    // Never let a redirect carry the key to another host.
+                    if (key.length() > 0) c.setInstanceFollowRedirects(false);
                     c.setConnectTimeout(15000);
                     c.setReadTimeout(30000);
                     c.setRequestMethod(method);
