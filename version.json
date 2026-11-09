@@ -1,9 +1,9 @@
 {
-  "version": "4.4.4",
-  "versionCode": 42,
+  "version": "4.5.0",
+  "versionCode": 43,
   "name": "Kita Chat",
-  "changelog": "New provider picker, text/code size controls, optional update prompts, safer backup and updater checks.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.4.4/NazChat.apk",
-  "sha256": "223fd0e8f3815f61a8636576603a3cde5533de1aa8c7c688128a6a0700fb292d",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.4.4"
+  "changelog": "Steer instead of queue, opt-in Memory, design skill pack v2, skill editor, and MCP HTTPS tools with OAuth.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.0/NazChat.apk",
+  "sha256": "22e2950346d7bcef2a0122a3ee109bf0b50e69760042c71bcdd00883340413ba",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.0"
 }
