@@ -42,7 +42,7 @@ Jalankan dari root repositori:
 ANDROID_HOME=/path/to/android-sdk UNSIGNED_ONLY=1 sh build.sh
 ```
 
-Aset produksi disalin melalui allowlist: `nazchat/index.html`, `nazchat/studio.css` dan `nazchat/studio.js` → `nazchat-apk/assets/`. Ketiga-tiganya wajib wujud. `design-lab/` tidak dibungkus. Selepas build, bandingkan ketiga-tiga aset dalam APK dengan sumber yang disemak, bukan HTML sahaja.
+Aset produksi disalin semula setiap build melalui allowlist: `nazchat/index.html`, `studio.css`, `studio.js`, `comfort.js`, `provider-picker.js` dan direktori library terbundel `nazchat/vendor/` → `nazchat-apk/assets/` (direktori ini dijana dan tidak di-commit). Semua fail wajib wujud; symlink ditolak. `design-lab/` tidak dibungkus. App tidak memuatkan skrip dari CDN semasa runtime.
 
 Output utama ialah `nazchat-apk/unsigned.apk`, sudah aligned. `nazchat-apk/build-metadata.txt` merekodkan package, versi dan toolchain. Dalam mod ini skrip tidak memerlukan/membaca keystore atau kata laluan, tidak menjalankan signing dan tidak menyentuh root `NazChat.apk`.
 

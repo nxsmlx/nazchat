@@ -119,10 +119,6 @@ async function assertSuccessfulDelete(page, before, {last = false, shared = fals
         if (/^https:\/\/(raw\.githubusercontent\.com|api\.github\.com)\//.test(url)) {
           return route.fulfill({status: 503, contentType: 'application/json', body: '{}'});
         }
-        if (/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(url)) return route.abort();
-        if (/^https:\/\/(cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com)\//.test(url)) {
-          return route.fulfill({status: 200, contentType: url.endsWith('.css') ? 'text/css' : 'application/javascript', body: ''});
-        }
         unexpectedRequests.push(url);
         return route.abort();
       });

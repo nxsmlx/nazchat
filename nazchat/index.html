@@ -5,22 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#171920">
 <meta name="color-scheme" content="dark light">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; frame-src 'self' blob: data: about:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script>
 // Restore before first paint; keep the existing storage key for installed apps.
 try{const t=JSON.parse(localStorage.getItem("nazchat_v1"))?.theme;const dark=typeof window.NazTheme?.isSystemDark==='function'?window.NazTheme.isSystemDark():matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=t==="light"||(t==="system"&&!dark)?"light":"dark";}catch(e){document.documentElement.dataset.theme="dark";}
 </script>
 <title>Kita Chat</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.5/dist/purify.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
+<!-- Libraries ship inside the app (nazchat/vendor). Never load remote script into
+     this frame: it holds the native bridges. pdf.js and mammoth load on demand. -->
+<link rel="stylesheet" href="vendor/highlight-github-dark.min.css">
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="vendor/fonts.css">
+<script src="vendor/marked.min.js"></script>
+<script src="vendor/purify.min.js"></script>
+<script src="vendor/highlight.min.js"></script>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="vendor/katex/auto-render.min.js"></script>
 <style>
 /* Theme contract: define every palette here. Components use semantic tokens,
    never a separate set of hardcoded dark/light overrides. */
@@ -3917,18 +3917,32 @@ function renderAttachments(){
 }
 function readAsDataURL(file){ return new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file); }); }
 function readAsArrayBuffer(file){ return new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsArrayBuffer(file); }); }
+const vendorScripts=new Map();
+function loadVendorScript(src){
+  if(!/^vendor\/[\w.-]+\.js$/.test(src)) return Promise.reject(new Error("Not a bundled script"));
+  if(!vendorScripts.has(src)) vendorScripts.set(src, new Promise((resolve,reject)=>{
+    const s=document.createElement("script"); s.src=src;
+    s.onload=()=>resolve(); s.onerror=()=>{ vendorScripts.delete(src); reject(new Error("Could not load "+src)); };
+    document.head.appendChild(s);
+  }));
+  return vendorScripts.get(src);
+}
 async function extractFileText(file){
   const name=file.name.toLowerCase();
-  if(name.endsWith(".pdf") && window.pdfjsLib){
+  if(name.endsWith(".pdf")){
     try{
-      pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-      const pdf=await pdfjsLib.getDocument({data:await readAsArrayBuffer(file)}).promise; let out=[];
+      // Bundled pdf.js. Loading the worker script as a page script lets pdf.js parse
+      // on the main thread, which also works from file:// where Workers are refused.
+      await loadVendorScript("vendor/pdf.min.js");
+      await loadVendorScript("vendor/pdf.worker.min.js");
+      pdfjsLib.GlobalWorkerOptions.workerSrc="vendor/pdf.worker.min.js";
+      const pdf=await pdfjsLib.getDocument({data:await readAsArrayBuffer(file),isEvalSupported:false}).promise; let out=[];
       for(let p=1;p<=Math.min(pdf.numPages,40);p++){ const page=await pdf.getPage(p); const tc=await page.getTextContent(); out.push(tc.items.map(x=>x.str).join(" ")); }
       return out.join("\n\n");
     }catch(e){ return "[PDF text extraction failed: "+e.message+"]"; }
   }
-  if(name.endsWith(".docx") && window.mammoth){
-    try{ const r=await mammoth.extractRawText({arrayBuffer:await readAsArrayBuffer(file)}); return r.value; }catch(e){ return "[DOCX text extraction failed: "+e.message+"]"; }
+  if(name.endsWith(".docx")){
+    try{ await loadVendorScript("vendor/mammoth.browser.min.js"); const r=await mammoth.extractRawText({arrayBuffer:await readAsArrayBuffer(file)}); return r.value; }catch(e){ return "[DOCX text extraction failed: "+e.message+"]"; }
   }
   try{ return await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(String(r.result||"")); r.onerror=reject; r.readAsText(file); }); }catch(e){ return "[Could not read this document]"; }
 }

@@ -47,7 +47,7 @@ async function mockIncremental(page, parts){
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.route(/^https?:\/\//,route=>{
       const url=new URL(route.request().url());
-      if(['cdn.jsdelivr.net','cdnjs.cloudflare.com','fonts.googleapis.com','fonts.gstatic.com'].includes(url.hostname)) return route.continue();
+      // Libraries and fonts are bundled; no CDN request is allowed.
       if(url.href===API) return route.fallback();
       return route.abort();
     });

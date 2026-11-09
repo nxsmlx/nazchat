@@ -89,12 +89,19 @@ case "$VERSION_CODE" in
 esac
 [ -n "$VERSION_NAME" ] || fail 'Manifest versionName must not be empty.'
 
+# Assets are regenerated on every build so no stale file can be packaged.
+rm -rf "$B/assets"
 mkdir -p "$B/assets"
 # Explicit frontend asset allowlist; never package design-lab or signing material.
 for asset in index.html studio.css studio.js comfort.js provider-picker.js; do
   [ -f "$ROOT/nazchat/$asset" ] || fail "Missing frontend asset: $asset"
   cp "$ROOT/nazchat/$asset" "$B/assets/$asset"
 done
+# Bundled third-party libraries (no remote script loads at runtime).
+[ -f "$ROOT/nazchat/vendor/marked.min.js" ] || fail 'Missing bundled libraries in nazchat/vendor.'
+[ ! -L "$ROOT/nazchat/vendor" ] || fail 'nazchat/vendor must not be a symlink.'
+cp -R "$ROOT/nazchat/vendor" "$B/assets/vendor"
+find "$B/assets/vendor" -type l -exec false {} + || fail 'Symlinks are not allowed in nazchat/vendor.'
 rm -rf "$B/obj" "$B/out"
 mkdir -p "$B/obj" "$B/out"
 # Use relative paths so a workspace path containing spaces is safe. Project
