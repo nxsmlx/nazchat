@@ -1,3 +1,9 @@
+# Kita Chat 4.5.2
+
+- Conversation text: Small 12px, Default 14px, Large 16px for assistant and user messages.
+- Appearance preview uses the same sizes. Code sizing and Extra large remain unchanged.
+- VersionCode 45; original package, signing identity and local data retained.
+
 # Kita Chat 4.5.1
 
 - Add Delete provider at the bottom of Edit Provider, with explicit confirmation.
