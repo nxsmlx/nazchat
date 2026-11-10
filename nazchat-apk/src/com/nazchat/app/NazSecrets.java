@@ -57,6 +57,35 @@ public final class NazSecrets {
         }
     }
 
+    /**
+     * Provider keys that are stored on this device, without their values: the reference,
+     * the last four characters (to tell keys apart) and the host the key is bound to.
+     * Lets the app offer saved keys again when provider settings were lost.
+     */
+    @JavascriptInterface
+    public String listProviderKeys() {
+        org.json.JSONArray out = new org.json.JSONArray();
+        synchronized (NazSecrets.class) {
+            SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            SharedPreferences bindings = origins(context);
+            for (String key : prefs.getAll().keySet()) {
+                if (!key.startsWith(PREFIX)) continue;
+                String ref = key.substring(PREFIX.length());
+                if (!NazSecretPolicy.isProviderRef(ref)) continue;
+                String value = getStored(context, ref);
+                if (value.length() == 0) continue;
+                try {
+                    org.json.JSONObject item = new org.json.JSONObject();
+                    item.put("ref", ref);
+                    item.put("hint", value.length() >= 12 ? value.substring(value.length() - 4) : "");
+                    item.put("origin", bindings.getString(ref, ""));
+                    out.put(item);
+                } catch (Exception ignored) {}
+            }
+        }
+        return out.toString();
+    }
+
     /** Removes provider keys only; MCP credentials are managed by NazOAuth. */
     @JavascriptInterface
     public void clearAll() {

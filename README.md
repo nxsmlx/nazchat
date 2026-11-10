@@ -1,3 +1,16 @@
+# Kita Chat 4.5.5
+
+Protects saved data from being lost when the app is updated or closed by Android.
+
+- Android's WebView writes app data to storage lazily. When the app was updated or killed soon after a change (for example after adding providers), that change could be lost. Every save is now also written straight to a private file on the device, and the app opens with whichever copy is newest.
+- The app saves everything to that file before it installs an update, and does not start the update if it cannot.
+- If storage is full, saving still succeeds through the device file instead of failing.
+- Data the app cannot read is kept for recovery instead of being replaced by empty data.
+- API keys whose provider settings were lost are still on the device. Providers shows how many there are, and Add Provider lets you pick one ("Saved key …abcd") instead of typing it again.
+- VersionCode 48, same com.nazchat.app package and original signing identity. Browser checks are not real-device verification.
+
+Providers lost before this version cannot be restored automatically: only their keys were kept. Add them again and choose the saved key.
+
 # Kita Chat 4.5.4
 
 Security and reliability fixes from a code review.
