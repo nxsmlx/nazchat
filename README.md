@@ -1,3 +1,18 @@
+# Kita Chat 4.8.0
+
+Choose your accent colour and how much tools may do without asking.
+
+- Settings → Appearance → Accent colour: Iris (Kita's colour, a little brighter in light mode), Lagoon, Ocean, Sunset or Forest, in light and dark. The app icon stays Iris.
+- Settings → Permissions:
+  - Careful: ask before every tool and every page the assistant chooses.
+  - Balanced (default): tools that declare themselves read-only run without asking; anything that can change data asks first.
+  - Bypass all: every tool and page runs without asking, including ones that can delete or send. Turning it on needs a confirmation, and a red badge above the message box shows while it is on; tap its × to turn it off.
+- Tool prompts offer Allow once, Allow for this chat, Always allow this tool (not for tools marked destructive) and Decline. Page prompts can allow a site for the current chat.
+- Per-tool rules (Ask, Always allow, Block) for every connected MCP tool, and a log of everything that ran without asking.
+- Private network addresses stay blocked in every mode.
+- A closed dialog can no longer leave an invisible layer that blocks taps if its fade-out animation stalls.
+- VersionCode 53, same com.nazchat.app package and original signing identity. Not tested on a real device.
+
 # Kita Chat 4.7.0
 
 Smarter answers for long chats and code, and One UI style navigation. Includes every fix from 4.6.2 below.

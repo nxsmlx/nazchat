@@ -3617,3 +3617,44 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 /* Content regions are focused programmatically after navigation (screen readers start
    there); they are not controls, so they draw no focus ring. */
 #workspaceView:focus, #chatScroll:focus, #empty:focus { outline: none; }
+
+/* ---------------------------------------------------------------------------
+   4.8.0 Accent colours (Appearance). Iris is the default identity and needs no
+   attribute; the app icon always stays Iris. All pairs meet WCAG AA.
+   ------------------------------------------------------------------------- */
+:root[data-accent="lagoon"] { --accent:#5fd8c6; --accent2:#86e3d5; --accent-soft:#173532; --selected:#173532; --selected-border:#3f9a8e; --primary:#5fd8c6; --on-primary:#062824; }
+:root[data-accent="ocean"]  { --accent:#9cc2ff; --accent2:#b5d2ff; --accent-soft:#1f2b45; --selected:#1f2b45; --selected-border:#5f7fb8; --primary:#9cc2ff; --on-primary:#0e1d3a; }
+:root[data-accent="sunset"] { --accent:#ffb08a; --accent2:#ffc3a6; --accent-soft:#3b2920; --selected:#3b2920; --selected-border:#b06f50; --primary:#ffb08a; --on-primary:#3a1708; }
+:root[data-accent="forest"] { --accent:#9fdcb5; --accent2:#b6e6c7; --accent-soft:#1d3327; --selected:#1d3327; --selected-border:#5c9a73; --primary:#9fdcb5; --on-primary:#0d2a19; }
+:root[data-theme="light"][data-accent="lagoon"] { --accent:#0f766e; --accent2:#0b5f58; --accent-soft:#e3f3f1; --selected:#e3f3f1; --selected-border:#4f9e95; --primary:#0f766e; --on-primary:#ffffff; }
+:root[data-theme="light"][data-accent="ocean"]  { --accent:#1d5fd1; --accent2:#164db0; --accent-soft:#e8f0fd; --selected:#e8f0fd; --selected-border:#6a92d8; --primary:#1d5fd1; --on-primary:#ffffff; }
+:root[data-theme="light"][data-accent="sunset"] { --accent:#c2410c; --accent2:#a3360a; --accent-soft:#fdeee6; --selected:#fdeee6; --selected-border:#d9875f; --primary:#c2410c; --on-primary:#ffffff; }
+:root[data-theme="light"][data-accent="forest"] { --accent:#2c7a4b; --accent2:#22633c; --accent-soft:#e7f3eb; --selected:#e7f3eb; --selected-border:#62a07a; --primary:#2c7a4b; --on-primary:#ffffff; }
+:root[data-accent] { --switch-on: var(--accent); }
+
+.accent-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 2px; }
+.accent-swatch {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 6px;
+  min-width: 56px; min-height: 64px; padding: 6px 4px; border: 1px solid transparent; border-radius: 14px;
+  background: transparent; color: var(--text2); font-size: 11.5px; font-weight: 550;
+}
+.accent-swatch i { display: block; width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+.accent-swatch[aria-checked="true"] { border-color: var(--selected-border); background: var(--accent-soft); color: var(--text); }
+.accent-swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Extra choices in confirmation dialogs (tool permissions). */
+.custom-dialog-choices { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 10px; }
+.custom-dialog-choices[hidden] { display: none; }
+.dialog-choice { min-height: 44px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; background: transparent; color: var(--text); font-size: 14px; text-align: left; }
+.dialog-choice:hover, .dialog-choice:focus-visible { background: var(--hover); outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+
+/* Permissions page */
+.permission-mode { width: 100%; align-items: flex-start; gap: 12px; border: 0; background: transparent; color: inherit; text-align: left; }
+.permission-mode .perm-radio { flex: 0 0 20px; width: 20px; height: 20px; margin-top: 3px; border: 2px solid var(--control-border); border-radius: 50%; }
+.permission-mode[aria-checked="true"] .perm-radio { border-color: var(--accent); box-shadow: inset 0 0 0 4px var(--bg2); background: var(--accent); }
+.permission-mode.danger-mode[aria-checked="true"] .perm-radio { border-color: var(--danger); background: var(--danger); }
+.permission-mode:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tool-rule-row select { width: auto; max-width: 150px; min-height: 44px; font-size: 14px; }
+.activity-log .sr-text small { overflow-wrap: anywhere; }
+.studio-context-chip.warn { border-color: var(--danger); color: var(--danger); background: var(--bg2); }
+.studio-context-chip.warn svg { color: var(--danger); }
