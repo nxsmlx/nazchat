@@ -31,9 +31,9 @@ test('production NazOAuth host behavioral suite (no Android runtime)', { timeout
   const options = { cwd: root, encoding: 'utf8', timeout: 25000, maxBuffer: 1024 * 1024 };
   execFileSync('javac', ['-source', '8', '-target', '8', '-Xlint:-options', '-encoding', 'UTF-8',
     '-cp', json, '-sourcepath', fixtures, '-d', classes,
-    path.join(root, 'nazchat-apk/src/com/nazchat/app/NazOAuth.java'), ...javaFiles(fixtures)], options);
+    path.join(root, 'nazchat-apk/src/com/nazchat/app/NazOAuth.java'), path.join(root, 'nazchat-apk/src/com/nazchat/app/NazOAuthError.java'), ...javaFiles(fixtures)], options);
   const output = execFileSync('java', ['-cp', classes + path.delimiter + json,
     'com.nazchat.app.NazOAuthBehaviorTest'], options);
   process.stdout.write(output);
-  assert.match(output, /RESULT 17 cases passed; \d+ assertions; production NazOAuth; host fixtures only/);
+  assert.match(output, /RESULT 20 cases passed; \d+ assertions; production NazOAuth; host fixtures only/);
 });

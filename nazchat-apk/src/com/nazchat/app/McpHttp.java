@@ -96,7 +96,7 @@ final class McpHttp {
     static JSONObject postForm(String url,JSONObject data,Control control) throws Exception {
         Map<String,String> h=jsonHeaders();h.put("Content-Type","application/x-www-form-urlencoded");
         Response r=request(url,"POST",h,form(data),control);
-        if(r.status/100!=2)throw new IOException("Authorization token request failed (HTTP "+r.status+"). Sign in again.");
+        if(r.status/100!=2)throw NazOAuthError.from(r.status,r.body);
         return new JSONObject(r.body);
     }
     /** Read SSE event groups, ignore notifications, match the actual RPC response id. */
