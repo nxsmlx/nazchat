@@ -19,6 +19,7 @@ function renderStudioView(){
   $('#main').dataset.view=studioView;
   $('#workspaceView').hidden=chat;$('#composerWrap').hidden=!chat;
   $('#empty').style.display=chat&&!has?'flex':'none';$('#chatScroll').style.display=chat&&has?'':'none';
+  renderBottomNav(chat,has);
   document.querySelectorAll('[data-studio-view]').forEach(b=>{const active=b.dataset.studioView===studioView;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   $('#studioProjectCount').textContent=db.projects.length||'';$('#studioLibraryCount').textContent=(db.prompts.length+db.artifacts.length)||'';
   $('#chatTitle').textContent=chat?(conv?.title||currentProject()?.name||'Kita Chat'):studioView==='projects'?'Projects':'Library';
@@ -26,6 +27,24 @@ function renderStudioView(){
   applyComfort();
   renderStudioContext();renderStudioHome();
   if(!chat){if(studioView==='projects')renderStudioProjects();else renderStudioLibrary();}
+}
+/* One UI style floating glass navigation for phones. It shows on Home, Projects and
+   Library and steps aside inside a conversation so the composer keeps the bottom edge. */
+function ensureBottomNav(){
+  let nav=$('#bottomNav');if(nav)return nav;
+  nav=el('nav','glass-nav');nav.id='bottomNav';nav.setAttribute('aria-label','Main');
+  const items=[['home','Home','chat',()=>studioNewChat(db.activeProjectId||null)],['chats','Chats','library',()=>openSidebar()],['projects','Projects','folder',()=>studioNavigate('projects')],['library','Library','file',()=>studioNavigate('library')],['settings','Settings','settings',()=>{renderSettingsHub();openSheet('setSheet');}]];
+  for(const [key,label,icon,run] of items){const b=el('button','glass-nav-item',`${kitaIcon(icon)}<span>${label}</span>`);b.type='button';b.dataset.navKey=key;b.onclick=()=>{haptic('light');run();};nav.appendChild(b);}
+  document.body.appendChild(nav);
+  addEventListener('resize',()=>renderBottomNav(studioView==='chat',!!conv?.messages?.length));
+  return nav;
+}
+function renderBottomNav(chat,has){
+  const nav=ensureBottomNav();
+  const show=innerWidth<=760&&!(chat&&has);
+  nav.hidden=!show;$('#main').classList.toggle('with-nav',show);document.body.classList.toggle('with-nav',show);
+  const current=chat?'home':studioView;
+  nav.querySelectorAll('[data-nav-key]').forEach(b=>{const on=b.dataset.navKey===current;b.classList.toggle('active',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
 }
 function renderStudioHome(){
   $('#studioGreeting').textContent=currentProject()?'Working in '+currentProject().name:'A fresh thought starts here.';

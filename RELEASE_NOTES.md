@@ -1,3 +1,27 @@
+# Kita Chat 4.7.0
+
+Smarter answers for long chats and code, and One UI style navigation. Includes every fix from 4.6.2 below.
+
+- Glass navigation bar (Home, Chats, Projects, Library, Settings) on phones. It steps aside inside a conversation so the message box keeps the bottom of the screen.
+- The update notice is a floating glass card; swipe it sideways to hide it until tomorrow.
+- Web pages Kita writes are tested in a hidden, isolated viewer. If they throw errors, Kita sends the errors back to the model and replaces the page with the corrected version (up to two rounds). The answer shows "Page tested: no errors" or what was fixed. Turn it off in Tools → Test web pages.
+- Research: up to six search/read steps before the final answer (was three), each shown as "Step n".
+- Long chats: older messages are condensed into a running summary and the latest twelve are sent in full, which keeps long conversations within the model's limits and costs less. Short chats are unchanged.
+- Fixed Compare models (and the new summary) calling a wrong address for providers whose URL has no trailing slash.
+- VersionCode 52, same com.nazchat.app package and original signing identity. Not tested on a real device.
+
+# Kita Chat 4.6.2
+
+Answers that survive a dropped connection, and fewer wrong turns.
+
+- If the connection drops while an answer is being written, Kita reconnects (up to twice) and continues from the text it already received instead of starting over. A stream that stops without finishing is treated the same way.
+- If it still cannot finish, the text so far is kept and the answer shows Continue (pick up from there) and Try again (start over). The error note is never sent back to the model.
+- Long builds retry a dropped part automatically; finished parts are always kept and Resume build continues from the first unfinished part.
+- A long message or a question about code or an error is answered normally. Before, any message over 180 characters was treated as a page or report build and split into parts.
+- Thinking: models that reason natively (o-series, GPT-5, DeepSeek-R1, Qwen3, Claude 4, Gemini 2.5+ and others) are no longer also asked to write <think> tags, which made them reason twice.
+- Updates: Kita checks for a new version every time it opens (and after 30 minutes in the background). A failed check is retried next time. "Update now" starts the download and install directly.
+- VersionCode 51, same com.nazchat.app package and original signing identity. Not tested on a real device.
+
 # Kita Chat 4.6.1
 
 Fixes saving files on Android.

@@ -19,15 +19,26 @@ function showUpdateNotice(info){
  banner=el('aside');banner.id='updateNotice';banner.setAttribute('aria-label','Application update');
  const title=el('strong');title.textContent=`Update ${info.version} available · installed ${APP_VERSION}`;
  const details=el('p');details.textContent=String(info.changelog||'An application update is available.').slice(0,500);banner.append(title,details);
- for(const [label,action] of [['Update',()=>{banner.remove();renderSettingsAbout();openSheet('setSheet');checkForUpdate();}],['Later',()=>{db.updateSnoozeUntil=Date.now()+24*3600000;save();banner.remove();}],['Skip this version',()=>{db.skippedUpdateCode=info.versionCode;save();banner.remove();}]]){const button=el('button','mini-btn',label);button.onclick=action;banner.appendChild(button);}
+ // "Update" goes straight to download + install (the About page shows progress).
+ for(const [label,action] of [['Update now',async()=>{banner.remove();renderSettingsAbout();openSheet('setSheet');await checkForUpdate();const b=document.querySelector('#checkUpdateBtn');if(b&&/Install update/.test(b.textContent))b.click();}],['Later',()=>{db.updateSnoozeUntil=Date.now()+24*3600000;save();banner.remove();}],['Skip this version',()=>{db.skippedUpdateCode=info.versionCode;save();banner.remove();}]]){const button=el('button','mini-btn',label);button.onclick=action;banner.appendChild(button);}
  document.body.appendChild(banner);
+ // Swipe sideways to dismiss (same as Later).
+ let startX=null,dx=0;
+ banner.addEventListener('touchstart',e=>{if(e.target.closest('button'))return;startX=e.touches[0].clientX;dx=0;banner.classList.add('dragging');},{passive:true});
+ banner.addEventListener('touchmove',e=>{if(startX===null)return;dx=e.touches[0].clientX-startX;banner.style.transform=`translateX(${dx}px)`;banner.style.opacity=String(Math.max(.2,1-Math.abs(dx)/260));},{passive:true});
+ banner.addEventListener('touchend',()=>{if(startX===null)return;banner.classList.remove('dragging');startX=null;
+   if(Math.abs(dx)>90){banner.style.transform=`translateX(${dx>0?120:-120}%)`;banner.style.opacity='0';db.updateSnoozeUntil=Date.now()+24*3600000;save();setTimeout(()=>banner.remove(),200);}
+   else{banner.style.transform='';banner.style.opacity='';}});
 }
+/* Checks for a new release when the app opens and when it returns after 30 minutes.
+   A failed check (offline, rate limit) is retried next time instead of waiting hours. */
+let launchCheckDone=false;
 async function automaticUpdateCheck(){
  if(updateCheckBusy||document.hidden)return;
  if(updateNoticeInfo&&!generating&&Date.now()>Number(db.updateSnoozeUntil||0)&&updateNoticeInfo.versionCode!==db.skippedUpdateCode){showUpdateNotice(updateNoticeInfo);return;}
- const now=Date.now();if(now-Number(db.lastAutoUpdateCheck||0)<6*3600000)return;
- updateCheckBusy=true;db.lastAutoUpdateCheck=now;save();
- try{const info=await fetchUpdateInfo();let local=APP_VERSION_CODE;try{local=Math.max(local,Number(window.NazUpdater?.getVersion()||0));}catch(e){}
+ const now=Date.now();if(launchCheckDone&&now-Number(db.lastAutoUpdateCheck||0)<30*60000)return;
+ updateCheckBusy=true;
+ try{const info=await fetchUpdateInfo();launchCheckDone=true;db.lastAutoUpdateCheck=now;save();let local=APP_VERSION_CODE;try{local=Math.max(local,Number(window.NazUpdater?.getVersion()||0));}catch(e){}
  if(info.versionCode>local&&info.versionCode>Number(db.skippedUpdateCode||0)&&now>Number(db.updateSnoozeUntil||0)){updateNoticeInfo=info;if(!generating)showUpdateNotice(info);}
  }catch(e){/* Background check failures never block chatting. */}finally{updateCheckBusy=false;}
 }

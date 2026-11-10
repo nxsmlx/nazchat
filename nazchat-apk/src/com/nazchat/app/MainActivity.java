@@ -80,6 +80,7 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NazShare(this), "NazShare");
         files = new NazFiles(this);
         web.addJavascriptInterface(files, "NazFiles");
+        web.addJavascriptInterface(new NazCodeCheck(this), "NazCodeCheck");
         web.addJavascriptInterface(new NazPreview(), "NazPreview");
         web.addJavascriptInterface(voice, "NazVoice");
         mcp = new NazMcp(this);
