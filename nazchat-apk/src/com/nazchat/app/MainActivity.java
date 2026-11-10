@@ -72,6 +72,8 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NazHaptics(this), "NazHaptics");
         web.addJavascriptInterface(new NazUpdater(), "NazUpdater");
         web.addJavascriptInterface(new NazSecrets(this), "NazSecrets");
+        // Durable state copy: survives a process kill that loses uncommitted localStorage.
+        web.addJavascriptInterface(new NazStore(this), "NazStore");
         web.addJavascriptInterface(new NazPreview(), "NazPreview");
         web.addJavascriptInterface(voice, "NazVoice");
         mcp = new NazMcp(this);

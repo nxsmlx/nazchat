@@ -1,9 +1,9 @@
 {
-  "version": "4.5.4",
-  "versionCode": 47,
+  "version": "4.5.5",
+  "versionCode": 48,
   "name": "Kita Chat",
-  "changelog": "Security fixes: provider keys locked to their host, bundled libraries (works offline), approval before opening unknown pages, clearer Tools and provider settings.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.4/NazChat.apk",
-  "sha256": "989ab7cf1f155da2c222d219e35e44aee1440a5e9adbc61842d58f2101627e03",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.4"
+  "changelog": "Keeps your data safe when the app is updated or closed by Android, and lets you reuse API keys whose provider settings were lost.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.5/NazChat.apk",
+  "sha256": "b3e505fcc96caefb131abe0c47723c308d2792a771925901506f4fe19e7a57da",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.5"
 }

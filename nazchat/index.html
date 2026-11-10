@@ -1297,14 +1297,69 @@ function migrateDb(raw){
   d.memory.items = d.memory.items.filter(x=>x && typeof x.text==="string" && x.text.trim()).map(x=>({...x,id:String(x.id||uid()),text:x.text,createdAt:Number(x.createdAt)||0}));
   return d;
 }
-function load(){ try{ return migrateDb(JSON.parse(localStorage.getItem(LS_KEY))); }catch(e){ return defaultDb(); } }
+/* Durable state. WebView commits localStorage to disk lazily (and rate limits large,
+   frequent writes), so changes made shortly before the process is killed by an app
+   update or a low-memory kill could be lost. On Android every save is therefore also
+   written to a private file (NazStore: fsync + atomic rename), and startup uses
+   whichever copy was saved last. A save stamp lives in its own key so app data and
+   backups are unchanged. */
+const LS_SAVED_AT_KEY = "nazchat_v1_saved_at";
+function hasNativeStore(){ return typeof window !== "undefined" && typeof window.NazStore === "object" && typeof window.NazStore.write === "function" && typeof window.NazStore.read === "function"; }
+function readNativeState(){
+  if(!hasNativeStore()) return null;
+  try{ const text=window.NazStore.read(); if(!text) return null; const state=JSON.parse(text); return state && typeof state.db==="object" && state.db ? state : null; }
+  catch(e){ return null; }
+}
+let lastSaveStamp=0;
+function load(){
+  let raw=null, parsed=null, localAt=0;
+  try{ raw=localStorage.getItem(LS_KEY); }catch(e){}
+  try{ parsed=raw==null?null:JSON.parse(raw); }catch(e){ parsed=undefined; }
+  try{ localAt=Number(localStorage.getItem(LS_SAVED_AT_KEY))||0; }catch(e){}
+  const native=readNativeState();
+  lastSaveStamp=Math.max(localAt, Number(native?.savedAt)||0);
+  // The native copy wins when it is newer, or when localStorage is empty or unreadable.
+  const useNative = native && (parsed==null || !(Number(native.savedAt)<=localAt));
+  if(useNative){
+    try{ return migrateDb(native.db); }catch(e){}
+  }
+  if(parsed!==undefined){ try{ return migrateDb(parsed); }catch(e){} }
+  // Unreadable data is never silently replaced: keep the raw text for recovery first.
+  if(raw){ try{ localStorage.setItem(LS_KEY+"_unreadable_"+Date.now(), raw); }catch(e){} }
+  return defaultDb();
+}
 let db = load();
+let nativeSaveTimer=null, nativeSavePending=null;
+function writeNativeState(text, savedAt){
+  if(!hasNativeStore()) return false;
+  try{ return window.NazStore.write('{"savedAt":'+savedAt+',"db":'+text+'}')===true; }catch(e){ return false; }
+}
+/* Writes the pending durable copy now (app hidden, before an update installs). */
+function flushNativeSave(){
+  if(nativeSaveTimer){ clearTimeout(nativeSaveTimer); nativeSaveTimer=null; }
+  const pending=nativeSavePending; nativeSavePending=null;
+  return pending ? writeNativeState(pending.text, pending.savedAt) : true;
+}
+if(typeof document!=="undefined"){
+  document.addEventListener("visibilitychange",()=>{ if(document.hidden) flushNativeSave(); });
+  window.addEventListener("pagehide",()=>flushNativeSave());
+}
 function hasNativeSecrets(){ return typeof window !== "undefined" && typeof window.NazSecrets === "object" && typeof window.NazSecrets.get === "function"; }
 function save(){
   try{
     const snapshot=JSON.parse(JSON.stringify(db));
     if(hasNativeSecrets()) (snapshot.providers||[]).forEach(p=>{ delete p.apiKey; });
-    localStorage.setItem(LS_KEY, JSON.stringify(snapshot));
+    // Monotonic stamp: later saves always compare newer, even if the clock moves back.
+    const text=JSON.stringify(snapshot), savedAt=lastSaveStamp=Math.max(lastSaveStamp+1, Date.now());
+    let localOk=true;
+    try{ localStorage.setItem(LS_KEY, text); localStorage.setItem(LS_SAVED_AT_KEY, String(savedAt)); }catch(e){ localOk=false; }
+    if(hasNativeStore()){
+      nativeSavePending={text, savedAt};
+      // localStorage failed (e.g. full): the durable copy is the only one, write it now.
+      if(!localOk){ if(flushNativeSave()) return true; throw new Error("No storage accepted the save"); }
+      if(!nativeSaveTimer) nativeSaveTimer=setTimeout(flushNativeSave, 400);
+    }
+    if(!localOk) throw new Error("localStorage rejected the save");
     return true;
   }catch(e){ console.warn("Kita Chat state save failed",e);setTimeout(()=>{if(!document.querySelector('#storageWarning')){const warning=document.createElement('aside');warning.id='storageWarning';warning.setAttribute('role','alert');warning.textContent='Changes could not be saved. Free some storage and export a backup before closing the app.';document.body.appendChild(warning);}},0);return false; }
 }
@@ -1451,8 +1506,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.5.4";
-const APP_VERSION_CODE = 47;
+const APP_VERSION = "4.5.5";
+const APP_VERSION_CODE = 48;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2572,6 +2627,8 @@ function renderProvidersSubView(){
     const hint=el("div","hint","Connect OpenAI-compatible providers. Tap a card to edit.");list.appendChild(hint);
     const group=el("div","settings-hub-group");
     if(!db.providers.length) group.appendChild(el("div","settings-empty","No providers connected yet."));
+    const orphans=orphanProviderKeys();
+    if(orphans.length) list.appendChild(el("div","hint saved-keys-note",`${orphans.length} saved API key${orphans.length===1?" is":"s are"} still on this device without a provider. Tap Add and choose it under “Or use a key already saved on this device”.`));
     db.providers.forEach(p=>{
       const card=el("button","provider-card");
       const key=hasProviderSecret(p);
@@ -2685,6 +2742,27 @@ function renderProvForm(){
   const eye = el("button","eye",eyeIcon(false)); eye.type="button"; eye.setAttribute("aria-label","Show API key"); eye.setAttribute("aria-pressed","false");
   eye.onclick = (e)=>{ e.preventDefault(); const show = keyIn.type==="password"; keyIn.type = show ? "text":"password"; eye.innerHTML = eyeIcon(show); eye.setAttribute("aria-label", show ? "Hide API key" : "Show API key"); eye.setAttribute("aria-pressed", String(show)); };
   pw.appendChild(keyIn); pw.appendChild(eye); key.appendChild(pw); form.appendChild(key);
+  // New provider: offer keys that are still stored but no longer linked to a provider.
+  const orphans = f.id ? [] : orphanProviderKeys();
+  if(orphans.length){
+    if(!f._draftRef) f._draftRef = f.secretRef;
+    const pick = el("div","fld","Or use a key already saved on this device");
+    const sel = el("select"); sel.setAttribute("aria-label","Use a saved API key");
+    sel.appendChild(new Option("Enter a new key", ""));
+    orphans.forEach(k=>sel.appendChild(new Option(orphanKeyLabel(k), k.ref)));
+    sel.value = f.secretRef!==f._draftRef && orphans.some(k=>k.ref===f.secretRef) ? f.secretRef : "";
+    const applyPick = ()=>{
+      const ref = sel.value;
+      f.secretRef = ref || f._draftRef;
+      if(ref){ f.apiKey=""; keyIn.value=""; }
+      keyIn.disabled = !!ref;
+      keyIn.placeholder = ref ? "Using "+orphanKeyLabel(orphans.find(k=>k.ref===ref)) : "sk-...";
+    };
+    sel.onchange = applyPick; applyPick();
+    pick.appendChild(sel);
+    pick.appendChild(el("div","hint","Keys stay on this device after provider settings are lost. Pick one to reuse it without typing it again."));
+    form.appendChild(pick);
+  }
 
   const hd = el("div","fld","Custom headers (optional)");
   const addH = el("button","secondary btn","+ Add header"); addH.type="button"; addH.className="btn secondary"; addH.style.padding="9px";
@@ -2846,6 +2924,9 @@ async function checkForUpdate(){
           }
         };
         if(typeof window.NazUpdater === "object" && window.NazUpdater.downloadAndInstall){
+          // Installing kills this process: make sure every change is on disk first.
+          save();
+          if(hasNativeStore() && !flushNativeSave()){ status.style.display="block"; status.style.color="var(--danger)"; status.textContent="Your latest changes could not be saved, so the update was not started. Export a backup first."; btn.textContent="Install update"; btn.disabled=false; return; }
           window.NazUpdater.downloadAndInstall(apkUrl, info.sha256||"");
         } else {
           // Browser fallback (no native updater): silent-ish, still opens download
@@ -2967,6 +3048,20 @@ function migrateLegacySecrets(){
 function providerSecret(p){
   const ref=prepareProviderSecret(p);
   return hasNativeSecrets() ? "" : (p?.apiKey||"");
+}
+/* API keys stored on this device that no provider uses any more (for example when
+   provider settings were lost). Values never reach JS: only ref, last 4 chars, host. */
+function orphanProviderKeys(){
+  if(!hasNativeSecrets() || typeof window.NazSecrets.listProviderKeys!=="function") return [];
+  try{
+    const used=new Set((db.providers||[]).map(p=>p.secretRef||("provider:"+p.id)));
+    const list=JSON.parse(window.NazSecrets.listProviderKeys()||"[]");
+    return Array.isArray(list) ? list.filter(k=>k && typeof k.ref==="string" && !used.has(k.ref)) : [];
+  }catch(e){ return []; }
+}
+function orphanKeyLabel(k){
+  const host=(()=>{ try{ return k.origin ? new URL(k.origin).host : ""; }catch(e){ return ""; } })();
+  return "Saved key"+(k.hint?" …"+k.hint:"")+(host?" · "+host:"");
 }
 function hasProviderSecret(p){
   const ref=prepareProviderSecret(p);
