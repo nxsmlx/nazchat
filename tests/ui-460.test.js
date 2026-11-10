@@ -96,7 +96,7 @@ const conv=(id,title,at,messages)=>({id,title,updatedAt:at,messages});
 
  await scenario('Tools rows: project, voice, style and library share one pattern',base({}),async page=>{
    await page.evaluate(()=>openToolsSheet());
-   const rows=await page.locator('#toolsSheetBody .tools-row').count();assert.equal(rows,4);
+   const rows=await page.locator('#toolsSheetBody .tools-row').count();assert.equal(rows,5);
    assert(await page.getByRole('button',{name:'Project: None',exact:true}).isVisible());
    for(const n of ['Dictate','Read latest answer aloud','New response style','Open prompt & artifact library'])assert(await page.getByRole('button',{name:n}).isVisible(),n);
    assert(await page.getByRole('combobox',{name:'Response style'}).isVisible());

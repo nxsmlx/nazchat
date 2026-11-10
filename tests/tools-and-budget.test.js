@@ -67,11 +67,11 @@ const assert=require('assert');
  await p.route('https://example.com/docs',r=>r.fulfill({status:200,body:'Neutral documentation fixture'}));
  await p.fill('#promptInput','Explain a documented feature from https://example.com/docs');await p.click('#sendBtn');
  await p.waitForFunction(()=>!generating,null,{timeout:30000});
- assert(requests.length===4,'expected three research calls and one tools-disabled answer');
+ assert(requests.length===7,'expected six research calls and one tools-disabled answer');
  assert(!requests.at(-1).tools,'tools must be removed on the final request');
  assert((await p.evaluate(()=>conv.messages.at(-1).content)).includes('Completed using the research'));
  assert.equal(await p.locator('.msg.assistant').last().locator('.run-label',{hasText:'Writing the answer'}).count(),0,'completed answer still says Writing the answer');
- console.log('PASS three tool rounds followed by a real final answer request');
+ console.log('PASS six tool rounds followed by a real final answer request');
  requests.length=0;mode='tool';await p.evaluate(()=>{conv=null;renderAll();});
  // 1. Budget is derived from the model and needs no manual tuning.
  const budget=await p.evaluate(()=>({auto:autoMaxTokens(currentModel()),used:modelParameters(currentModel()).max_tokens}));

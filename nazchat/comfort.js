@@ -22,6 +22,13 @@ function showUpdateNotice(info){
  // "Update" goes straight to download + install (the About page shows progress).
  for(const [label,action] of [['Update now',async()=>{banner.remove();renderSettingsAbout();openSheet('setSheet');await checkForUpdate();const b=document.querySelector('#checkUpdateBtn');if(b&&/Install update/.test(b.textContent))b.click();}],['Later',()=>{db.updateSnoozeUntil=Date.now()+24*3600000;save();banner.remove();}],['Skip this version',()=>{db.skippedUpdateCode=info.versionCode;save();banner.remove();}]]){const button=el('button','mini-btn',label);button.onclick=action;banner.appendChild(button);}
  document.body.appendChild(banner);
+ // Swipe sideways to dismiss (same as Later).
+ let startX=null,dx=0;
+ banner.addEventListener('touchstart',e=>{if(e.target.closest('button'))return;startX=e.touches[0].clientX;dx=0;banner.classList.add('dragging');},{passive:true});
+ banner.addEventListener('touchmove',e=>{if(startX===null)return;dx=e.touches[0].clientX-startX;banner.style.transform=`translateX(${dx}px)`;banner.style.opacity=String(Math.max(.2,1-Math.abs(dx)/260));},{passive:true});
+ banner.addEventListener('touchend',()=>{if(startX===null)return;banner.classList.remove('dragging');startX=null;
+   if(Math.abs(dx)>90){banner.style.transform=`translateX(${dx>0?120:-120}%)`;banner.style.opacity='0';db.updateSnoozeUntil=Date.now()+24*3600000;save();setTimeout(()=>banner.remove(),200);}
+   else{banner.style.transform='';banner.style.opacity='';}});
 }
 /* Checks for a new release when the app opens and when it returns after 30 minutes.
    A failed check (offline, rate limit) is retried next time instead of waiting hours. */

@@ -1,3 +1,15 @@
+# Kita Chat 4.7.0
+
+Smarter answers for long chats and code, and One UI style navigation. Includes every fix from 4.6.2 below.
+
+- Glass navigation bar (Home, Chats, Projects, Library, Settings) on phones. It steps aside inside a conversation so the message box keeps the bottom of the screen.
+- The update notice is a floating glass card; swipe it sideways to hide it until tomorrow.
+- Web pages Kita writes are tested in a hidden, isolated viewer. If they throw errors, Kita sends the errors back to the model and replaces the page with the corrected version (up to two rounds). The answer shows "Page tested: no errors" or what was fixed. Turn it off in Tools → Test web pages.
+- Research: up to six search/read steps before the final answer (was three), each shown as "Step n".
+- Long chats: older messages are condensed into a running summary and the latest twelve are sent in full, which keeps long conversations within the model's limits and costs less. Short chats are unchanged.
+- Fixed Compare models (and the new summary) calling a wrong address for providers whose URL has no trailing slash.
+- VersionCode 52, same com.nazchat.app package and original signing identity. Not tested on a real device.
+
 # Kita Chat 4.6.2
 
 Answers that survive a dropped connection, and fewer wrong turns.
