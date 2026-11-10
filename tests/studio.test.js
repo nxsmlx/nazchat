@@ -65,7 +65,7 @@ async function ready(page) {
   await page.waitForFunction(() => typeof db !== 'undefined' &&
     typeof studioNavigate === 'function' && document.querySelector('#main')?.dataset.view === 'chat');
 }
-async function reload(page) { await page.reload(); await ready(page); }
+async function reload(page) { await page.goto(page.url()); await ready(page); }
 async function stored(page) { return page.evaluate(() => JSON.parse(localStorage.getItem('nazchat_v1'))); }
 async function screenshot(page, name) { await page.screenshot({path:path.join(output, name+'.png')}); }
 async function sidebar(page) {
@@ -149,7 +149,16 @@ async function target(page, selector, scroll = false) {
   fs.mkdirSync(output, {recursive:true});
   const browser = await launch();
   const results = [];
-  async function test(name, fixture, run, viewport = {width:1280,height:900}) {
+  // A case gets up to three tries: headless Chromium can read a stale localStorage value
+  // after reloading a file:// page (also seen with a blank page), which breaks persistence
+  // checks at random. A case that fails every try still fails; retries are reported.
+  async function test(name, fixture, run, viewport) {
+    for (let tryNo = 1; tryNo <= 3; tryNo++) {
+      if (tryNo > 1) console.log('RETRY '+name);
+      if (await attempt(name, fixture, run, viewport, tryNo === 1, tryNo === 3)) return;
+    }
+  }
+  async function attempt(name, fixture, run, viewport = {width:1280,height:900}, firstTry, lastTry) {
     const context = await browser.newContext({viewport,reducedMotion:'reduce',colorScheme:'dark'});
     const page = await context.newPage();
     page.setDefaultTimeout(10000);
@@ -157,12 +166,9 @@ async function target(page, selector, scroll = false) {
     page.on('pageerror', e => errors.push(e.message));
     try {
       // No real provider, search, GitHub API or other application network calls.
-      // Keep the real markdown, syntax and font assets rather than mocking the UI.
-      const staticHosts = new Set(['cdn.jsdelivr.net','cdnjs.cloudflare.com','fonts.googleapis.com','fonts.gstatic.com']);
+      // Markdown, syntax and font assets are bundled locally, so any remote request is unexpected.
       await page.route(/^https?:\/\//, route => {
         const req = route.request(), url = new URL(req.url());
-        if (req.method() === 'GET' && staticHosts.has(url.hostname) &&
-            ['script','stylesheet','font','image'].includes(req.resourceType())) return route.continue();
         unexpected.push(req.method()+' '+url.origin+url.pathname);
         return route.abort();
       });
@@ -183,13 +189,16 @@ async function target(page, selector, scroll = false) {
       await run(page);
       assert.deepEqual(errors, [], 'uncaught application errors');
       assert.deepEqual(unexpected, [], 'unexpected external requests (all were blocked)');
-      results.push({name,status:'passed'});
+      results.push({name,status:firstTry?'passed':'passed-on-retry'});
       fs.rmSync(path.join(output,name+'-failure.png'),{force:true});
-      console.log('PASS '+name);
+      console.log((firstTry?'PASS ':'PASS (retry) ')+name);
+      return true;
     } catch (error) {
       await screenshot(page, name+'-failure').catch(() => {});
+      if (!lastTry) { console.error('TRY FAILED '+name+': '+String(error.message).split('\n')[0]); return false; }
       results.push({name,status:'failed',error:error.stack,pageErrors:errors,blockedRequests:unexpected});
       console.error('FAIL '+name+'\n'+error.stack);
+      return false;
     } finally { await context.close(); }
   }
   try {
@@ -775,8 +784,9 @@ async function target(page, selector, scroll = false) {
         await page.setViewportSize(viewport);
         const font = await page.locator('body').evaluate(n => getComputedStyle(n).fontFamily);
         assert.match(font,/DM Sans/,'Studio font CSS is not applied');
-        // Check availability in CSS, not a network-dependent webfont download.
-        assert(await page.locator('head link[rel="stylesheet"]').evaluateAll(links => links.some(n => /family=DM\+Sans|family=DM%20Sans/i.test(n.href))));
+        // The font ships in the app; it must load with every network request blocked.
+        assert(await page.locator('head link[rel="stylesheet"]').evaluateAll(links => links.some(n => /vendor\/fonts\.css$/.test(n.href))));
+        assert(await page.evaluate(async () => (await document.fonts.load('16px "DM Sans"')).length > 0), 'bundled DM Sans did not load');
         await page.locator('#promptInput').fill(Array.from({length:12},(_,i) => 'Line '+i+' of the unsent resize fixture.').join('\n'));
         for (const selector of ['#promptInput','#attachBtn','#bottomModelBtn','#moreToolsBtn','#sendBtn']) await target(page,selector);
         await noOverflow(page,'composer '+viewport.width);
@@ -808,6 +818,7 @@ async function target(page, selector, scroll = false) {
     fs.writeFileSync(path.join(output,'results.json'),JSON.stringify(results,null,2)+'\n');
   }
   const failed = results.filter(result => result.status === 'failed');
-  console.log(`${results.length-failed.length}/${results.length} Studio regression cases passed. Artifacts: test-results/studio/`);
+  const retried = results.filter(result => result.status === 'passed-on-retry').length;
+  console.log(`${results.length-failed.length}/${results.length} Studio regression cases passed${retried?` (${retried} on retry)`:''}. Artifacts: test-results/studio/`);
   if (failed.length) process.exitCode = 1;
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -18,8 +18,14 @@ final class McpHttp {
         URL u = new URL(value);
         if (!"https".equalsIgnoreCase(u.getProtocol()) || u.getUserInfo()!=null || u.getRef()!=null || u.getHost().isEmpty())
             throw new IOException("Use a public HTTPS URL without credentials or fragments");
-        String host=u.getHost().toLowerCase(java.util.Locale.US);
-        if(host.equals("localhost") || host.endsWith(".local") || host.endsWith(".localhost")) throw new IOException("Private hosts are not allowed");
+        requirePublicHost(u.getHost());
+        return u;
+    }
+    /** Refuses loopback, LAN, link-local, CGNAT, multicast and .local names (after DNS resolution). */
+    static void requirePublicHost(String hostName) throws IOException {
+        String host=hostName==null?"":hostName.toLowerCase(java.util.Locale.US);
+        if(host.isEmpty()) throw new IOException("Missing host");
+        if(host.equals("localhost") || host.endsWith(".local") || host.endsWith(".localhost") || host.endsWith(".internal")) throw new IOException("Private hosts are not allowed");
         for(InetAddress a:InetAddress.getAllByName(host)) {
             byte[] b=a.getAddress();
             if(a.isAnyLocalAddress()||a.isLoopbackAddress()||a.isLinkLocalAddress()||a.isSiteLocalAddress()||a.isMulticastAddress()
@@ -27,7 +33,6 @@ final class McpHttp {
                 || (b.length==4 && ((b[0]&255)==0 || (b[0]&255)==127 || ((b[0]&255)==100 && (b[1]&255)>=64 && (b[1]&255)<=127)
                     || ((b[0]&255)==169 && (b[1]&255)==254) || (b[0]&255)>=224))) throw new IOException("Private network endpoints are not allowed");
         }
-        return u;
     }
     static Response request(String url,String method,Map<String,String> headers,String body,Control control) throws Exception {
         return requestWithId(url,method,headers,body,control,-1);

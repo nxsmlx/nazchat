@@ -5,22 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#171920">
 <meta name="color-scheme" content="dark light">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; frame-src 'self' blob: data: about:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script>
 // Restore before first paint; keep the existing storage key for installed apps.
 try{const t=JSON.parse(localStorage.getItem("nazchat_v1"))?.theme;const dark=typeof window.NazTheme?.isSystemDark==='function'?window.NazTheme.isSystemDark():matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=t==="light"||(t==="system"&&!dark)?"light":"dark";}catch(e){document.documentElement.dataset.theme="dark";}
 </script>
 <title>Kita Chat</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.5/dist/purify.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
+<!-- Libraries ship inside the app (nazchat/vendor). Never load remote script into
+     this frame: it holds the native bridges. pdf.js and mammoth load on demand. -->
+<link rel="stylesheet" href="vendor/highlight-github-dark.min.css">
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="vendor/fonts.css">
+<script src="vendor/marked.min.js"></script>
+<script src="vendor/purify.min.js"></script>
+<script src="vendor/highlight.min.js"></script>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="vendor/katex/auto-render.min.js"></script>
 <style>
 /* Theme contract: define every palette here. Components use semantic tokens,
    never a separate set of hardcoded dark/light overrides. */
@@ -312,7 +312,7 @@ header .menu-btn{background:var(--bg3);}
 .model-item .check{color:var(--accent); flex-shrink:0;}
 
 /* Provider form */
-label.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text2); font-weight:600;}
+label.fld,div.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text2); font-weight:600;}
 .radio-row{display:flex; gap:8px;}
 .radio-row button{flex:1; padding:11px; border-radius:10px; border:1px solid var(--border); background:var(--bg3); color:var(--text2); font-size:13.5px; font-weight:600;}
 .radio-row button.sel{border-color:var(--accent); color:var(--accent); background:rgba(16,163,127,.12);}
@@ -707,7 +707,7 @@ input,textarea,select{background:var(--bg);}
 .settings-back{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--text2);font-size:12.5px;font-weight:700;padding:5px 0;min-height:34px;}.settings-back:active{color:var(--text);}
 .provider-card{width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border:0;border-bottom:1px solid rgba(255,255,255,.04);background:transparent;color:var(--text);text-align:left;min-height:72px;cursor:pointer;}.provider-card:last-child{border-bottom:0;}.provider-card:active{background:var(--hover);}
 .provider-main{min-width:0;flex:1;}.provider-title{display:flex;align-items:center;gap:8px;min-width:0;}.provider-title strong{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.provider-main small{display:block;margin-top:5px;color:#a1a1aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px;max-width:100%;}.key-status{display:inline-flex;align-items:center;gap:4px;color:#a1a1aa;font-size:10px;white-space:nowrap;}.key-status i{width:6px;height:6px;border-radius:50%;background:#71717a;}.key-status.stored i{background:#8f9a8d;}.key-status.missing{color:#b08b8b;}.key-status.missing i{background:#b08b8b;}.model-count{padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.06);color:#a1a1aa;font-size:10.5px;white-space:nowrap;}
-.settings-empty{padding:18px 16px;color:#a1a1aa;font-size:12.5px;}.skill-search{position:sticky;top:0;z-index:2;background:var(--bg2)!important;}
+.settings-empty{padding:18px 16px;color:#a1a1aa;font-size:12.5px;}.skill-search{position:sticky;top:0;z-index:2;background-color:var(--bg2)!important;}
 .switch{position:relative;width:44px;height:24px;min-height:24px;padding:0;border:0;border-radius:999px;background:#3f3f46;flex:none;transition:background .18s;}.switch:after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#d4d4d8;transition:transform .18s;box-shadow:0 1px 2px rgba(0,0,0,.28);}.switch.on{background:#71717a;}.switch.on:after{transform:translateX(20px);background:#fafafa;}
 .provider-card+.provider-card,.skill-row+.skill-row{border-top:0;}
 .model-filters{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;padding:2px 0 9px;background:var(--bg2);scrollbar-width:none;}.model-filters::-webkit-scrollbar{display:none;}.model-filter{flex:none;min-height:32px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg3);color:var(--text2);font-size:11.5px;font-weight:700;white-space:nowrap;}.model-filter.active{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);color:#fafafa;}.model-filter span{color:var(--text3);margin-left:3px;}.model-section-label{padding:10px 12px 5px;color:var(--text3);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}.model-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid transparent;}.model-item.sel{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 12px rgba(0,0,0,.3);}.model-item .nm{min-width:0;flex:1;}.model-item .nm strong{display:block;font-size:15px;font-weight:600;color:#f4f4f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.model-item .nm small{display:block;margin-top:3px;font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.model-meta-pill{flex:none;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.06);color:#a1a1aa;font-size:10.5px;white-space:nowrap;}.model-search input,.skill-search,#convSearch{background-color:var(--input);background-position:14px center;background-repeat:no-repeat;background-size:17px 17px;padding-left:38px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%2371717a' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='8' cy='8' r='5.5'/%3E%3Cpath d='M12 12l4 4'/%3E%3C/svg%3E");}.conv-search:before{display:none;}.skill-search{width:100%;position:sticky;top:0;z-index:2;}.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:12px;border-radius:12px;}.settings-row .sr-text{min-width:0;flex:1;}.settings-row .sr-text strong{display:block;font-size:15px;font-weight:600;color:#f4f4f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.settings-row .sr-text small{display:block;margin-top:3px;font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.settings-hub-group>.settings-row{border-bottom:1px solid rgba(255,255,255,.04);}.settings-hub-group>.settings-row:last-child{border-bottom:0;}
@@ -1030,9 +1030,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
   </div>
   <div class="preview-toolbar">
     <div class="vp-seg" role="group" aria-label="Preview width">
-      <button class="vp-btn" data-vp="mobile" title="Mobile width">📱</button>
-      <button class="vp-btn" data-vp="tablet" title="Tablet width">▭</button>
-      <button class="vp-btn active" data-vp="full" title="Full width" aria-label="Full width"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="14" rx="1"/></svg></button>
+      <button class="vp-btn" data-vp="mobile" title="Mobile width" aria-label="Mobile width" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg></button>
+      <button class="vp-btn" data-vp="tablet" title="Tablet width" aria-label="Tablet width" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M11 18h2"/></svg></button>
+      <button class="vp-btn active" data-vp="full" title="Full width" aria-label="Full width" aria-pressed="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="1.5"/><path d="M8 20.5h8M12 17v3.5"/></svg></button>
     </div>
     <label class="js-toggle"><input type="checkbox" id="previewJs" checked><span>Run JS</span></label>
   </div>
@@ -1440,7 +1440,7 @@ function learnTokenCeiling(model,errorMsg,attempted){
 }
 function contextStats(model,history,extra){const max=Number(model?.provider?.modelMeta?.[model.modelId]?.context_length||model?.provider?.modelMeta?.[model.modelId]?.contextLength)||8192;const used=history.reduce((n,m)=>n+estimateTokens(typeof m.content==="string"?m.content:JSON.stringify(m.content)),0)+estimateTokens(extra||"");return {max,used,pct:Math.min(100,Math.round(used/max*100))};}
 function indexProjectDocument(a){const project=currentProject();if(!project||!a?.text)return;project.sources=Array.isArray(project.sources)?project.sources:[];const chunkSize=1800;for(let i=0;i<a.text.length;i+=chunkSize){const text=a.text.slice(i,i+chunkSize);project.sources.push({id:uid(),name:a.name,text,terms:text.toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>2).slice(0,500)});}project.updatedAt=Date.now();save();}
-function retrieveProjectContext(query){const project=currentProject();if(!project?.sources?.length)return "";const terms=String(query||"").toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>2);return project.sources.map(s=>({s,score:terms.reduce((n,t)=>n+(s.terms||[]).includes(t)?1:0,0)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>0).slice(0,5).map((x,i)=>`[Project source ${i+1}: ${x.s.name}]\n${x.s.text}`).join("\n\n").slice(0,12000);}
+function retrieveProjectContext(query){const project=currentProject();if(!project?.sources?.length)return "";const terms=String(query||"").toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>2);return project.sources.map(s=>({s,score:terms.reduce((n,t)=>n+((s.terms||[]).includes(t)?1:0),0)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>0).slice(0,5).map((x,i)=>`[Project source ${i+1}: ${x.s.name}]\n${x.s.text}`).join("\n\n").slice(0,12000);}
 function modelPricing(model){return model?.provider?.modelMeta?.[model.modelId]?.pricing||model?.provider?.modelMeta?.[model.modelId]?.pricing_metadata||{};}
 function estimateCost(model,inputTokens,outputTokens){const p=modelPricing(model);const inPrice=Number(p.prompt||p.input||p.input_per_million||0),outPrice=Number(p.completion||p.output||p.output_per_million||0);return (inputTokens*inPrice+outputTokens*outPrice)/1000000;}
 
@@ -1451,8 +1451,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.5.3";
-const APP_VERSION_CODE = 46;
+const APP_VERSION = "4.5.4";
+const APP_VERSION_CODE = 47;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1596,6 +1596,12 @@ function enhance(container, opts){
     decorateCodeBlock(pre, code, {});
   });
   container.querySelectorAll("a").forEach(a=>{ a.target="_blank"; a.rel="noopener"; });
+  // Tables scroll inside their own frame and fill the message width.
+  container.querySelectorAll("table:not(.code-table)").forEach(t=>{
+    if(t.parentElement && t.parentElement.classList.contains("md-table")) return;
+    const frame=el("div","md-table"); frame.tabIndex=0; frame.setAttribute("role","region"); frame.setAttribute("aria-label","Table");
+    t.replaceWith(frame); frame.appendChild(t);
+  });
   container.querySelectorAll("code:not(pre code)").forEach(c=>{ if(!c.classList.contains("inline-code")) c.classList.add("inline-code"); });
   if(light) return;
   try{
@@ -1646,7 +1652,8 @@ function decorateCodeBlock(pre, code, opts){
   body.innerHTML = lineTable(highlighted, count);
   pre.replaceWith(wrap);
   wrap.appendChild(head); wrap.appendChild(body);
-  if(opts.defaultOpen){ wrap.classList.remove("collapsed"); toggle.textContent="Collapse"; }
+  // Short snippets are easier to read than to unfold: show up to 12 lines straight away.
+  if(opts.defaultOpen || count <= 12){ wrap.classList.remove("collapsed"); toggle.textContent="Collapse"; toggle.setAttribute("aria-label","Collapse code"); }
   return wrap;
 }
 function buildCodeTabs(container, blocks){
@@ -1889,7 +1896,7 @@ function renderAssistant(bubble, msg, live){
     const box = el("div","run-status");
     const state = msg.phases ? msg.phases.state : (msg.content ? "execute" : msg.reasoning ? "think" : "waiting");
     const busy = !!live && state!=="done" && state!=="incomplete";
-    const label = msg.phases ? phaseStatusLabel(state) : (!live ? (msg.stopped?'Stopped':msg.toolCall?'Incomplete':'Completed') : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider"));
+    const label = msg.phases ? phaseStatusLabel(state) : (!live ? (msg.stopped?'Stopped':msg.toolCall?'Incomplete':'Reasoning') : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider"));
     const parts = msg.phases && msg.phases.parts && msg.phases.parts.length ? msg.phases.parts : null;
     const head = el("button","run-summary");
     head.setAttribute("aria-expanded", String(!!msg._runOpen));
@@ -2112,7 +2119,6 @@ function buildPreviewDoc(html, runJs){
   const bridge = `<script>try{const _l=console.log,_w=console.warn,_e=console.error;const send=(t,a)=>{try{parent.postMessage({__naz:'console',nonce:'${previewNonce}',type:t,text:[...a].map(String).join(' ')},'*')}catch(e){}};console.log=(...a)=>{_l.apply(console,a);send('log',a)};console.warn=(...a)=>{_w.apply(console,a);send('warn',a)};console.error=(...a)=>{_e.apply(console,a);send('error',a)};window.addEventListener('error',e=>{try{parent.postMessage({__naz:'console',type:'error',nonce:'${previewNonce}',text:e.message||String(e.error||'error'),src:(e.filename||'')+':'+(e.lineno||'')},'*')}catch(_){}});}catch(e){}<\/script>`;
   if(isFull){
     let doc = html;
-    const security = runJs ? "" : `<script>window.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('script').forEach(s=>s.type='text/blocked')},true)<\/script>`;
     if(!/<meta[^>]+name=["']viewport/i.test(doc) && /<head/i.test(doc))
       doc = doc.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width, initial-scale=1">');
     if(/<\/head>\s*<body/i.test(doc)) doc = doc.replace(/<\/head>\s*<body/i, bridge + "</head><body");
@@ -2155,7 +2161,8 @@ async function renderPreview(){
   if(hasNativePreview()){
     const code=$('#previewCode').value;
     if(!code.trim())return;
-    window.NazPreview.open(buildPreviewDoc(code,$('#previewJs').checked),'Kita Chat Preview');
+    const runJs=$('#previewJs').checked;
+    window.NazPreview.open(buildPreviewDoc(code,runJs),'Kita Chat Preview',runJs);
     return;
   }
   const code = $("#previewCode").value;
@@ -2165,6 +2172,8 @@ async function renderPreview(){
   hidePreviewDiag();
   $("#previewEmpty").style.display = "none";
   const doc = buildPreviewDoc(code, runJs);
+  // "Run JS" off: the sandbox drops allow-scripts, so no script in the page runs at all.
+  frame.setAttribute("sandbox", runJs ? "allow-scripts allow-modals allow-popups allow-downloads" : "allow-popups allow-downloads");
   const candidates = [];
   try{ candidates.push({name:"blob", url:URL.createObjectURL(new Blob([doc],{type:"text/html"}))}); }catch(e){}
   candidates.push({name:"data", url:"data:text/html;charset=utf-8,"+encodeURIComponent(doc)});
@@ -2180,7 +2189,8 @@ async function renderPreview(){
 }
 function openNativePreview(){
   if(!hasNativePreview()) return false;
-  try{ window.NazPreview.open(buildPreviewDoc(previewOriginal, $("#previewJs").checked), "Kita Chat Preview"); haptic("light"); return true; }catch(e){ return false; }
+  const runJs=$("#previewJs").checked;
+  try{ window.NazPreview.open(buildPreviewDoc(previewOriginal, runJs), "Kita Chat Preview", runJs); haptic("light"); return true; }catch(e){ return false; }
 }
 function openPreview(html, opts){
   opts = opts || {};
@@ -2223,7 +2233,7 @@ $("#previewRun").onclick = ()=>{ renderPreview(); showPreviewTab("preview"); hap
 $("#previewRefresh").onclick = ()=>{ renderPreview(); haptic(); };
 $("#previewJs").onchange = ()=>renderPreview();
 document.querySelectorAll(".vp-btn").forEach(b=>b.onclick = ()=>{
-  document.querySelectorAll(".vp-btn").forEach(x=>x.classList.toggle("active", x===b));
+  document.querySelectorAll(".vp-btn").forEach(x=>{x.classList.toggle("active", x===b);x.setAttribute("aria-pressed",String(x===b));});
   const wrap = $("#previewFrameWrap");
   wrap.classList.toggle("vp-mobile", b.dataset.vp==="mobile");
   wrap.classList.toggle("vp-tablet", b.dataset.vp==="tablet");
@@ -2287,7 +2297,7 @@ function renderModelSheet(){
     db.providers.filter(p=>modelProviderFilter==="all"||p.id===modelProviderFilter).forEach(p=>{
       const models=p.selectedModels.filter(id=>!q||id.toLowerCase().includes(q)||prettyModel(id).toLowerCase().includes(q)||p.name.toLowerCase().includes(q));if(!models.length)return;
       list.appendChild(el("div","model-section-label",esc(p.name)));
-      models.forEach(mid=>{visible++;const it=el("button","model-item"+(cur&&cur.provider.id===p.id&&cur.modelId===mid?" sel":""));const context=p.modelMeta?.[mid]?.context_length||p.modelMeta?.[mid]?.contextLength;it.innerHTML=`<span class="nm"><strong>${esc(prettyModel(mid))}</strong><small>${esc(mid)}${context?` · ${Math.round(context/1000)}k context`:""}</small></span><span class="model-meta-pill">${context?Math.round(context/1000)+"k":"Model"}</span>`;if(cur&&cur.provider.id===p.id&&cur.modelId===mid)it.innerHTML+=`<svg class="check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;it.onclick=()=>{db.lastProviderId=p.id;db.lastModelId=mid;if(conv){conv.providerId=p.id;conv.modelId=mid;}save();renderHeader();renderModelSheet();closeSheet("modelSheet");if(conv)renderAll();haptic("success");};list.appendChild(it);});
+      models.forEach(mid=>{visible++;const it=el("button","model-item"+(cur&&cur.provider.id===p.id&&cur.modelId===mid?" sel":""));const context=p.modelMeta?.[mid]?.context_length||p.modelMeta?.[mid]?.contextLength;it.innerHTML=`<span class="nm"><strong>${esc(prettyModel(mid))}</strong><small>${esc(mid)}${context?` · ${Math.round(context/1000)}k context`:""}</small></span>`;if(cur&&cur.provider.id===p.id&&cur.modelId===mid)it.innerHTML+=`<svg class="check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;it.onclick=()=>{db.lastProviderId=p.id;db.lastModelId=mid;if(conv){conv.providerId=p.id;conv.modelId=mid;}save();renderHeader();renderModelSheet();closeSheet("modelSheet");if(conv)renderAll();haptic("success");};list.appendChild(it);});
     });
     if(!visible){const anyModels=db.providers.some(p=>Array.isArray(p.selectedModels)&&p.selectedModels.length);const msg=anyModels?"No matching models":"No models selected yet. Open Settings → provider → Edit and choose models.";list.appendChild(el("div","model-empty",`<div style="color:var(--text2);font-size:13px;padding:15px 3px;line-height:1.5">${esc(msg)}</div>`));}
   };search.oninput=draw;draw();
@@ -2458,7 +2468,7 @@ function startVoiceInput(){
 function openToolsSheet(){syncToggles();renderToolsSheet();openSheet("toolsSheet");}
 
 function settingsIcon(kind){
-  const paths={providers:'<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 5V3h8v2M8 10h8M8 14h5"/>',workspace:'<path d="M4 5h6l2 2h8v12H4z"/><path d="M8 12h8M8 16h5"/>',skills:'<path d="M12 3l1.8 5.2L19 10l-4 3.5 1.1 5.2L12 16l-4.1 2.7L9 13.5 5 10l5.2-1.8L12 3z"/>',appearance:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5v.2h-4v-.2a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 005.6 15a1.6 1.6 0 00-1.5-1H4v-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1L8 4.3l.1.1a1.6 1.6 0 001.8.3 1.6 1.6 0 001-1.5V3h4v.2a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 00-.3 1.8 1.6 1.6 0 001.5 1h.2v4h-.2a1.6 1.6 0 00-1.5 1z"/>',about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'};
+  const paths={providers:'<circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16 7l3 3M14 9l2 2"/>',memory:'<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 11h4"/>',mcp:'<path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5"/>',workspace:'<path d="M4 5h6l2 2h8v12H4z"/><path d="M8 12h8M8 16h5"/>',skills:'<path d="M12 3l1.8 5.2L19 10l-4 3.5 1.1 5.2L12 16l-4.1 2.7L9 13.5 5 10l5.2-1.8L12 3z"/>',appearance:'<path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/>',appearanceGear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5v.2h-4v-.2a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 005.6 15a1.6 1.6 0 00-1.5-1H4v-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1L8 4.3l.1.1a1.6 1.6 0 001.8.3 1.6 1.6 0 001-1.5V3h4v.2a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 00-.3 1.8 1.6 1.6 0 001.5 1h.2v4h-.2a1.6 1.6 0 00-1.5 1z"/>',about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'};
   return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths[kind]||paths.about}</svg>`;
 }
 function settingsChevron(){return '<svg class="settings-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';}
@@ -2478,18 +2488,17 @@ function settingsHubRow(kind,title,subtitle,onclick){
 }
 function renderSettingsHub(){
   $("#setSheetTitle").textContent="Settings";const list=$("#provList");list.innerHTML="";
-  const intro=el("div","settings-hub-intro","Choose a workspace area");list.appendChild(intro);
+  const intro=el("div","settings-hub-intro","Connections, tools and how Kita looks.");list.appendChild(intro);
   const group=el("div","settings-hub-group");
   const models=(db.providers||[]).reduce((n,p)=>n+(p.selectedModels||[]).length,0);
   group.appendChild(settingsHubRow("providers","Providers",`${db.providers.length} active provider${db.providers.length===1?"":"s"} · ${models} models`,renderProvidersSubView));
   group.appendChild(settingsHubRow("workspace","Workspace",`${db.projects.length} projects · ${db.prompts.length} prompts · ${db.artifacts.length} artifacts`,renderStudioWorkspaceSettings));
   group.appendChild(settingsHubRow("skills","Skill Library",`${activeSkills().length} active skills · Pack v${skillPack.packVersion}`,()=>{closeSheet("setSheet");skillLibraryOpen=true;renderSkillSheet();openSheet("skillSheet");}));
-  group.appendChild(settingsHubRow("workspace","Memory",db.memory.enabled?`${db.memory.items.length} saved notes`:"Off · nothing is remembered",renderMemorySettings));
-  group.appendChild(settingsHubRow("providers","MCP Servers",`${mcpEnabledServers().length} enabled | ${mcpToolDefs().length} tools`,renderMcpSettings));
+  group.appendChild(settingsHubRow("memory","Memory",db.memory.enabled?`${db.memory.items.length} saved notes`:"Off · nothing is remembered",renderMemorySettings));
+  group.appendChild(settingsHubRow("mcp","MCP Servers",`${mcpEnabledServers().length} enabled · ${mcpToolDefs().length} tools`,renderMcpSettings));
   group.appendChild(settingsHubRow("appearance","Appearance",`${studioThemeName()} theme · ${db.textSize==="large"?"Larger":"Default"} conversation text`,()=>renderSettingsAppearance()));
   group.appendChild(settingsHubRow("about","About",`Kita Chat ${APP_VERSION} · Private BYOK`,()=>renderSettingsAbout()));
   list.appendChild(group);
-  const note=el("div","settings-hub-note","Providers, skills and workspace tools open in their own focused views.");list.appendChild(note);
 }
 function renderSettingsAppearance(){renderStudioAppearance();}
 function renderMcpSettings(){
@@ -2499,7 +2508,7 @@ function renderMcpSettings(){
   if(!mcpServers().length)list.appendChild(el('div','settings-empty','No servers. Add your MCP endpoint to get started.'));
   for(const s of mcpServers()){
    const connected=!!window.NazOAuth?.hasToken(s.id),row=el('div','settings-row'),text=el('div','sr-text');
-   const title=el('strong');title.textContent=s.name;const subtitle=el('small');subtitle.textContent=s.url+' | '+(s.tools?.length||0)+' tools | '+(connected?'Signed in':'Not signed in');text.append(title,subtitle);
+   const title=el('strong');title.textContent=s.name;const subtitle=el('small');subtitle.textContent=s.url+' · '+(s.tools?.length||0)+' tools · '+(connected?'Signed in':'Not signed in');text.append(title,subtitle);
    const toggle=el('button','switch'+(s.enabled!==false?' on':''));toggle.setAttribute('role','switch');toggle.setAttribute('aria-label','Enable '+s.name);toggle.setAttribute('aria-checked',String(s.enabled!==false));toggle.onclick=()=>{s.enabled=s.enabled===false;save();renderMcpSettings();};row.append(text,toggle);list.appendChild(row);
    const actions=el('div','toolbar-row');
    const refresh=el('button','','Refresh tools');refresh.onclick=async()=>{refresh.disabled=true;try{toast((await mcpRefreshTools(s)).length+' tools available');}catch(e){toast(e.message);}finally{renderMcpSettings();}};
@@ -2613,6 +2622,10 @@ async function deleteProvider(id){
 }
 function openProvForm(p, preset){
   const base=p ? {...p} : {...(preset||{}),id:null, name:preset?.name||"", baseUrl:preset?.baseUrl||"", endpointMode:"base", apiType:preset?.apiType||"chat_completions", apiKey:"", headers:[], selectedModels:[], capabilities:{}, secretRef:"draft:"+uid()};
+  // Match how requests are built: only "full" / "responses" are special, so a provider
+  // saved without these fields (older backups) must show Base URL / Chat Completions.
+  base.endpointMode = base.endpointMode==="full" ? "full" : "base";
+  base.apiType = base.apiType==="responses" ? "responses" : "chat_completions";
   provFormState = base;
   renderProvForm();
   closeSheet("setSheet");
@@ -2630,51 +2643,56 @@ function renderProvForm(){
     presetButton.onclick=()=>openProviderPresetPicker(f,presetButton);
     presetLabel.appendChild(presetButton);form.appendChild(presetLabel);
   }
-  const name = el("label","fld","Provider Name");
+  const name = el("label","fld","Provider name");
   const nameIn = el("input"); nameIn.value = f.name; nameIn.placeholder = "e.g. OpenRouter, DeepSeek";
   nameIn.oninput = ()=>f.name = nameIn.value;
   name.appendChild(nameIn); form.appendChild(name);
 
-  const mode = el("label","fld","Endpoint Mode");
-  const mrow = el("div","radio-row");
+  const mode = el("div","fld","Endpoint");
+  const mrow = el("div","radio-row"); mrow.setAttribute("role","group"); mrow.setAttribute("aria-label","Endpoint");
   const mb = el("button", f.endpointMode==="base"?"sel":"","Base URL");
-  const mf = el("button", f.endpointMode==="full"?"sel":"","Full Endpoint URL");
+  const mf = el("button", f.endpointMode==="full"?"sel":"","Full endpoint URL");
+  [mb,mf].forEach(b=>{b.type="button";b.setAttribute("aria-pressed",String(b.classList.contains("sel")));});
   mb.onclick = ()=>{ f.endpointMode="base"; renderProvForm(); };
   mf.onclick = ()=>{ f.endpointMode="full"; renderProvForm(); };
   mrow.appendChild(mb); mrow.appendChild(mf); mode.appendChild(mrow);
-  mode.appendChild(el("div","hint", f.endpointMode==="base" ? "System appends /models and /chat/completions automatically" : "You give the full URL manually"));
+  mode.appendChild(el("div","hint", f.endpointMode==="base" ? "Kita adds /models and /chat/completions (or /responses) for you." : "Enter the exact URL to call, for example …/v1/chat/completions."));
   form.appendChild(mode);
 
-  const url = el("label","fld", f.endpointMode==="base" ? "Base URL" : "Full Endpoint URL");
+  const url = el("label","fld", f.endpointMode==="base" ? "Base URL" : "Full endpoint URL");
   const urlIn = el("input"); urlIn.value = f.baseUrl; urlIn.placeholder = f.endpointMode==="base" ? "https://api.example.com/v1" : "https://api.example.com/v1/chat/completions";
   urlIn.oninput = ()=>f.baseUrl = urlIn.value;
   url.appendChild(urlIn); form.appendChild(url);
 
-  const api = el("label","fld","API Type");
-  const arow = el("div","radio-row");
+  const api = el("div","fld","API type");
+  const arow = el("div","radio-row"); arow.setAttribute("role","group"); arow.setAttribute("aria-label","API type");
   const ab = el("button", f.apiType==="chat_completions"?"sel":"","Chat Completions");
   const ar = el("button", f.apiType==="responses"?"sel":"","Responses API");
+  [ab,ar].forEach(b=>{b.type="button";b.setAttribute("aria-pressed",String(b.classList.contains("sel")));});
   ab.onclick = ()=>{ f.apiType="chat_completions"; renderProvForm(); };
   ar.onclick = ()=>{ f.apiType="responses"; renderProvForm(); };
   arow.appendChild(ab); arow.appendChild(ar); api.appendChild(arow);
-  api.appendChild(el("div","hint","/v1/chat/completions or /v1/responses"));
+  api.appendChild(el("div","hint", f.apiType==="responses" ? "Uses /v1/responses (OpenAI Responses API)." : "Uses /v1/chat/completions, supported by most providers."));
   form.appendChild(api);
 
-  const key = el("label","fld","API Key");
+  const key = el("label","fld","API key");
   const pw = el("div","pw-wrap");
   const keyIn = el("input"); keyIn.type="password"; keyIn.value = f.apiKey||""; keyIn.placeholder = hasNativeSecrets() && f.id && hasProviderSecret(f) ? "Stored securely — enter a new key to replace" : "sk-...";
   keyIn.oninput = ()=>f.apiKey = keyIn.value;
-  const eye = el("button","eye","👁");
-  eye.onclick = ()=>{ keyIn.type = keyIn.type==="password" ? "text":"password"; };
+  const eyeIcon = open=>open
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0112 6c5 0 8.5 4.5 9.5 6-.5.8-1.6 2.3-3.2 3.6M6.4 7.6C4.6 8.9 3.2 10.7 2.5 12c1 1.5 4.5 6 9.5 6 1.5 0 2.9-.4 4.1-1M9.9 9.9a3 3 0 004.2 4.2"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12C3.5 10.5 7 6 12 6s8.5 4.5 9.5 6c-1 1.5-4.5 6-9.5 6s-8.5-4.5-9.5-6z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const eye = el("button","eye",eyeIcon(false)); eye.type="button"; eye.setAttribute("aria-label","Show API key"); eye.setAttribute("aria-pressed","false");
+  eye.onclick = (e)=>{ e.preventDefault(); const show = keyIn.type==="password"; keyIn.type = show ? "text":"password"; eye.innerHTML = eyeIcon(show); eye.setAttribute("aria-label", show ? "Hide API key" : "Show API key"); eye.setAttribute("aria-pressed", String(show)); };
   pw.appendChild(keyIn); pw.appendChild(eye); key.appendChild(pw); form.appendChild(key);
 
-  const hd = el("label","fld","Custom Headers (optional)");
-  const addH = el("button","secondary btn","+ Add Header"); addH.className="btn secondary"; addH.style.padding="9px";
+  const hd = el("div","fld","Custom headers (optional)");
+  const addH = el("button","secondary btn","+ Add header"); addH.type="button"; addH.className="btn secondary"; addH.style.padding="9px";
   hd.appendChild(addH);
   f.headers.forEach((h,i)=>{
     const row = el("div",""); row.style.cssText="display:flex;gap:6px;margin-top:6px";
-    const k = el("input"); k.placeholder="Header"; k.value=h.key; k.style.flex="1";
-    const v = el("input"); v.placeholder="Value"; v.value=h.value; v.style.flex="1";
+    const k = el("input"); k.placeholder="Header"; k.setAttribute("aria-label","Header name"); k.value=h.key; k.style.flex="1";
+    const v = el("input"); v.placeholder="Value"; v.setAttribute("aria-label","Header value"); v.value=h.value; v.style.flex="1";
     const x = el("button","icon-btn",`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`); x.style.cssText="flex-shrink:0";
     k.oninput=()=>h.key=k.value; v.oninput=()=>h.value=v.value;
     x.onclick=()=>{ f.headers.splice(i,1); renderProvForm(); };
@@ -2683,7 +2701,7 @@ function renderProvForm(){
   addH.onclick = ()=>{ f.headers.push({key:"",value:""}); renderProvForm(); };
   form.appendChild(hd);
 
-  const test = el("button","btn secondary","Test Connection & Fetch Models");
+  const test = el("button","btn secondary","Test connection & fetch models"); test.type="button";
   const status = el("div","status-line");
   test.onclick = async ()=>{
     prepareProviderSecret(f);
@@ -2741,7 +2759,7 @@ function renderProvForm(){
   // if previously fetched models exist (editing), show picker
   if(f.fetchedModels && f.fetchedModels.length) renderModelPick();
 
-  const saveBtn = el("button","btn","💾 Save Provider");
+  const saveBtn = el("button","btn","Save provider"); saveBtn.type="button";
   saveBtn.onclick = ()=>{
     if(!f.name || !f.baseUrl){ toast("Name and URL are required"); return; }
     prepareProviderSecret(f);
@@ -3211,6 +3229,37 @@ async function confirmMcpCall(name,args){
  try{return !!await confirmDialog('Allow an external tool to run?\n\nServer: '+target.server.name+'\nEndpoint: '+target.server.url+'\nTool: '+target.tool.name+'\nArguments: '+JSON.stringify(args).slice(0,1200)+'\n\nThis tool may change remote data. Stopping a request cannot undo changes.',{title:'Confirm MCP tool call',confirmText:'Allow once'});}
  finally{signal?.removeEventListener('abort',abort);}
 }
+/* fetch_url opens a page without asking only when the user typed or pasted that exact
+   address, or a web search in this answer returned it. Any other URL was composed by the
+   model (possibly following instructions inside a fetched page or tool result) and could
+   carry conversation data out in its path or query, so the user approves it once. */
+function normalizeToolUrl(u){ try{ const x=new URL(String(u||"")); x.hash=""; return x.href.replace(/\/$/,""); }catch(e){ return ""; } }
+function isPrivateHostName(hostname){
+  const h=String(hostname||"").toLowerCase().replace(/^\[|\]$/g,"").replace(/\.$/,"");
+  return !h || h==="localhost" || /\.(local|localhost|internal)$/.test(h) || h==="::" || h==="::1"
+    || /^(0|10|127)\./.test(h) || /^169\.254\./.test(h) || /^192\.168\./.test(h)
+    || /^172\.(1[6-9]|2\d|3[01])\./.test(h) || /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(h)
+    || /^(22[4-9]|2[3-5]\d)\./.test(h) || /^f[cd][0-9a-f]{0,2}:/.test(h) || /^fe[89ab][0-9a-f]?:/.test(h) || /^::ffff:/.test(h);
+}
+function userProvidedUrls(){
+  const set=new Set();
+  for(const m of (conv?.messages||[])){
+    if(m.role!=="user") continue;
+    const text=typeof m.content==="string"?m.content:JSON.stringify(m.content||"");
+    for(const u of text.match(/https?:\/\/[^\s<>"'`]+/gi)||[]) set.add(normalizeToolUrl(u.replace(/[)\].,;:!?]+$/,"")));
+  }
+  return set;
+}
+async function confirmFetchUrl(url, msg){
+  const wanted=normalizeToolUrl(url); if(!wanted) return false;
+  if(userProvidedUrls().has(wanted)) return true;
+  if((msg?.sources||[]).some(s=>normalizeToolUrl(s.url)===wanted)) return true;
+  const signal=currentAbortSignal(); if(signal?.aborted) return false;
+  const abort=()=>$('#customDialogCancel')?.click(); signal?.addEventListener('abort',abort,{once:true});
+  const shown=wanted.length>600 ? wanted.slice(0,600)+"… ("+wanted.length+" characters)" : wanted;
+  try{ return !!await confirmDialog('The assistant wants to open a page you did not type and no search returned.\n\n'+shown+'\n\nA page address can carry text from this chat to that website. Only allow it if you expect this page.',{title:'Open this page?',confirmText:'Open once'}); }
+  finally{ signal?.removeEventListener('abort',abort); }
+}
 /* The Search chip controls whether the web_search tool is offered; fetch_url stays available. */
 function toolsSupported(model){
   const p=model&&model.provider; if(!p) return false;
@@ -3243,6 +3292,9 @@ async function runKitaTool(name,args){
   if(name==="fetch_url"){
     const u=String(args.url||"");
     if(!/^https?:\/\//i.test(u)) return {error:"Only http(s) URLs are allowed"};
+    let parsed; try{ parsed=new URL(u); }catch(e){ return {error:"Invalid URL"}; }
+    if(parsed.username||parsed.password) return {error:"URLs with credentials are not allowed"};
+    if(isPrivateHostName(parsed.hostname)) return {error:"Private network addresses are not allowed"};
     try{
       const res=await netFetch(u,{headers:{"Accept":"text/html,application/json,text/plain"}});
       const raw=await res.text();
@@ -3762,6 +3814,9 @@ async function sendResponse(text, opts, run){
       if(c.name.startsWith('mcp_')&&!await confirmMcpCall(c.name,args)){
         results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined or cancelled this MCP tool call.'}});continue;
       }
+      if(c.name==="fetch_url"&&!await confirmFetchUrl(args.url,aiMsg)){
+        results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined opening this page.'}});continue;
+      }
       if(currentAbortSignal()?.aborted)break;
       const label = c.name==="web_search" ? `Searching the web for “${args.query||""}”` : `Reading ${args.url||"a page"}`;
       setStreamNote(label+"…");
@@ -3917,18 +3972,32 @@ function renderAttachments(){
 }
 function readAsDataURL(file){ return new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file); }); }
 function readAsArrayBuffer(file){ return new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsArrayBuffer(file); }); }
+const vendorScripts=new Map();
+function loadVendorScript(src){
+  if(!/^vendor\/[\w.-]+\.js$/.test(src)) return Promise.reject(new Error("Not a bundled script"));
+  if(!vendorScripts.has(src)) vendorScripts.set(src, new Promise((resolve,reject)=>{
+    const s=document.createElement("script"); s.src=src;
+    s.onload=()=>resolve(); s.onerror=()=>{ vendorScripts.delete(src); reject(new Error("Could not load "+src)); };
+    document.head.appendChild(s);
+  }));
+  return vendorScripts.get(src);
+}
 async function extractFileText(file){
   const name=file.name.toLowerCase();
-  if(name.endsWith(".pdf") && window.pdfjsLib){
+  if(name.endsWith(".pdf")){
     try{
-      pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-      const pdf=await pdfjsLib.getDocument({data:await readAsArrayBuffer(file)}).promise; let out=[];
+      // Bundled pdf.js. Loading the worker script as a page script lets pdf.js parse
+      // on the main thread, which also works from file:// where Workers are refused.
+      await loadVendorScript("vendor/pdf.min.js");
+      await loadVendorScript("vendor/pdf.worker.min.js");
+      pdfjsLib.GlobalWorkerOptions.workerSrc="vendor/pdf.worker.min.js";
+      const pdf=await pdfjsLib.getDocument({data:await readAsArrayBuffer(file),isEvalSupported:false}).promise; let out=[];
       for(let p=1;p<=Math.min(pdf.numPages,40);p++){ const page=await pdf.getPage(p); const tc=await page.getTextContent(); out.push(tc.items.map(x=>x.str).join(" ")); }
       return out.join("\n\n");
     }catch(e){ return "[PDF text extraction failed: "+e.message+"]"; }
   }
-  if(name.endsWith(".docx") && window.mammoth){
-    try{ const r=await mammoth.extractRawText({arrayBuffer:await readAsArrayBuffer(file)}); return r.value; }catch(e){ return "[DOCX text extraction failed: "+e.message+"]"; }
+  if(name.endsWith(".docx")){
+    try{ await loadVendorScript("vendor/mammoth.browser.min.js"); const r=await mammoth.extractRawText({arrayBuffer:await readAsArrayBuffer(file)}); return r.value; }catch(e){ return "[DOCX text extraction failed: "+e.message+"]"; }
   }
   try{ return await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(String(r.result||"")); r.onerror=reject; r.readAsText(file); }); }catch(e){ return "[Could not read this document]"; }
 }

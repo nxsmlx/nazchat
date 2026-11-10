@@ -65,7 +65,7 @@ const assert=require('assert');
  // Exhausted research must switch to a final answer instead of stopping empty.
  mode='exhaust-tools';
  await p.route('https://example.com/docs',r=>r.fulfill({status:200,body:'Neutral documentation fixture'}));
- await p.fill('#promptInput','Explain a documented feature');await p.click('#sendBtn');
+ await p.fill('#promptInput','Explain a documented feature from https://example.com/docs');await p.click('#sendBtn');
  await p.waitForFunction(()=>!generating,null,{timeout:30000});
  assert(requests.length===4,'expected three research calls and one tools-disabled answer');
  assert(!requests.at(-1).tools,'tools must be removed on the final request');

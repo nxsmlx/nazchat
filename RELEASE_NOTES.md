@@ -1,3 +1,19 @@
+# Kita Chat 4.5.4
+
+Security and reliability fixes from a code review.
+
+- Provider API keys are sent only over HTTPS to the host each key is bound to. The first request binds it; entering the key again moves it to a new host. Scripts in the app can no longer send a key, or MCP sign-in tokens, anywhere else, or overwrite or erase MCP tokens.
+- Markdown, code highlighting, math, PDF/DOCX reading and the DM Sans font now ship inside the app instead of loading from a CDN. The app opens and shows your chats without a network, and a Content-Security-Policy blocks remote scripts.
+- The assistant asks before opening a web page you did not type and no search returned, and never opens private network addresses (router, localhost, LAN).
+- Project documents are ranked by how many search terms they match.
+- Turning off Run JS now really stops scripts in previews, in the app and in the full-screen Android preview.
+- Edit Provider shows which endpoint and API type are selected, including for providers restored from older backups.
+- Search and Thinking in Tools are on/off switches; Settings rows have distinct icons; model names are left-aligned.
+- Tables fill the message width, short code blocks open by default, and preview size buttons use proper icons.
+- VersionCode 47, same com.nazchat.app package and original signing identity. The APK is larger (about 1.2 MB) because the libraries are bundled.
+
+If you changed a provider's URL to another host without re-entering its key, open Edit Provider and enter the key again. Browser checks are not real-device verification.
+
 # Kita Chat 4.5.3
 
 - Keep Appearance conversation-size controls compact with the label above a fixed-height dropdown.

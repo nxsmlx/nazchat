@@ -7,6 +7,9 @@ const appUrl = pathToFileURL(path.join(root, 'nazchat/index.html')).href;
 const executablePath = process.env.CHROMIUM_PATH || [
   '/usr/bin/chromium', '/usr/bin/chromium-headless-shell', '/usr/bin/chromium-browser'
 ].find(p => fs.existsSync(p));
+// Persistence checks: in headless Chromium a reload of a file:// page can read a stale
+// localStorage value (seen with a blank page too, so not an app bug). page.goto(page.url())
+// makes this rarer; scripts/run-tests.cjs retries a failing file once and reports it.
 function launch() {
   return chromium.launch({...(executablePath ? {executablePath} : {}), args:['--no-sandbox', '--disable-dev-shm-usage']});
 }
