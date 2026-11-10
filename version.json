@@ -1,9 +1,9 @@
 {
-  "version": "4.7.0",
-  "versionCode": 52,
+  "version": "4.8.0",
+  "versionCode": 53,
   "name": "Kita Chat",
-  "changelog": "Answers continue after a dropped connection, web pages are tested and fixed automatically, long chats are summarised, and a new glass navigation bar.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.7.0/NazChat.apk",
-  "sha256": "8bf5e58fc8860ceca0be24e464fa929d8c42f4710941f08c396709dec07e5832",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.7.0"
+  "changelog": "Pick an accent colour, and choose how much tools may do without asking (Careful, Balanced or Bypass all).",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.8.0/NazChat.apk",
+  "sha256": "8963a116217cff4af5c86609308a9df91ba316dbb1942e155ac66570d9b07dba",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.8.0"
 }
