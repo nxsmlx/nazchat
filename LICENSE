@@ -1,0 +1,11 @@
+Kita Chat
+Copyright (c) 2026 Nazz. All rights reserved.
+
+This source code and the Kita Chat application are the property of Nazz.
+No permission is granted to copy, modify, publish, distribute, sublicense or
+sell this software or any part of it, in source or binary form, without prior
+written permission from Nazz. Viewing the source on GitHub does not grant a
+licence to use it.
+
+Third-party components keep their own licences. They are listed in
+THIRD_PARTY_NOTICES.md, with full texts in licenses/ and nazchat/vendor/licenses/.

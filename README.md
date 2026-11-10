@@ -1,6 +1,9 @@
 # Kita Chat 4.8.1
 
+Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
 - Fixed code that rendered as plain text and a row of "snippet.html" tabs when a provider put text directly before the opening ``` (for example "…switch to another model.```html") or put the closing ``` at the end of a code line. Such fences are now moved onto their own line, so the page shows as one code block again (with Preview and the automatic page test).
+- Settings → About now shows the author: Made by Nazz. The repository has a LICENSE file (© 2026 Nazz, all rights reserved; third-party components keep their own licences).
 - VersionCode 54, same com.nazchat.app package and original signing identity.
 
 # Kita Chat 4.8.0
