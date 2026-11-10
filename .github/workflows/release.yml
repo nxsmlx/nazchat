@@ -1,0 +1,93 @@
+name: Publish release
+
+# Publishes the signed NazChat.apk already committed on the chosen ref as a GitHub
+# Release, so the in-app updater can find it. Nothing is built or signed here and no
+# signing material is used: the workflow only verifies and uploads.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      # SHA-256 of the original Kita Chat signing certificate (v4.5.3 and earlier).
+      EXPECTED_SIGNER: ebd77288ed52773d694e35625e26e8ef8962eac0741e6b5eefc29f121dc598d3
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Ensure Android Build Tools 36.0.0
+        run: |
+          set -eu
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses >/dev/null
+          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --install 'build-tools;36.0.0'
+
+      - name: Verify APK against version.json, package and signing certificate
+        id: meta
+        run: |
+          set -eu
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          version=$(jq -r .version version.json)
+          code=$(jq -r .versionCode version.json)
+          sha=$(jq -r .sha256 version.json)
+          case "$version" in *[!0-9.]*|'') echo "Bad version: $version" >&2; exit 1 ;; esac
+          test "$(jq -r .apkUrl version.json)" = "https://github.com/$GITHUB_REPOSITORY/releases/download/v$version/NazChat.apk"
+          test "$(jq -r .releaseUrl version.json)" = "https://github.com/$GITHUB_REPOSITORY/releases/tag/v$version"
+          test "$(sha256sum NazChat.apk | cut -d' ' -f1)" = "$sha"
+          "$BT/aapt2" dump badging NazChat.apk > badging.txt
+          grep -q "^package: name='com.nazchat.app' versionCode='$code' versionName='$version'" badging.txt
+          java -jar "$BT/lib/apksigner.jar" verify --print-certs NazChat.apk > certs.txt
+          signers=$(grep -c 'certificate SHA-256 digest' certs.txt)
+          test "$signers" = 1
+          grep -q "certificate SHA-256 digest: $EXPECTED_SIGNER" certs.txt
+          if gh release view "v$version" >/dev/null 2>&1; then echo "Release v$version already exists" >&2; exit 1; fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Verified NazChat.apk $version ($code), signer $EXPECTED_SIGNER"
+
+      - name: Write release notes with updater metadata
+        run: |
+          set -eu
+          version='${{ steps.meta.outputs.version }}'
+          awk -v head="# Kita Chat $version" '
+            $0 == head { on = 1 }
+            on && /^# Kita Chat / && $0 != head { exit }
+            on { print }
+          ' RELEASE_NOTES.md > body.md
+          test -s body.md
+          {
+            printf '\n## Update without uninstalling\n'
+            printf 'Settings → About → Check for updates → Install update. A private backup before updating is recommended.\n\n'
+            printf 'Package: `com.nazchat.app` · versionCode: **%s** · original signing certificate verified (v2/v3).\n\n' "$(jq -r .versionCode version.json)"
+            printf 'SHA-256: `%s`\n\n' "$(jq -r .sha256 version.json)"
+            printf '<!-- kita-update %s -->\n' "$(jq -c . version.json)"
+          } >> body.md
+
+      - name: Publish release
+        run: |
+          set -eu
+          version='${{ steps.meta.outputs.version }}'
+          gh release create "v$version" NazChat.apk version.json \
+            --target "$GITHUB_SHA" --title "Kita Chat v$version" --notes-file body.md --latest
+
+      - name: Check the published asset
+        run: |
+          set -eu
+          version='${{ steps.meta.outputs.version }}'
+          gh release download "v$version" --pattern NazChat.apk --output published.apk
+          test "$(sha256sum published.apk | cut -d' ' -f1)" = "$(jq -r .sha256 version.json)"
+          gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name | grep -qx "v$version"
+          echo "Release v$version is live and its APK matches version.json."

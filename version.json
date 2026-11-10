@@ -1,9 +1,9 @@
 {
-  "version": "4.5.3",
-  "versionCode": 46,
+  "version": "4.5.4",
+  "versionCode": 47,
   "name": "Kita Chat",
-  "changelog": "Fix oversized Appearance settings cards, compact dropdowns and overlapping Back navigation.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.3/NazChat.apk",
-  "sha256": "f9380fd394e38f26de560b5c42042c1c8f6abe12b6a6acb7eeab57c7c92c6365",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.3"
+  "changelog": "Security fixes: provider keys locked to their host, bundled libraries (works offline), approval before opening unknown pages, clearer Tools and provider settings.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.4/NazChat.apk",
+  "sha256": "989ab7cf1f155da2c222d219e35e44aee1440a5e9adbc61842d58f2101627e03",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.4"
 }
