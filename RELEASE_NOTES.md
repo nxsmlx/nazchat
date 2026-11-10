@@ -1,3 +1,13 @@
+# Kita Chat 4.6.1
+
+Fixes saving files on Android.
+
+- Export backup, Export encrypted backup, the Download button on code blocks and Download in HTML preview did nothing on Android: the app's WebView ignored them, so no file was saved. They now open Android's "Save to" screen, where you choose the folder (for example Downloads). No storage permission is needed.
+- Backup files include the date in their name, for example kita-chat-backup-2026-11-10.json.
+- MCP sign-in: when a server rejects the token step (HTTP 400), the message now shows the server's reason (for example invalid_grant or invalid_client). If the server does not accept the resource parameter, sign-in retries once without it and remembers that. If it rejects Kita Chat's client ID, the next sign-in registers again.
+- MCP tool errors (HTTP 400 and others) include the server's message.
+- VersionCode 50, same com.nazchat.app package and original signing identity. Not tested on a real device.
+
 # Kita Chat 4.6.0
 
 Interface update: easier to pick up where you left off, clearer actions and errors, and one-tap connectors.

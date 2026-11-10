@@ -53,7 +53,13 @@ public final class NazMcp {
             initialize(req,s,token);response=rpc(req,s,method,params,token,false);
         }else if(code==-32022){throw new IOException("Server does not support this MCP protocol revision");}
         if(response.status==404&&!s.id.isEmpty()){s.id="";s.ready=false;throw new IOException("MCP session expired. Refresh tools to reconnect.");}
-        if(response.status/100!=2)throw new IOException("MCP HTTP "+response.status+". Use a Streamable HTTP endpoint.");
+        if(response.status/100!=2){
+            // Show the server's reason (JSON-RPC error message or a short text body) so a 400 can be diagnosed.
+            JSONObject err=null;try{err=new JSONObject(response.body).optJSONObject("error");}catch(Exception ignored){}
+            String why=err!=null?err.optString("message",""):String.valueOf(response.body==null?"":response.body);
+            why=why.replaceAll("<[^>]*>"," ").replaceAll("[\\p{Cntrl}\\s]+"," ").trim();if(why.length()>140)why=why.substring(0,140);
+            throw new IOException("MCP HTTP "+response.status+(why.isEmpty()?". Use a Streamable HTTP endpoint.":": "+why));
+        }
         // rpc assigned id is attached privately to response headers by rpc().
         JSONObject body=McpHttp.rpcBody(response.body,Integer.parseInt(response.header("kita-rpc-id")));
         if(body.has("error"))throw new IOException("MCP error: "+body.getJSONObject("error").optString("message","Request failed").substring(0,Math.min(180,body.getJSONObject("error").optString("message","Request failed").length())));
@@ -81,7 +87,7 @@ public final class NazMcp {
         s.version=LEGACY;
         JSONObject params=new JSONObject().put("protocolVersion",LEGACY).put("capabilities",new JSONObject()).put("clientInfo",new JSONObject().put("name","Kita Chat").put("version","4.5.0"));
         McpHttp.Response response=rpc(req,s,"initialize",params,token,false);
-        if(response.status/100!=2)throw new IOException("MCP initialize HTTP "+response.status);
+        if(response.status/100!=2){String why=response.body==null?"":response.body.replaceAll("<[^>]*>"," ").replaceAll("[\\p{Cntrl}\\s]+"," ").trim();throw new IOException("MCP initialize HTTP "+response.status+(why.isEmpty()?"":": "+why.substring(0,Math.min(140,why.length()))));}
         JSONObject body=McpHttp.rpcBody(response.body,Integer.parseInt(response.header("kita-rpc-id")));if(body.has("error"))throw new IOException("MCP initialize was rejected");
         String version=body.getJSONObject("result").getString("protocolVersion");
         if(!version.equals("2025-11-25")&&!version.equals("2025-06-18")&&!version.equals("2025-03-26"))throw new IOException("Unsupported legacy MCP protocol version");

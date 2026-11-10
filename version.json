@@ -1,9 +1,9 @@
 {
-  "version": "4.6.0",
-  "versionCode": 49,
+  "version": "4.6.1",
+  "versionCode": 50,
   "name": "Kita Chat",
-  "changelog": "Recent chats on Home, clearer answer actions and errors, follows your font size, and one-tap MCP connectors.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.6.0/NazChat.apk",
-  "sha256": "ba5c82adaa9c90440204a587af85f0aa75921ff053fc13150aa2fd987c6db83c",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.6.0"
+  "changelog": "Backups and downloads now save on Android, and MCP sign-in errors show the server's reason.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.6.1/NazChat.apk",
+  "sha256": "ef83b1147c9c5c956b5505985603521d27b8a46361e7a3ce21f4e2ef14e10c25",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.6.1"
 }

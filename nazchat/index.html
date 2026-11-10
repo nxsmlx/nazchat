@@ -1506,8 +1506,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.6.0";
-const APP_VERSION_CODE = 49;
+const APP_VERSION = "4.6.1";
+const APP_VERSION_CODE = 50;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1607,16 +1607,29 @@ function codeFileName(lang, raw){
   const ext={html:"html",htm:"html",xhtml:"html",css:"css",json:"json",python:"py",py:"py",javascript:"js",js:"js",typescript:"ts",ts:"ts",jsx:"jsx",tsx:"tsx",markdown:"md",md:"md",bash:"sh",shell:"sh",sh:"sh",sql:"sql",java:"java",kotlin:"kt",kt:"kt",xml:"xml",yaml:"yml",yml:"yml",text:"txt"}[lang]||"txt";
   return "snippet."+ext;
 }
-function downloadText(name, text){
+/* Saves text as a file. Android WebView ignores <a download>, so the app opens Android's
+   "Save to" screen (NazFiles) and the user picks the folder; browsers download normally. */
+function saveTextFile(name, text, mime, savedMessage){
+  const fileName=String(name||"kita-file.txt");
+  if(typeof window.NazFiles==="object" && typeof window.NazFiles.save==="function"){
+    window.nazFileSaved=(ok, savedName, error)=>{
+      if(ok) toast((savedMessage||"Saved")+" · "+savedName);
+      else if(error!=="cancelled") toast("Not saved: "+error);
+    };
+    try{ if(window.NazFiles.save(fileName, mime||"text/plain", String(text))) return true; }catch(e){}
+    toast("This file is too large to save"); return false;
+  }
   try{
-    const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+    const blob=new Blob([text],{type:(mime||"text/plain")+";charset=utf-8"});
     const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob); a.download=String(name||"kita-snippet.txt");
+    a.href=URL.createObjectURL(blob); a.download=fileName;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),4000);
-    toast("Downloaded "+a.download);
-  }catch(e){ toast("Could not download this file"); }
+    toast((savedMessage||"Downloaded")+" · "+fileName);
+    return true;
+  }catch(e){ toast("Could not save this file"); return false; }
 }
+function downloadText(name, text){ return saveTextFile(name||"kita-snippet.txt", text, "text/plain", "Saved"); }
 function lineTable(html, count){
   const numbers=[];
   for(let i=1;i<=count;i++) numbers.push(`<span>${i}</span>`);
@@ -2334,9 +2347,7 @@ $("#previewMore").onclick = ()=>{ $("#previewMenu").classList.add("open"); $("#p
 $("#previewMenuScrim").onclick = ()=>{ $("#previewMenu").classList.remove("open"); $("#previewMenuScrim").style.display="none"; };
 $("#pmCopy").onclick = ()=>{ copyText($("#previewCode").value); $("#previewMenu").classList.remove("open"); $("#previewMenuScrim").style.display="none"; };
 $("#pmDownload").onclick = ()=>{
-  const blob = new Blob([$("#previewCode").value], {type:"text/html"});
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "nazchat-preview.html"; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+  saveTextFile("kita-preview.html", $("#previewCode").value, "text/html", "Saved");
   $("#previewMenu").classList.remove("open"); $("#previewMenuScrim").style.display="none";
 };
 $("#pmReset").onclick = ()=>{ $("#previewCode").value = previewOriginal; renderPreview(); $("#previewMenu").classList.remove("open"); $("#previewMenuScrim").style.display="none"; };
@@ -3042,14 +3053,14 @@ function exportBackup(){
   const safe=JSON.parse(JSON.stringify(db));
   (safe.providers||[]).forEach(p=>{delete p.apiKey; p.secretStored=hasProviderSecret(p);});
   safe.exportedAt=new Date().toISOString(); safe.format="kita-chat-backup-v2"; safe.secretsIncluded=false;
-  const blob = new Blob([JSON.stringify(safe,null,2)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="kita-chat-backup.json"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); toast("Safe backup exported — keys excluded");
+  const day=new Date().toISOString().slice(0,10);
+  saveTextFile("kita-chat-backup-"+day+".json", JSON.stringify(safe,null,2), "application/json", "Backup saved (API keys not included)");
 }
 function safeBackupObject(){const safe=JSON.parse(JSON.stringify(db));(safe.providers||[]).forEach(p=>{delete p.apiKey;});safe.exportedAt=new Date().toISOString();safe.format="kita-chat-backup-v2";return safe;}
 function bytesToB64(bytes){let s="";for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(s);}
 function b64ToBytes(s){const bin=atob(s),out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out;}
 async function deriveBackupKey(pass,salt){const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pass),"PBKDF2",false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:150000,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);}
-async function exportEncryptedBackup(){if(!crypto?.subtle){toast("Encrypted backup unavailable");return;}const pass=await promptDialog("Create a passphrase with at least 8 characters", "", {title:"Encrypted backup",mode:"input",confirmText:"Create"});if(!pass||pass.length<8){toast("Use at least 8 characters");return;}const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await deriveBackupKey(pass,salt),data=new TextEncoder().encode(JSON.stringify(db));const cipher=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,data);const envelope={format:"kita-chat-encrypted-v1",salt:bytesToB64(salt),iv:bytesToB64(iv),ciphertext:bytesToB64(new Uint8Array(cipher)),createdAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(envelope)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="kita-chat-encrypted-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("Encrypted backup exported");}
+async function exportEncryptedBackup(){if(!crypto?.subtle){toast("Encrypted backup unavailable");return;}const pass=await promptDialog("Create a passphrase with at least 8 characters", "", {title:"Encrypted backup",mode:"input",confirmText:"Create"});if(!pass||pass.length<8){toast("Use at least 8 characters");return;}const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await deriveBackupKey(pass,salt),data=new TextEncoder().encode(JSON.stringify(db));const cipher=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,data);const envelope={format:"kita-chat-encrypted-v1",salt:bytesToB64(salt),iv:bytesToB64(iv),ciphertext:bytesToB64(new Uint8Array(cipher)),createdAt:new Date().toISOString()};saveTextFile("kita-chat-encrypted-backup-"+new Date().toISOString().slice(0,10)+".json", JSON.stringify(envelope), "application/json", "Encrypted backup saved");}
 async function decodeBackup(text){const parsed=JSON.parse(text);if(parsed.format!=="kita-chat-encrypted-v1")return parsed;const pass=await promptDialog("Enter the passphrase used for this backup", "", {title:"Unlock backup",mode:"input",confirmText:"Unlock"});if(!pass)throw new Error("Passphrase required");const key=await deriveBackupKey(pass,b64ToBytes(parsed.salt));const plain=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64ToBytes(parsed.iv)},key,b64ToBytes(parsed.ciphertext));return JSON.parse(new TextDecoder().decode(plain));}
 function importBackup(){const inp=document.createElement("input");inp.type="file";inp.accept="application/json";inp.onchange=async()=>{try{const d=await decodeBackup(await inp.files[0].text());if(!Array.isArray(d.providers)||!Array.isArray(d.conversations))throw new Error();if(generating){toast('Stop the response before restoring a backup');return;}if(!await confirmDialog('Restore will replace existing conversations and settings. Export a backup first. Continue?',{title:'Restore backup',danger:true,confirmText:'Restore'}))return;db=migrateDb({...db,...d});(db.providers||[]).forEach(p=>{if(p.apiKey&&hasNativeSecrets()){try{window.NazSecrets.put(p.secretRef||("provider:"+p.id),p.apiKey);delete p.apiKey;}catch(e){}}});applyTheme();save();renderAll();renderProvList();toast("Backup restored");}catch(e){toast("That backup file is not valid or passphrase was wrong");}};inp.click();}
 

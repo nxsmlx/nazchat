@@ -93,6 +93,10 @@ final class McpHttp {
             }
             JSONObject reply = tokenReplies.poll();
             if (reply == null) throw new AssertionError("Unscripted token request");
+            if (reply.has("__status")) {
+                int status = reply.getInt("__status"); JSONObject errorBody = new JSONObject(reply.toString()); errorBody.remove("__status");
+                return new Response(status, errorBody.toString(), Collections.<String, String>emptyMap());
+            }
             return json(reply);
         }
         throw new AssertionError("Unexpected fake HTTP request: " + method + " " + url);
@@ -113,7 +117,9 @@ final class McpHttp {
             body.append(URLEncoder.encode(key, "UTF-8")).append('=').append(URLEncoder.encode(data.getString(key), "UTF-8"));
         }
         Map<String, String> h = jsonHeaders(); h.put("Content-Type", "application/x-www-form-urlencoded");
-        return new JSONObject(request(url, "POST", h, body.toString(), control).body);
+        Response r = request(url, "POST", h, body.toString(), control);
+        if (r.status / 100 != 2) throw NazOAuthError.from(r.status, r.body);
+        return new JSONObject(r.body);
     }
     static List<Request> forms() {
         List<Request> forms = new ArrayList<Request>();

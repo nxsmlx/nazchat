@@ -226,6 +226,38 @@ public final class NazOAuthBehaviorTest {
                     NazOAuth.REDIRECT + "#fragment", "com.nazchat.app:/other"})
                 check(!NazOAuth.isRedirect(Uri.parse(uri)), "Invalid redirect rejected: " + uri);
         });
+        test("token 400 invalid_target retries once without resource and remembers it", () -> {
+            Session s = new Session(); s.begin("");
+            McpHttp.tokenReplies.add(new JSONObject().put("__status", 400).put("error", "invalid_target").put("error_description", "resource not recognised"));
+            McpHttp.tokenReplies.add(tokens(ACCESS, REFRESH));
+            s.oauth.handleRedirect(s.callback(McpHttp.ISSUER)); s.event("authorized", "Signed in");
+            eq(2, McpHttp.forms().size(), "One retry");
+            check(McpHttp.forms().get(0).form.has("resource"), "First attempt sends resource");
+            check(!McpHttp.forms().get(1).form.has("resource"), "Retry omits resource");
+            eq(true, s.config().optBoolean("noResource"), "Server preference remembered");
+            McpHttp.tokenReplies.add(tokens("next-access", REFRESH));
+            NazOAuth.access(s.activity, s.id, McpHttp.RESOURCE, true, null);
+            check(!McpHttp.forms().get(2).form.has("resource"), "Refresh omits resource too");
+        });
+        test("token 400 shows the server's reason and does not retry other errors", () -> {
+            Session s = new Session(); s.begin("");
+            McpHttp.tokenReplies.add(new JSONObject().put("__status", 400).put("error", "invalid_grant").put("error_description", "Authorization code expired"));
+            s.oauth.handleRedirect(s.callback(McpHttp.ISSUER));
+            JSONObject event = s.event("error", "invalid_grant - Authorization code expired");
+            check(event.getString("message").contains("HTTP 400"), "Status kept");
+            eq(1, McpHttp.forms().size(), "No retry for invalid_grant");
+            check(!s.oauth.hasToken(s.id), "No token stored");
+        });
+        test("invalid_client forgets a rejected metadata-document client", () -> {
+            Session s = new Session(); s.begin("");
+            eq(NazOAuth.CLIENT_DOC, s.browser.getQueryParameter("client_id"), "Started with metadata document");
+            McpHttp.tokenReplies.add(new JSONObject().put("__status", 400).put("error", "invalid_client"));
+            s.oauth.handleRedirect(s.callback(McpHttp.ISSUER)); s.event("error", "invalid_client");
+            eq("", s.config().optString("clientId"), "Rejected client forgotten");
+            eq(true, s.config().optBoolean("skipCimd"), "Metadata document skipped next time");
+            s.oauth.start(McpHttp.RESOURCE, s.id, "");
+            s.event("error", "pre-registered public client ID");
+        });
         System.out.println("RESULT " + passed + " cases passed; " + assertions + " assertions; production NazOAuth; host fixtures only");
     }
 }

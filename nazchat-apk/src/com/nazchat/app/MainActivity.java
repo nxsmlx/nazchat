@@ -27,6 +27,7 @@ public class MainActivity extends Activity {
     private NazOAuth oauth;
     private NazMcp mcp;
     private static final int FILE_PICKER = 7401;
+    private NazFiles files;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +78,8 @@ public class MainActivity extends Activity {
         // Durable state copy: survives a process kill that loses uncommitted localStorage.
         web.addJavascriptInterface(new NazStore(this), "NazStore");
         web.addJavascriptInterface(new NazShare(this), "NazShare");
+        files = new NazFiles(this);
+        web.addJavascriptInterface(files, "NazFiles");
         web.addJavascriptInterface(new NazPreview(), "NazPreview");
         web.addJavascriptInterface(voice, "NazVoice");
         mcp = new NazMcp(this);
@@ -142,6 +145,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == NazFiles.REQUEST) { if (files != null) files.onResult(resultCode, data); return; }
         if (requestCode == FILE_PICKER && fileCallback != null) {
             Uri[] result = null;
             if (resultCode == RESULT_OK && data != null) {

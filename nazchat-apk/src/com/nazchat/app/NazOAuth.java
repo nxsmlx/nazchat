@@ -55,7 +55,9 @@ public final class NazOAuth {
             String clientId=registeredClientId==null?"":registeredClientId.trim();
             JSONObject previous=config(activity,id);
             if(clientId.isEmpty()&&issuer.equals(previous.optString("issuer")))clientId=previous.optString("clientId");
-            if(clientId.isEmpty()&&as.optBoolean("client_id_metadata_document_supported",false))clientId=CLIENT_DOC;
+            boolean sameIssuer=issuer.equals(previous.optString("issuer"));
+            boolean skipCimd=sameIssuer&&previous.optBoolean("skipCimd",false);
+            if(clientId.isEmpty()&&!skipCimd&&as.optBoolean("client_id_metadata_document_supported",false))clientId=CLIENT_DOC;
             if(clientId.isEmpty()&&!as.optString("registration_endpoint").isEmpty()){
                 JSONObject reg=new JSONObject();reg.put("client_name","Kita Chat");reg.put("redirect_uris",new JSONArray().put(REDIRECT));reg.put("grant_types",new JSONArray().put("authorization_code").put("refresh_token"));reg.put("response_types",new JSONArray().put("code"));reg.put("token_endpoint_auth_method","none");reg.put("application_type","native");
                 JSONObject result=McpHttp.postJson(as.getString("registration_endpoint"),reg);
@@ -64,7 +66,7 @@ public final class NazOAuth {
             if(clientId.isEmpty())throw new Exception("Server requires a pre-registered public client ID. Add it in server settings. Redirect: "+REDIRECT);
             String verifier=random(32),state=random(32),scopes=scope(pr,challenge(www,"scope"));
             String codeChallenge=android.util.Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(verifier.getBytes("US-ASCII")),11);
-            JSONObject cfg=new JSONObject();cfg.put("endpoint",endpoint);cfg.put("resource",resource);cfg.put("issuer",issuer);cfg.put("tokenEndpoint",token);cfg.put("clientId",clientId);cfg.put("scopes",scopes);cfg.put("issRequired",as.optBoolean("authorization_response_iss_parameter_supported",false));cfg.put("generation",generation);
+            JSONObject cfg=new JSONObject();cfg.put("endpoint",endpoint);cfg.put("resource",resource);cfg.put("issuer",issuer);cfg.put("tokenEndpoint",token);cfg.put("clientId",clientId);cfg.put("scopes",scopes);cfg.put("issRequired",as.optBoolean("authorization_response_iss_parameter_supported",false));cfg.put("generation",generation);if(skipCimd)cfg.put("skipCimd",true);if(sameIssuer&&previous.optBoolean("noResource",false))cfg.put("noResource",true);
             synchronized(NazOAuth.class){if(!generation.equals(generations.get(id)))throw new Exception("Sign-in was cancelled");store(activity,id,cfg);} // Bind all callbacks to this registration generation.
             JSONObject pending=new JSONObject();pending.put("id",id);pending.put("state",state);pending.put("verifier",verifier);pending.put("created",System.currentTimeMillis());pending.put("config",cfg);
             if(!NazSecrets.putStored(activity,"mcp:pending:"+state,pending.toString()))throw new Exception("Cannot save secure authorization state");
@@ -84,7 +86,15 @@ public final class NazOAuth {
         String iss=uri.getQueryParameter("iss");if((cfg.optBoolean("issRequired")&&iss==null)||(iss!=null&&!iss.equals(cfg.getString("issuer"))))throw new Exception("OAuth response issuer mismatch");
         if(uri.getQueryParameter("error")!=null)throw new Exception("Sign-in was declined or cancelled");String code=uri.getQueryParameter("code");if(code==null||code.isEmpty())throw new Exception("Missing authorization code");
         JSONObject form=new JSONObject();form.put("grant_type","authorization_code");form.put("code",code);form.put("client_id",cfg.getString("clientId"));form.put("redirect_uri",REDIRECT);form.put("code_verifier",pending.getString("verifier"));form.put("resource",cfg.getString("resource"));
-        JSONObject tokens=McpHttp.postForm(cfg.getString("tokenEndpoint"),form);applyTokens(cfg,tokens);
+        if(cfg.optBoolean("noResource",false))form.remove("resource");
+        JSONObject tokens;
+        try{tokens=McpHttp.postForm(cfg.getString("tokenEndpoint"),form);}
+        catch(NazOAuthError e){
+            // Some servers reject RFC 8707 resource indicators: retry once without it.
+            if(e.status==400&&e.rejectsResource()&&form.has("resource")){form.remove("resource");cfg.put("noResource",true);tokens=McpHttp.postForm(cfg.getString("tokenEndpoint"),form);}
+            else{if("invalid_client".equals(e.error))forgetClient(activity,id,cfg);throw e;}
+        }
+        applyTokens(cfg,tokens);
         synchronized(NazOAuth.class){if(!startedGeneration.equals(generation(id))||!config(activity,id).optString("generation").equals(cfg.optString("generation")))throw new Exception("Sign-in was cancelled");store(activity,id,cfg);}event(id,"authorized","Signed in. Refreshing tools.");
     }catch(Exception e){event(id,"error",safe(e));}}},"mcp-oauth-callback").start();}
     private static final java.util.concurrent.ConcurrentHashMap<String,Object> refreshLocks=new java.util.concurrent.ConcurrentHashMap<String,Object>();
@@ -95,11 +105,16 @@ public final class NazOAuth {
         JSONObject cfg=config(a,id);if(cfg.length()==0)return "";
         if(!endpoint.equals(cfg.optString("endpoint")))throw new Exception("Token is bound to another MCP endpoint");
         if((force||cfg.optLong("expires",0)<System.currentTimeMillis()+30000)&&!cfg.optString("refresh_token").isEmpty()){
-            JSONObject form=new JSONObject();form.put("grant_type","refresh_token");form.put("refresh_token",cfg.getString("refresh_token"));form.put("client_id",cfg.getString("clientId"));form.put("resource",cfg.getString("resource"));
+            JSONObject form=new JSONObject();form.put("grant_type","refresh_token");form.put("refresh_token",cfg.getString("refresh_token"));form.put("client_id",cfg.getString("clientId"));if(!cfg.optBoolean("noResource",false))form.put("resource",cfg.getString("resource"));
             applyTokens(cfg,McpHttp.postForm(cfg.getString("tokenEndpoint"),form,control));
             synchronized(NazOAuth.class){if(!startedGeneration.equals(generation(id))||!config(a,id).optString("generation").equals(cfg.optString("generation")))throw new Exception("Authorization changed while refreshing");store(a,id,cfg);}
         }return cfg.optString("access_token");
         }
+    }
+    /** The server does not accept this client: register again next time (and skip the metadata document if that was it). */
+    private static void forgetClient(Activity a,String id,JSONObject cfg){
+        try{synchronized(NazOAuth.class){JSONObject current=config(a,id);if(current.length()==0||!current.optString("generation").equals(cfg.optString("generation")))return;
+            if(CLIENT_DOC.equals(current.optString("clientId")))current.put("skipCimd",true);current.put("clientId","");current.remove("access_token");current.remove("refresh_token");store(a,id,current);}}catch(Exception ignored){}
     }
     private static void applyTokens(JSONObject cfg,JSONObject tokens)throws Exception {
         if(!"bearer".equalsIgnoreCase(tokens.optString("token_type","Bearer")))throw new Exception("Unsupported token type");String access=tokens.optString("access_token");if(access.isEmpty())throw new Exception("No access token returned");
