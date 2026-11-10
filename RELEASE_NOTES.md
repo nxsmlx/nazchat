@@ -1,3 +1,17 @@
+# Kita Chat 4.6.0
+
+Interface update: easier to pick up where you left off, clearer actions and errors, and one-tap connectors.
+
+- Text follows the phone's font size setting (85–150%).
+- Home shows your three most recent chats first once you have chatted, with a compact welcome. "All chats" opens the full list.
+- Answers keep Copy and Regenerate visible; Compare, Review & Improve, Save artifact and Share are under "More actions". Share opens Android's share sheet.
+- A "Latest" button appears when you scroll up, including while an answer is still being written.
+- Provider errors explain what to do (wrong key, no credit, rate limit, provider down, no connection) and offer Try again. An offline notice appears when there is no connection.
+- Tools: Project, Voice, Response style and Library use the same row layout as the switches. Temperature and Top-p show their values beside the label.
+- Skill Library: Create, Import and Update fit in one row, and tapping a skill opens its details.
+- MCP Servers has a Connectors list: Linear, Notion, Sentry, Supabase, Canva, Hugging Face, DeepWiki, Context7, Exa Search and AWS Knowledge, added in one tap. Vercel is listed but only accepts apps it has approved. GitHub, Atlassian, Figma and Box are not supported yet.
+- VersionCode 49, same com.nazchat.app package and original signing identity. Connector sign-in and installation were not tested on a real device.
+
 # Kita Chat 4.5.5
 
 Protects saved data from being lost when the app is updated or closed by Android.

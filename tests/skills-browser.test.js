@@ -89,7 +89,8 @@ function skillData(){return require('../skills.json').skills;}
  assert(await answerBubble.locator('.md').count()>0,'answer body missing');
 
  assert(await answerBubble.locator('.skill-badge').count()>0,'skill badge missing');
- await p.getByRole('button',{name:'Review & Improve',exact:true}).last().click();await p.waitForFunction(()=>!generating);
+ await p.getByRole('button',{name:'More actions',exact:true}).last().click();
+ await p.getByRole('menuitem',{name:'Review & Improve',exact:true}).click();await p.waitForFunction(()=>!generating);
  const reviewSystem=requests.at(-1).messages[0].content;
  for(const id of ['design-critique','code-review','testing']){const s=skillData().find(s=>s.id===id);assert(reviewSystem.includes('[Skill: '+s.name+']\n'+s.content),'review missing '+id);}
  assert.deepStrictEqual((await p.evaluate(()=>conv.messages.at(-1).usedSkills)).sort(),['code-review','design-critique','testing']);

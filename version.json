@@ -1,9 +1,9 @@
 {
-  "version": "4.5.5",
-  "versionCode": 48,
+  "version": "4.6.0",
+  "versionCode": 49,
   "name": "Kita Chat",
-  "changelog": "Keeps your data safe when the app is updated or closed by Android, and lets you reuse API keys whose provider settings were lost.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.5.5/NazChat.apk",
-  "sha256": "b3e505fcc96caefb131abe0c47723c308d2792a771925901506f4fe19e7a57da",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.5.5"
+  "changelog": "Recent chats on Home, clearer answer actions and errors, follows your font size, and one-tap MCP connectors.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.6.0/NazChat.apk",
+  "sha256": "ba5c82adaa9c90440204a587af85f0aa75921ff053fc13150aa2fd987c6db83c",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.6.0"
 }

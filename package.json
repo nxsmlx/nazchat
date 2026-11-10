@@ -1,6 +1,6 @@
 {
   "name": "kita-chat-checks",
-  "version": "4.5.5",
+  "version": "4.6.0",
   "private": true,
   "scripts": {
     "icons:generate": "node scripts/generate-launcher-icons.cjs",
