@@ -32,6 +32,7 @@ async function automaticUpdateCheck(){
  }catch(e){/* Background check failures never block chatting. */}finally{updateCheckBusy=false;}
 }
 window.kitaHandleBack=function(){
+ if(document.querySelector('.msg-menu')){closeMessageMenu();return true;}
  const overlay=studioTopOverlay();if(overlay){document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return true;}
  if(studioView!=='chat'){studioNavigate('chat');return true;}return false;
 };

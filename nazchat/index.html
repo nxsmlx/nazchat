@@ -1506,8 +1506,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.5.5";
-const APP_VERSION_CODE = 48;
+const APP_VERSION = "4.6.0";
+const APP_VERSION_CODE = 49;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2078,33 +2078,70 @@ function renderAssistant(bubble, msg, live){
   if(!live && msg.comparisons?.length){
     const box=el("div","settings-card");box.innerHTML=`<h4>Model comparison</h4>`;msg.comparisons.forEach(c=>{const item=el("div","");item.style.cssText="border-top:1px solid var(--border);padding-top:9px;margin-top:9px";item.innerHTML=`<strong>${esc(c.label)}</strong><small style="display:block;color:var(--text2);margin:3px 0 7px">${c.ms}ms${c.error?" · error":""}</small>`;const out=el("div","md");out.innerHTML=renderMarkdown(c.content);item.appendChild(out);enhance(out);box.appendChild(item);});bubble.appendChild(box);
   }
-  // action bar (not while streaming)
+  // action bar (not while streaming): Copy and Regenerate stay visible, task actions
+  // (Continue, Resume, Preview) appear when relevant, the rest live under "More".
   if(!live){
     const bar = el("div","action-bar");
-    const cp = el("button","act-btn");
-    cp.innerHTML = `⧉ Copy`;
-    cp.onclick = ()=>copyText(msg.content, cp, "✓ Copied!");
-    const rg = el("button","act-btn","Regenerate");
+    const icon = d=>`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+    const cp = el("button","act-btn", icon('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>')+"<span>Copy</span>");
+    cp.onclick = ()=>copyText(msg.content, cp, icon('<path d="M20 6L9 17l-5-5"/>')+"<span>Copied</span>");
+    const rg = el("button","act-btn act-icon", icon('<path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/>'));
+    rg.setAttribute("aria-label","Regenerate"); rg.title="Regenerate";
     rg.onclick = ()=>regenerate(msg);
     bar.appendChild(cp); bar.appendChild(rg);
-    if(msg.comparisons?.length){const compare=el("button","act-btn","Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
-    else if(db.providers.reduce((n,p)=>n+p.selectedModels.length,0)>1){const compare=el("button","act-btn","Compare");compare.onclick=()=>compareLastAnswer(msg);bar.appendChild(compare);}
+    if(msg.failed){ const retry=el("button","act-btn act-primary","Try again"); retry.onclick=()=>regenerate(msg); bar.insertBefore(retry, cp); }
     if(msg.truncated){const cont=el("button","act-btn","Continue");cont.onclick=()=>{if(generating)return;send("Continue exactly where you stopped. Do not repeat text that was already written.",{skipTitle:true});};bar.appendChild(cont);}
     if(msg.phases && !msg.steerContinuation && msg.phases.state==="paused" && (msg.phases.parts||[]).some(p=>p.status!=="done")){
       const resume=el("button","act-btn","Resume build");
       resume.onclick=()=>window.kitaResumeBuild(msg.id);
       bar.appendChild(resume);
     }
+    const more=[];
+    const models=db.providers.reduce((n,p)=>n+p.selectedModels.length,0);
+    if(msg.comparisons?.length || models>1) more.push(["Compare models",()=>compareLastAnswer(msg)]);
     if(/```[\w+-]*\n[\s\S]+/.test(msg.content||"") || extractHtmlBlock(msg.content)){
       const htmlCandidate=extractHtmlBlock(msg.content);
       if(htmlCandidate){const pv=el("button","act-btn","Preview");pv.onclick=()=>openPreview(htmlCandidate,{live:false});bar.appendChild(pv);}
-      const review=el("button","act-btn","Review & Improve");
-      review.onclick=()=>reviewAndImprove(msg);
-      bar.appendChild(review);
-      const artifact=el("button","act-btn","Save artifact");artifact.onclick=()=>saveArtifactFromMessage(msg);bar.appendChild(artifact);
+      more.push(["Review & Improve",()=>reviewAndImprove(msg)]);
+      more.push(["Save artifact",()=>saveArtifactFromMessage(msg)]);
+    }
+    if(typeof window.NazShare==="object" || navigator.share) more.push(["Share",()=>shareText(msg.content)]);
+    if(more.length){
+      const mb=el("button","act-btn act-icon act-more", icon('<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>'));
+      mb.setAttribute("aria-label","More actions"); mb.title="More actions";
+      mb.setAttribute("aria-haspopup","menu"); mb.setAttribute("aria-expanded","false");
+      mb.onclick=(e)=>{ e.stopPropagation(); openMessageMenu(mb, more); };
+      bar.appendChild(mb);
     }
     bubble.appendChild(bar);
   }
+}
+/* Small popover menu for secondary message actions. */
+function closeMessageMenu(){
+  const open=document.querySelector(".msg-menu");
+  if(open){ const owner=open._owner; open.remove(); if(owner){ owner.setAttribute("aria-expanded","false"); } }
+}
+function openMessageMenu(anchor, items){
+  const wasOpen=document.querySelector(".msg-menu")?._owner===anchor;
+  closeMessageMenu(); if(wasOpen) return;
+  const menu=el("div","msg-menu"); menu.setAttribute("role","menu"); menu._owner=anchor;
+  items.forEach(([label,run])=>{ const it=el("button","msg-menu-item"); it.type="button"; it.setAttribute("role","menuitem"); it.textContent=label;
+    it.onclick=()=>{ closeMessageMenu(); anchor.focus({preventScroll:true}); run(); }; menu.appendChild(it); });
+  anchor.closest(".action-bar").appendChild(menu);
+  anchor.setAttribute("aria-expanded","true");
+  menu.querySelector("button")?.focus({preventScroll:true});
+  menu.addEventListener("keydown",e=>{
+    const list=[...menu.querySelectorAll("button")], i=list.indexOf(document.activeElement);
+    if(e.key==="Escape"){ e.preventDefault(); e.stopPropagation(); closeMessageMenu(); anchor.focus(); }
+    else if(e.key==="ArrowDown"){ e.preventDefault(); list[(i+1)%list.length].focus(); }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); list[(i-1+list.length)%list.length].focus(); }
+  });
+}
+document.addEventListener("click",e=>{ if(!e.target.closest(".msg-menu")) closeMessageMenu(); });
+function shareText(text){
+  const value=String(text||"");
+  try{ if(typeof window.NazShare==="object" && window.NazShare.text){ window.NazShare.text(value); return; } }catch(e){}
+  if(navigator.share) navigator.share({text:value}).catch(()=>{});
 }
 function scrollBottom(){ const s=$("#chatScroll"); s.scrollTop = s.scrollHeight; }
 
@@ -2382,8 +2419,10 @@ function renderSkillSheet(){
     visible.forEach(s=>{
       const row=el("div","settings-row skill-row");row.style.alignItems="center";
       const selected=db.skillSettings.selected.includes(s.id);const enabled=skillLibraryOpen?!db.skillSettings.disabled.includes(s.id):selected;
-      row.innerHTML=`<div class="sr-icon">${settingsIcon("skills")}</div><div class="sr-text"><strong>${esc(s.name||s.shortName)}</strong><small>${esc(s.description||s.license||"Local skill")}</small></div>`;
-      const view=el("button","mini-btn","Details");view.onclick=()=>showSkillDetails(s);
+      // The whole name/description area opens the details; the switch stays separate.
+      const view=el("button","skill-open");view.type="button";view.setAttribute("aria-label",(s.name||s.shortName)+" details");
+      view.innerHTML=`<span class="sr-icon">${settingsIcon("skills")}</span><span class="sr-text"><strong>${esc(s.name||s.shortName)}</strong><small>${esc(s.description||s.license||"Local skill")}</small></span>`;
+      view.onclick=()=>showSkillDetails(s);
       const toggle=el("button","switch"+(enabled?" on":""));toggle.setAttribute("role","switch");toggle.setAttribute("aria-checked",String(enabled));toggle.setAttribute("aria-label",(enabled?(skillLibraryOpen?"Disable ":"Deselect "):(skillLibraryOpen?"Enable ":"Select "))+(s.name||s.shortName));
       toggle.onclick=()=>{if(!skillLibraryOpen){db.skillSettings.mode="manual";db.skillSettings.selected=enabled?db.skillSettings.selected.filter(x=>x!==s.id):[...db.skillSettings.selected,s.id];}else{db.skillSettings.disabled=enabled?[...db.skillSettings.disabled,s.id]:db.skillSettings.disabled.filter(x=>x!==s.id);}save();syncToggles();drawSkills();};
       row.appendChild(view);row.appendChild(toggle);list.appendChild(row);
@@ -2393,10 +2432,12 @@ function renderSkillSheet(){
   if(search)search.oninput=drawSkills;body.appendChild(list);drawSkills();
   if(!skillLibraryOpen){const manage=el("button","btn secondary","Open Skill Library");manage.onclick=()=>{skillLibraryOpen=true;renderSkillSheet();};body.appendChild(manage);}
   else{
+    // One compact row: short visible labels, full names for assistive technology.
     const actions=el("div","toolbar-row skill-library-actions");
-    const create=el("button",null,"Create skill");create.onclick=()=>openCustomSkillForm();
-    const imp=el("button",null,"Import SKILL.md / URL");imp.onclick=openSkillImport;
-    const update=el("button",null,"Update pack");update.onclick=async()=>{update.disabled=true;await refreshSkillPack(false);if(update.isConnected)renderSkillSheet();};
+    const action=(text,label,svg)=>{const b=el("button","skill-action",`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${svg}</svg><span>${text}</span>`);b.type="button";b.setAttribute("aria-label",label);return b;};
+    const create=action("Create","Create skill",'<path d="M12 5v14M5 12h14"/>');create.onclick=()=>openCustomSkillForm();
+    const imp=action("Import","Import SKILL.md / URL",'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>');imp.onclick=openSkillImport;
+    const update=action("Update","Update pack",'<path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/>');update.onclick=async()=>{update.disabled=true;await refreshSkillPack(false);if(update.isConnected)renderSkillSheet();};
     actions.append(create,imp,update);body.insertBefore(actions,modes);
     body.appendChild(el("div","hint","Pack v"+skillPack.packVersion+". Custom skills stay on this device. Changes apply to future requests. Up to 3 skills are used per request."));
   }
@@ -2505,14 +2546,27 @@ function saveArtifactFromMessage(msg){
 function renderToolsSheet(){
   const body=$("#toolsSheetBody");body.innerHTML="";
   $('#studioChatControls').hidden=false;$('#toolsSheet .sheet-head h3').textContent='Tools for this conversation';
-  const projectControl=el('button','btn secondary','Project: '+esc(currentProject()?.name||'None'));projectControl.onclick=openStudioProjectPicker;body.appendChild(projectControl);
-  const voice=el("div","settings-card");voice.innerHTML=`<div class="row"><div><h4>Voice</h4><p id="voiceStatus">Dictate a prompt or read the latest answer aloud.</p></div><button class="mini-btn" id="voiceInputBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0014 0M12 18v3M9 21h6"/></svg> Dictate</button></div><button class="mini-btn" id="speakLastBtn" style="margin-top:8px;width:100%"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6l-5 4H4z"/><path d="M17 9a5 5 0 010 6M19.5 6.5a9 9 0 010 11"/></svg> Read latest answer</button>`;body.appendChild(voice);
+  // Same row pattern as the switches above: label and state on the left, control on the right.
+  const chevron='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
+  const rows=el("div","tools-rows");
+  const linkRow=(title,value,label,onclick)=>{const b=el("button","tools-row tools-link");b.type="button";b.setAttribute("aria-label",label);b.innerHTML=`<span><strong>${esc(title)}</strong><small>${esc(value)}</small></span>${chevron}`;b.onclick=onclick;return b;};
+  const projectName=currentProject()?.name||'None';
+  rows.appendChild(linkRow("Project",projectName==='None'?'Not in a project':projectName,'Project: '+projectName,openStudioProjectPicker));
+  const voice=el("div","tools-row");
+  voice.innerHTML=`<span><strong>Voice</strong><small id="voiceStatus">Dictate a prompt or hear the latest answer.</small></span><span class="tools-row-actions"><button class="mini-btn" id="voiceInputBtn" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0014 0M12 18v3M9 21h6"/></svg> Dictate</button><button class="mini-btn" id="speakLastBtn" type="button" aria-label="Read latest answer aloud"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/></svg> Read</button></span>`;
+  rows.appendChild(voice);
+  const style=el("div","tools-row");
+  style.innerHTML=`<span><strong>Response style</strong><small>How answers are written</small></span><span class="tools-row-actions"></span>`;
+  const styles=el("select");styles.setAttribute('aria-label','Response style');styles.innerHTML=`<option value="">Default</option>`+db.styles.map(s=>`<option value="${esc(s.id)}" ${s.id===db.activeStyleId?"selected":""}>${esc(s.name)}</option>`).join("");
+  styles.onchange=()=>{db.activeStyleId=styles.value||null;if(conv)conv.styleId=db.activeStyleId;save();renderToolsSheet();renderStudioContext();};
+  const newStyle=el("button","mini-btn","New");newStyle.id="newStyleTool";newStyle.type="button";newStyle.setAttribute("aria-label","New response style");newStyle.onclick=createStyle;
+  style.querySelector(".tools-row-actions").append(styles,newStyle);
+  rows.appendChild(style);
+  rows.appendChild(linkRow("Library","Saved prompts and artifacts","Open prompt & artifact library",()=>{closeSheet('toolsSheet');studioNavigate('library');}));
+  body.appendChild(rows);
   $("#voiceInputBtn").onclick=()=>startVoiceInput();$("#speakLastBtn").onclick=()=>{const last=conv?.messages?.slice().reverse().find(x=>x.role==="assistant"&&x.content);if(last)speakText(last.content);else toast("No answer to read yet");};
-  const styleBox=el("div","settings-card");styleBox.innerHTML=`<div class="row"><div><h4>Response style</h4><p>${currentStyle()?esc(currentStyle().name):"Default"}</p></div><button class="mini-btn" id="newStyleTool">New</button></div>`;body.appendChild(styleBox);
-  const styles=el("select");styles.setAttribute('aria-label','Response style');styles.innerHTML=`<option value="">Default</option>`+db.styles.map(s=>`<option value="${esc(s.id)}" ${s.id===db.activeStyleId?"selected":""}>${esc(s.name)}</option>`).join("");styles.onchange=()=>{db.activeStyleId=styles.value||null;if(conv)conv.styleId=db.activeStyleId;save();renderToolsSheet();renderStudioContext();};body.appendChild(styles);$("#newStyleTool").onclick=createStyle;
-  const library=el('button','btn secondary','Open prompt & artifact library');library.onclick=()=>{closeSheet('toolsSheet');studioNavigate('library');};body.appendChild(library);
   const paramLabel=el("div","settings-section-label","Model parameters");body.appendChild(paramLabel);
-  const m=currentModel(),params=modelParameters(m);const pbox=el("div","settings-card");pbox.innerHTML=`<p><strong>${m?esc(prettyModel(m.modelId)):"Select a model"}</strong></p><p class="hint">Output length is automatic: Kita Chat always asks for the largest budget the model allows (<strong>${params.max_tokens}</strong> tokens) and adjusts itself if a provider rejects it.</p>`;[['temperature','Temperature',0,2,.1],['top_p','Top-p',0,1,.05]].forEach(([key,label,min,max,step])=>{const l=el("label","fld",label);const range=el("input");range.type="range";range.min=min;range.max=max;range.step=step;range.value=params[key];const val=el("span","hint",String(params[key]));range.oninput=()=>{val.textContent=range.value;};range.onchange=()=>{if(m){const id=m.provider.id+":"+m.modelId;db.parametersByModel[id]={...modelParameters(m),[key]:Number(range.value)};save();}};l.appendChild(range);l.appendChild(val);pbox.appendChild(l);});body.appendChild(pbox);
+  const m=currentModel(),params=modelParameters(m);const pbox=el("div","settings-card");pbox.innerHTML=`<p><strong>${m?esc(prettyModel(m.modelId)):"Select a model"}</strong></p><p class="hint">Output length is automatic: Kita Chat always asks for the largest budget the model allows (<strong>${params.max_tokens}</strong> tokens) and adjusts itself if a provider rejects it.</p>`;[['temperature','Temperature',0,2,.1],['top_p','Top-p',0,1,.05]].forEach(([key,label,min,max,step])=>{const l=el("label","fld param-field");const head=el("span","param-head");head.appendChild(el("span","",label));const range=el("input");range.type="range";range.min=min;range.max=max;range.step=step;range.value=params[key];range.setAttribute("aria-label",label);const val=el("output","param-value",String(params[key]));head.appendChild(val);range.oninput=()=>{val.textContent=range.value;};range.onchange=()=>{if(m){const id=m.provider.id+":"+m.modelId;db.parametersByModel[id]={...modelParameters(m),[key]:Number(range.value)};save();}};l.appendChild(head);l.appendChild(range);pbox.appendChild(l);});body.appendChild(pbox);
 }
 function speakText(text){try{if("speechSynthesis" in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text||"").replace(/```[\s\S]*?```/g,"code block").slice(0,12000));speechSynthesis.speak(u);toast("Reading answer aloud");}else toast("Text-to-speech is not available");}catch(e){toast("Voice output unavailable");}}
 let voiceRecognition=null;
@@ -2572,8 +2626,52 @@ function renderMcpSettings(){
    const remove=el('button','','Remove');remove.onclick=async()=>{if(await confirmDialog('Remove this server and its local tokens?',{title:'Remove MCP server',danger:true,confirmText:'Remove'})){window.NazOAuth?.signOut(s.id);db.mcpServers=mcpServers().filter(x=>x.id!==s.id);save();renderMcpSettings();}};
    actions.append(refresh,sign,edit,remove);list.appendChild(actions);
   }
+  renderMcpConnectorGallery(list);
   list.appendChild(el('div','hint','OAuth redirect URI: com.nazchat.app:/oauth/callback. Servers with pre-registration require a public native client ID. Legacy HTTP+SSE, confidential clients, sampling and elicitation are not supported.'));
  });
+}
+/* Connector gallery: official remote MCP servers that use Streamable HTTP and either
+   need no sign-in or let any app sign in (dynamic registration / client metadata).
+   Endpoints checked against vendor docs and public catalogs in November 2026. */
+const MCP_CONNECTORS=[
+  {name:'Linear',url:'https://mcp.linear.app/mcp',auth:'oauth',about:'Issues, projects and cycles'},
+  {name:'Notion',url:'https://mcp.notion.com/mcp',auth:'oauth',about:'Search and edit pages and databases'},
+  {name:'Sentry',url:'https://mcp.sentry.dev/mcp',auth:'oauth',about:'Errors, issues and releases'},
+  {name:'Supabase',url:'https://mcp.supabase.com/mcp',auth:'oauth',about:'Projects, tables and SQL'},
+  {name:'Canva',url:'https://mcp.canva.com/mcp',auth:'oauth',about:'Find, summarise and create designs'},
+  {name:'Hugging Face',url:'https://huggingface.co/mcp',auth:'none',about:'Models, datasets, Spaces and papers'},
+  {name:'DeepWiki',url:'https://mcp.deepwiki.com/mcp',auth:'none',about:'Ask about any public GitHub repository'},
+  {name:'Context7',url:'https://mcp.context7.com/mcp',auth:'none',about:'Up-to-date library documentation'},
+  {name:'Exa Search',url:'https://mcp.exa.ai/mcp',auth:'none',about:'Web search and page contents'},
+  {name:'AWS Knowledge',url:'https://knowledge-mcp.global.api.aws',auth:'none',about:'AWS documentation and guidance'},
+  {name:'Vercel',url:'https://mcp.vercel.com',auth:'oauth',about:'Projects, deployments and logs',note:'Vercel only accepts apps it has approved, so sign-in may be refused.'}
+];
+function renderMcpConnectorGallery(list){
+  list.appendChild(el('div','settings-section-label','Connectors'));
+  list.appendChild(el('div','hint','Add a known service in one tap. Tools still ask for your approval every time they run.'));
+  const group=el('div','settings-hub-group connector-list');
+  const added=new Set(mcpServers().map(x=>x.url));
+  MCP_CONNECTORS.forEach(c=>{
+    const row=el('div','settings-row connector-row');
+    const text=el('div','sr-text');const title=el('strong');title.textContent=c.name;
+    const sub=el('small');sub.textContent=c.about+' · '+(c.auth==='none'?'No sign-in':'Sign in with '+c.name);
+    text.append(title,sub);
+    if(c.note){const note=el('small','connector-note');note.textContent=c.note;text.appendChild(note);}
+    const has=added.has(c.url);
+    const btn=el('button','mini-btn',has?'Added':'Add');btn.type='button';btn.disabled=has;btn.setAttribute('aria-label',(has?'Added: ':'Add ')+c.name);
+    btn.onclick=async()=>{
+      if(mcpServers().some(x=>x.url===c.url))return;
+      const server={id:uid().slice(0,8),name:c.name,url:c.url,clientId:'',tools:[],enabled:true};
+      mcpServers().push(server);save();
+      if(c.auth==='none'){try{toast((await mcpRefreshTools(server)).length+' tools available from '+c.name);}catch(e){toast(c.name+': '+e.message);}}
+      else if(window.NazOAuth){NazOAuth.start(server.url,server.id,'');toast('Opening '+c.name+' sign-in');}
+      else toast(c.name+' added. Sign in from the installed app.');
+      renderMcpSettings();
+    };
+    row.append(text,btn);group.appendChild(row);
+  });
+  list.appendChild(group);
+  list.appendChild(el('div','hint','Not available yet: GitHub, Atlassian, Figma and Box require apps registered with them in advance or personal access tokens.'));
 }
 function openMcpForm(existing){
  renderSettingsPage(existing?'Edit MCP server':'Add MCP server',null,null,list=>{
@@ -3485,6 +3583,53 @@ function ensureConv(){
 function setSendMode(gen){
   generating = gen; syncComposerSteer();
 }
+/* "Jump to latest": appears when the reader scrolls up away from the newest message,
+   including while an answer is still streaming below. */
+function updateJumpLatest(){
+  const s=$("#chatScroll"), btn=$("#jumpLatest"); if(!s||!btn) return;
+  const away = s.style.display!=="none" && s.scrollHeight - s.scrollTop - s.clientHeight > 400;
+  btn.hidden = !away;
+  btn.classList.toggle("live", away && !!generating);
+}
+(function initJumpLatest(){
+  const wrap=$("#composerWrap"), s=$("#chatScroll"); if(!wrap||!s) return;
+  const btn=el("button","jump-latest",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg><span>Latest</span>');
+  btn.id="jumpLatest"; btn.type="button"; btn.hidden=true; btn.setAttribute("aria-label","Jump to the latest message");
+  btn.onclick=()=>{ s.scrollTo({top:s.scrollHeight, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}); };
+  wrap.appendChild(btn);
+  let queued=false; const schedule=()=>{ if(queued) return; queued=true; requestAnimationFrame(()=>{ queued=false; updateJumpLatest(); }); };
+  s.addEventListener("scroll", schedule, {passive:true});
+  new MutationObserver(schedule).observe($("#chatInner"), {childList:true, subtree:true, characterData:true});
+})();
+/* Turns raw provider / network failures into a sentence people can act on.
+   The original status line is kept underneath for troubleshooting. */
+function friendlyProviderError(raw, model){
+  const text=String(raw||"");
+  const host=(()=>{ try{ return new URL(model?.provider?.baseUrl||"").host; }catch(e){ return "the provider"; } })();
+  const status=Number((text.match(/\bHTTP (\d{3})\b/)||[])[1]||0);
+  let advice;
+  if(/locked to https?:\/\//i.test(text)) return "⚠️ **Error:** "+text;
+  if(!navigator.onLine) advice="You are offline. Connect to the internet and send again.";
+  else if(!status && /network|failed to fetch|connection|timed out|unreachable|refused|resolve/i.test(text)) advice=`Could not reach ${host}. Check your connection and the provider URL.`;
+  else if(status===401) advice=`${host} did not accept the API key (401). Open Settings → Providers and enter the key again.`;
+  else if(status===402 || /insufficient|quota|billing|credit|balance/i.test(text)) advice=`Your ${host} account is out of credit or quota. Check billing with the provider.`;
+  else if(status===403) advice=`${host} refused access (403). The key may not have access to this model.`;
+  else if(status===404) advice=`Model or endpoint not found on ${host} (404). Check the model name and provider URL.`;
+  else if(status===429) advice=`Too many requests to ${host} (429). Wait a moment, then try again.`;
+  else if(status>=500) advice=`${host} had a problem (${status}). Try again shortly.`;
+  if(!advice) return "⚠️ **Error:** "+text;
+  const detail=text.replace(/\s+/g," ").trim().slice(0,220).replace(/`/g,"'");
+  return "⚠️ **Error:** "+advice+(detail?"\n\n`"+detail+"`":"");
+}
+/* Offline notice: chats stay readable, sending needs a connection. */
+function updateOfflineNotice(){
+  let note=$("#offlineNotice");
+  if(!note){ const wrap=$("#composerWrap"); if(!wrap) return; note=el("div","offline-notice","You are offline. Your chats are here; sending needs an internet connection."); note.id="offlineNotice"; note.setAttribute("role","status"); wrap.insertBefore(note, wrap.firstChild); }
+  note.hidden = navigator.onLine !== false;
+}
+window.addEventListener("online", updateOfflineNotice);
+window.addEventListener("offline", updateOfflineNotice);
+updateOfflineNotice();
 function scrollIfNear(){
   if(db.autoScroll===false)return;
   const s = $("#chatScroll");
@@ -3893,7 +4038,8 @@ async function sendResponse(text, opts, run){
         retries++; aiMsg.reasoning=""; aiMsg.content=""; aiMsg._thinkShown=false;
         continue;
       }
-      aiMsg.content += (aiMsg.content?"\n\n":"") + "⚠️ **Error:** "+msg;
+      aiMsg.content += (aiMsg.content?"\n\n":"") + friendlyProviderError(msg, model);
+      aiMsg.failed = true;
     }
     break;
   }

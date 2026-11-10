@@ -11,8 +11,9 @@ const {launch, appUrl, root} = require('./browser');
   fs.mkdirSync(output, {recursive:true});
   let checks = 0;
   try {
-    for (const width of [360, 390, 1440]) {
-      const page = await browser.newPage({viewport:{width, height:width > 760 ? 1000 : 844}, reducedMotion:'reduce'});
+    let current = null;
+    const runWidth = async width => {
+      const page = current = await browser.newPage({viewport:{width, height:width > 760 ? 1000 : 844}, reducedMotion:'reduce'});
       const errors = [];
       page.on('pageerror', e => errors.push(e.message));
       await page.route('https://raw.githubusercontent.com/**', r => r.abort());
@@ -173,6 +174,20 @@ const {launch, appUrl, root} = require('./browser');
       assert.deepEqual(errors,[],`page errors: ${errors.join('; ')}`);
       console.log(`PASS themes at ${width}px: text contrast, surfaces, dialogs, preview, switching, persistence and native sync`);
       await page.close();
+    };
+    // Up to three tries per width: headless Chromium can lose the latest localStorage
+    // write across a file:// navigation, which breaks the persistence check at random.
+    for (const width of [360, 390, 1440]) {
+      for (let tryNo = 1; ; tryNo++) {
+        const before = checks;
+        try { await runWidth(width); break; }
+        catch (error) {
+          await current?.close().catch(() => {});
+          if (tryNo >= 3) throw error;
+          checks = before;
+          console.log(`RETRY width ${width}: ${String(error.message).split('\n')[0]}`);
+        }
+      }
     }
     console.log(`PASS ${checks} theme/screen checks. Screenshots: test-results/themes/`);
   } finally {await browser.close();}

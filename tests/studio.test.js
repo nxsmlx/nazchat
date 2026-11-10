@@ -410,12 +410,15 @@ async function target(page, selector, scroll = false) {
 
     await test('artifact-save-action-and-deduplication', legacyDb(), async page => {
       await page.evaluate(id => studioOpenConversation(db.conversations.find(c => c.id === id)),PROJECT_CHAT);
-      const saveButton = page.locator('#chatInner').getByRole('button',{name:'Save artifact',exact:true});
+      // Secondary actions live in the message's "More actions" menu.
+      await page.locator('#chatInner').getByRole('button',{name:'More actions',exact:true}).last().click();
+      const saveButton = page.locator('#chatInner').getByRole('menuitem',{name:'Save artifact',exact:true});
       await saveButton.click();
       const after = await stored(page);
       const saved = after.artifacts.filter(a => a.conversationId === PROJECT_CHAT && a.content === CODE);
       assert.equal(saved.length,1,'Save artifact did not extract the actual fenced HTML');
       assert.equal(saved[0].kind,'html');
+      await page.locator('#chatInner').getByRole('button',{name:'More actions',exact:true}).last().click();
       await saveButton.click();
       assert.deepEqual((await stored(page)).artifacts,after.artifacts,'repeat save duplicated the artifact');
       await navigate(page,'library');

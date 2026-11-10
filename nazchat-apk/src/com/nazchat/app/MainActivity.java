@@ -55,7 +55,9 @@ public class MainActivity extends Activity {
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         s.setUseWideViewPort(true);
         s.setLoadWithOverviewMode(true);
-        s.setTextZoom(100);
+        // Follow the phone's font size (Settings > Display), clamped so layouts stay usable.
+        float fontScale = getResources().getConfiguration().fontScale;
+        s.setTextZoom(Math.max(85, Math.min(150, Math.round(fontScale * 100))));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         }
@@ -74,6 +76,7 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NazSecrets(this), "NazSecrets");
         // Durable state copy: survives a process kill that loses uncommitted localStorage.
         web.addJavascriptInterface(new NazStore(this), "NazStore");
+        web.addJavascriptInterface(new NazShare(this), "NazShare");
         web.addJavascriptInterface(new NazPreview(), "NazPreview");
         web.addJavascriptInterface(voice, "NazVoice");
         mcp = new NazMcp(this);

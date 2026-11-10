@@ -30,9 +30,21 @@ function renderStudioView(){
 function renderStudioHome(){
   $('#studioGreeting').textContent=currentProject()?'Working in '+currentProject().name:'A fresh thought starts here.';
   const box=$('#studioResume');box.innerHTML='';
-  const recent=[...db.conversations].filter(c=>c.messages?.length&&(!db.activeProjectId||c.projectId===db.activeProjectId)).sort((a,b)=>b.updatedAt-a.updatedAt)[0];
-  if(recent){box.appendChild(el('p','studio-section-title','Pick up where you left off'));const b=el('button','studio-resume-item');b.innerHTML=`<span class="studio-resume-icon">${kitaIcon('chat')}</span><span><strong>${esc(recent.title||'New chat')}</strong><small>${esc(conversationDay(recent.updatedAt))} · ${recent.messages.length} messages</small></span>${kitaIcon('arrow')}`;b.onclick=()=>studioOpenConversation(recent);box.appendChild(b);}
-  else if(!db.providers.length){const b=el('button','studio-resume-item');b.innerHTML=`<span class="studio-resume-icon">${kitaIcon('plus')}</span><span><strong>Connect your first provider</strong><small>Bring your own API key to start chatting</small></span>${kitaIcon('arrow')}`;b.onclick=()=>openProvForm(null);box.appendChild(b);}
+  const home=document.querySelector('.studio-home'),sugg=home?.querySelector('.sugg');
+  const recents=[...db.conversations].filter(c=>c.messages?.length&&(!db.activeProjectId||c.projectId===db.activeProjectId)).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  // Returning users come back to continue: recent chats go first and the welcome copy shrinks.
+  const returning=recents.length>0;
+  home?.classList.toggle('returning',returning);
+  if(home&&sugg){if(returning&&box.nextElementSibling!==sugg)home.insertBefore(box,sugg);else if(!returning&&sugg.nextElementSibling!==box)sugg.after(box);}
+  const item=(icon,title,sub,onclick)=>{const b=el('button','studio-resume-item');b.innerHTML=`<span class="studio-resume-icon">${kitaIcon(icon)}</span><span><strong>${esc(title)}</strong><small>${esc(sub)}</small></span>${kitaIcon('arrow')}`;b.onclick=onclick;return b;};
+  if(!db.providers.length)box.appendChild(returning?item('plus','Connect a provider','Add your API key to keep chatting',()=>openProvForm(null)):item('plus','Connect your first provider','Bring your own API key to start chatting',()=>openProvForm(null)));
+  if(returning){
+    const head=el('div','studio-resume-head');head.appendChild(el('p','studio-section-title','Continue where you left off'));
+    if(recents.length>3){const all=el('button','studio-see-all','All chats');all.type='button';all.onclick=()=>openSidebar();head.appendChild(all);}
+    box.appendChild(head);
+    recents.slice(0,3).forEach(c=>box.appendChild(item('chat',c.title||'New chat',`${conversationDay(c.updatedAt)} · ${c.messages.length} message${c.messages.length===1?'':'s'}`,()=>studioOpenConversation(c))));
+    if(sugg)sugg.setAttribute('aria-label','Start something new');
+  }
 }
 function openStudioProjectPicker(){
   if(!studioCanNavigate())return;
