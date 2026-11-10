@@ -79,7 +79,9 @@ function renderStudioContext(){
   if(db.thinking)chips.push({label:'Thinking · '+db.reasoningEffort,icon:'think',clear:()=>{db.thinking=false;save();syncToggles();}});
   if(db.skillSettings.mode==='manual')chips.push({label:db.skillSettings.selected.length+' skills',icon:'spark',clear:()=>{db.skillSettings.mode='auto';save();syncToggles();}});
   if(style)chips.push({label:style.name,icon:'pen',clear:()=>{db.activeStyleId=null;if(conv)conv.styleId=null;save();renderStudioContext();}});
-  chips.forEach(c=>{const chip=el('div','studio-context-chip');chip.innerHTML=kitaIcon(c.icon);const label=el('span');label.textContent=c.label;chip.appendChild(label);const remove=el('button',null,kitaIcon(c.icon==='folder'?'chevron':'close'));remove.setAttribute('aria-label',(c.icon==='folder'?'Change project: ':'Remove ')+c.label);remove.onclick=()=>{if(generating){toast('Stop the response before changing context.');return;}c.clear();};chip.appendChild(remove);host.appendChild(chip);});host.hidden=!chips.length;
+  // Bypass all is always visible while it is on; removing the chip turns it off.
+  if(permissionMode()==='bypass')chips.unshift({label:'Bypass all: tools run without asking',icon:'spark',warn:true,clear:()=>{db.permissionMode='balanced';save();renderStudioContext();toast('Bypass all is off. Tools ask again.');}});
+  chips.forEach(c=>{const chip=el('div','studio-context-chip'+(c.warn?' warn':''));chip.innerHTML=kitaIcon(c.icon);const label=el('span');label.textContent=c.label;chip.appendChild(label);const remove=el('button',null,kitaIcon(c.icon==='folder'?'chevron':'close'));remove.setAttribute('aria-label',(c.icon==='folder'?'Change project: ':c.warn?'Turn off ':'Remove ')+c.label.split(':')[0]);remove.onclick=()=>{if(generating){toast('Stop the response before changing context.');return;}c.clear();};chip.appendChild(remove);host.appendChild(chip);});host.hidden=!chips.length;
   const count=Number(!!db.search)+Number(!!db.thinking)+Number(db.skillSettings.mode==='manual');const badge=$('.studio-tool-count');if(badge){badge.textContent=count;badge.hidden=!count;}
 }
 function studioEmpty(title,text,action,label){const box=el('div','studio-empty-state');box.innerHTML=`${kitaIcon('folder')}<h2>${esc(title)}</h2><p>${esc(text)}</p>`;if(action){const b=el('button','btn secondary',esc(label));b.onclick=action;box.appendChild(b);}return box;}
@@ -121,6 +123,16 @@ function studioThemeName(){return db.theme==='system'?'System':db.theme==='light
 function renderStudioAppearance(){renderSettingsPage('Appearance',null,null,list=>{
   list.appendChild(el('p','settings-hub-intro','Comfortable in the morning. Easy on the eyes at night.'));
   const grid=el('div','studio-theme-grid');['light','dark','system'].forEach(t=>{const b=el('button','studio-theme-option'+(db.theme===t?' active':''));b.dataset.themeChoice=t;b.setAttribute('aria-pressed',String(db.theme===t));b.innerHTML=`<span class="studio-theme-mini ${t}"></span><span>${t[0].toUpperCase()+t.slice(1)}</span>`;b.onclick=()=>{db.theme=t;applyTheme();save();grid.querySelectorAll('button').forEach(n=>{n.classList.toggle('active',n.dataset.themeChoice===t);n.setAttribute('aria-pressed',String(n.dataset.themeChoice===t));});};grid.appendChild(b);});list.appendChild(grid);
+  // Accent colour: Iris is Kita's identity (and the app icon); the others are personal choices.
+  const swatchColor={iris:'#7c6cf0',lagoon:'#14a394',ocean:'#3b7ce8',sunset:'#ea6a3a',forest:'#3f9a63'};
+  list.appendChild(el('div','settings-section-label','Accent colour'));
+  const accents=el('div','accent-row');accents.setAttribute('role','radiogroup');accents.setAttribute('aria-label','Accent colour');
+  const current=ACCENTS.some(a=>a.id===db.accent)?db.accent:'iris';
+  ACCENTS.forEach(a=>{const b=el('button','accent-swatch',`<i style="background:${swatchColor[a.id]}"></i><span>${a.name}</span>`);b.type='button';b.setAttribute('role','radio');b.setAttribute('aria-checked',String(a.id===current));b.tabIndex=a.id===current?0:-1;b.dataset.accent=a.id;
+    b.onclick=()=>{db.accent=a.id;applyTheme();save();accents.querySelectorAll('.accent-swatch').forEach(n=>{const on=n.dataset.accent===a.id;n.setAttribute('aria-checked',String(on));n.tabIndex=on?0:-1;});};
+    b.onkeydown=e=>{if(!['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(e.key))return;e.preventDefault();const all=[...accents.children],i=all.indexOf(b),next=all[(i+(e.key==='ArrowRight'||e.key==='ArrowDown'?1:all.length-1))%all.length];next.focus();next.click();};
+    accents.appendChild(b);});
+  list.appendChild(accents);
   const card=el('div','settings-hub-group'),row=el('div','settings-row appearance-size-row');row.innerHTML='<div class="sr-text"><strong>Conversation text</strong><small>A little more room to read.</small></div>';const select=el('select');select.setAttribute('aria-label','Conversation text size');select.innerHTML='<option value="small">Small</option><option value="default">Default</option><option value="large">Larger</option><option value="extra">Extra large</option>';select.value=['small','large','extra'].includes(db.textSize)?db.textSize:'default';select.onchange=()=>{db.textSize=select.value;document.documentElement.dataset.textSize=db.textSize;applyComfort();save();};row.appendChild(select);card.appendChild(row);list.appendChild(card);renderComfortControls(list);
 });}
 function renderStudioWorkspaceSettings(){renderSettingsPage('Workspace',null,null,list=>{

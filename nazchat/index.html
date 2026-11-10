@@ -8,6 +8,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; frame-src 'self' blob: data: about:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script>
 // Restore before first paint; keep the existing storage key for installed apps.
+try{const a=JSON.parse(localStorage.getItem("nazchat_v1"))?.accent;if(["lagoon","ocean","sunset","forest"].includes(a))document.documentElement.dataset.accent=a;}catch(e){}
 try{const t=JSON.parse(localStorage.getItem("nazchat_v1"))?.theme;const dark=typeof window.NazTheme?.isSystemDark==='function'?window.NazTheme.isSystemDark():matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=t==="light"||(t==="system"&&!dark)?"light":"dark";}catch(e){document.documentElement.dataset.theme="dark";}
 </script>
 <title>Kita Chat</title>
@@ -51,10 +52,10 @@ try{const t=JSON.parse(localStorage.getItem("nazchat_v1"))?.theme;const dark=typ
   --bg:#fafbfc; --bg2:#ffffff; --bg3:#eceef4; --panel:#ffffff;
   --border:#dce0e9; --line:#e9ecf2; --control-border:#788195;
   --text:#222531; --text2:#626879; --text3:#60697a;
-  --accent:#6653bb; --accent2:#5642aa; --accent-soft:#eeebf9;
-  --user-bubble:#eceef4; --selected:#eeebf9; --selected-border:#8370bf; --hover:#eceef4;
+  --accent:#5b47d6; --accent2:#4c39c0; --accent-soft:#edeafd;
+  --user-bubble:#eceef4; --selected:#edeafd; --selected-border:#7d6be0; --hover:#eceef4;
   --input:#f4f5f8; --sidebar:#eef0f5; --header:#fafbfc;
-  --on-primary:#ffffff; --primary:#6653bb;
+  --on-primary:#ffffff; --primary:#5b47d6;
   --danger:#a92c3b; --danger-fill:#a92c3b; --on-danger:#ffffff;
   --success:#246443; --warning:#80510b; --link:#215cac;
   --code-bg:#f5f6f8; --code-head:#e9edf2; --code-text:#263447;
@@ -357,7 +358,7 @@ label.fld,div.fld{display:flex; flex-direction:column; gap:6px; font-size:13px; 
 /* Toast */
 #toast{position:fixed; bottom:calc(90px + var(--safe-b)); left:50%; transform:translateX(-50%) translateY(20px); background:#333; color:#fff; padding:11px 20px; border-radius:12px; font-size:14px; opacity:0; transition:.25s; z-index:99; pointer-events:none; max-width:88vw; text-align:center;}
 #customDialogScrim{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .18s ease,visibility .18s ease;}
-#customDialogScrim.open{opacity:1;visibility:visible;}
+#customDialogScrim.open{opacity:1;visibility:visible;}#customDialogScrim.settled:not(.open){transition:none;opacity:0;visibility:hidden;pointer-events:none;}
 .custom-dialog{width:min(100%,390px);background:#18181b;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px;box-shadow:0 12px 32px rgba(0,0,0,.5);transform:scale(.96) translateY(6px);transition:transform .18s ease;color:#fafafa;}
 #customDialogScrim.open .custom-dialog{transform:none;}
 .custom-dialog h3{margin:0;font-family:"Space Grotesk",sans-serif;font-size:18px;letter-spacing:-.025em;}
@@ -1506,8 +1507,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.7.0";
-const APP_VERSION_CODE = 52;
+const APP_VERSION = "4.8.0";
+const APP_VERSION_CODE = 53;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1519,6 +1520,8 @@ let customDialogResolve=null;
 function closeCustomDialog(value=null){
   const scrim=$("#customDialogScrim");
   scrim.classList.remove("open"); scrim.setAttribute("aria-hidden","true");
+  // If the fade-out transition stalls, a closed dialog must still never block taps.
+  clearTimeout(scrim._settle); scrim._settle=setTimeout(()=>{ if(!scrim.classList.contains("open")) scrim.classList.add("settled"); },260);
   const resolve=customDialogResolve; customDialogResolve=null;
   if(resolve) resolve(value);
 }
@@ -1534,6 +1537,13 @@ function customDialog(opts={}){
   confirm.textContent=opts.confirmText||(opts.danger?"Delete":mode==="confirm"?"Continue":"Save");
   confirm.className=opts.danger?"danger":"primary";
   cancel.textContent=opts.cancelText||"Cancel";
+  // Optional extra choices (e.g. "Allow for this chat"); each resolves with its own value.
+  let choices=box.querySelector(".custom-dialog-choices");
+  if(!choices){ choices=el("div","custom-dialog-choices"); box.querySelector(".custom-dialog-actions").before(choices); }
+  choices.innerHTML="";
+  (opts.choices||[]).forEach(c=>{ const b=el("button","dialog-choice"); b.type="button"; b.textContent=c.label; b.onclick=()=>closeCustomDialog(c.value); choices.appendChild(b); });
+  choices.hidden=!(opts.choices||[]).length;
+  clearTimeout(scrim._settle); scrim.classList.remove("settled");
   scrim.classList.add("open"); scrim.setAttribute("aria-hidden","false");
   const focusTarget=mode==="input"?input:mode==="textarea"?area:confirm;
   setTimeout(()=>focusTarget.focus(),30);
@@ -2602,7 +2612,7 @@ function startVoiceInput(){
 function openToolsSheet(){syncToggles();renderToolsSheet();openSheet("toolsSheet");}
 
 function settingsIcon(kind){
-  const paths={providers:'<circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16 7l3 3M14 9l2 2"/>',memory:'<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 11h4"/>',mcp:'<path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5"/>',workspace:'<path d="M4 5h6l2 2h8v12H4z"/><path d="M8 12h8M8 16h5"/>',skills:'<path d="M12 3l1.8 5.2L19 10l-4 3.5 1.1 5.2L12 16l-4.1 2.7L9 13.5 5 10l5.2-1.8L12 3z"/>',appearance:'<path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/>',appearanceGear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5v.2h-4v-.2a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 005.6 15a1.6 1.6 0 00-1.5-1H4v-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1L8 4.3l.1.1a1.6 1.6 0 001.8.3 1.6 1.6 0 001-1.5V3h4v.2a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 00-.3 1.8 1.6 1.6 0 001.5 1h.2v4h-.2a1.6 1.6 0 00-1.5 1z"/>',about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'};
+  const paths={permissions:'<path d="M12 3l7 3v6c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>',providers:'<circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16 7l3 3M14 9l2 2"/>',memory:'<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 11h4"/>',mcp:'<path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5"/>',workspace:'<path d="M4 5h6l2 2h8v12H4z"/><path d="M8 12h8M8 16h5"/>',skills:'<path d="M12 3l1.8 5.2L19 10l-4 3.5 1.1 5.2L12 16l-4.1 2.7L9 13.5 5 10l5.2-1.8L12 3z"/>',appearance:'<path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/>',appearanceGear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5v.2h-4v-.2a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 005.6 15a1.6 1.6 0 00-1.5-1H4v-4h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1L8 4.3l.1.1a1.6 1.6 0 001.8.3 1.6 1.6 0 001-1.5V3h4v.2a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 00-.3 1.8 1.6 1.6 0 001.5 1h.2v4h-.2a1.6 1.6 0 00-1.5 1z"/>',about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'};
   return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths[kind]||paths.about}</svg>`;
 }
 function settingsChevron(){return '<svg class="settings-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';}
@@ -2629,8 +2639,9 @@ function renderSettingsHub(){
   group.appendChild(settingsHubRow("workspace","Workspace",`${db.projects.length} projects · ${db.prompts.length} prompts · ${db.artifacts.length} artifacts`,renderStudioWorkspaceSettings));
   group.appendChild(settingsHubRow("skills","Skill Library",`${activeSkills().length} active skills · Pack v${skillPack.packVersion}`,()=>{closeSheet("setSheet");skillLibraryOpen=true;renderSkillSheet();openSheet("skillSheet");}));
   group.appendChild(settingsHubRow("memory","Memory",db.memory.enabled?`${db.memory.items.length} saved notes`:"Off · nothing is remembered",renderMemorySettings));
+  group.appendChild(settingsHubRow("permissions","Permissions",({careful:"Ask before every tool",balanced:"Read-only tools run without asking",bypass:"Bypass all is on"})[permissionMode()],renderPermissionSettings));
   group.appendChild(settingsHubRow("mcp","MCP Servers",`${mcpEnabledServers().length} enabled · ${mcpToolDefs().length} tools`,renderMcpSettings));
-  group.appendChild(settingsHubRow("appearance","Appearance",`${studioThemeName()} theme · ${db.textSize==="large"?"Larger":"Default"} conversation text`,()=>renderSettingsAppearance()));
+  group.appendChild(settingsHubRow("appearance","Appearance",`${studioThemeName()} theme · ${(ACCENTS.find(a=>a.id===db.accent)||ACCENTS[0]).name} accent`,()=>renderSettingsAppearance()));
   group.appendChild(settingsHubRow("about","About",`Kita Chat ${APP_VERSION} · Private BYOK`,()=>renderSettingsAbout()));
   list.appendChild(group);
 }
@@ -2671,6 +2682,58 @@ const MCP_CONNECTORS=[
   {name:'AWS Knowledge',url:'https://knowledge-mcp.global.api.aws',auth:'none',about:'AWS documentation and guidance'},
   {name:'Vercel',url:'https://mcp.vercel.com',auth:'oauth',about:'Projects, deployments and logs',note:'Vercel only accepts apps it has approved, so sign-in may be refused.'}
 ];
+/* Settings → Permissions: mode, per-tool rules, this chat's allowances, activity log. */
+function renderPermissionSettings(){
+ renderSettingsPage("Permissions",null,null,list=>{
+  list.appendChild(el("div","hint","Decide when tools (MCP servers and opening web pages) may run without asking. Private network addresses are always blocked."));
+  const modes=[["careful","Careful","Ask before every tool call and every page the assistant chooses."],["balanced","Balanced (recommended)","Tools marked read-only run without asking. Anything that can change data asks first."],["bypass","Bypass all","Every tool and page runs without asking, including ones that can delete or send. Text in a web page or tool result could then make the assistant act without you seeing it."]];
+  const group=el("div","settings-hub-group permission-modes");group.setAttribute("role","radiogroup");group.setAttribute("aria-label","Permission mode");
+  modes.forEach(([id,title,desc])=>{
+   const b=el("button","settings-row permission-mode"+(id==="bypass"?" danger-mode":""));b.type="button";b.setAttribute("role","radio");b.setAttribute("aria-checked",String(permissionMode()===id));b.dataset.mode=id;
+   b.innerHTML=`<span class="perm-radio" aria-hidden="true"></span><span class="sr-text"><strong>${esc(title)}</strong><small>${esc(desc)}</small></span>`;
+   b.onclick=async()=>{
+    if(id==="bypass"&&permissionMode()!=="bypass"){
+     const ok=await confirmDialog("All tools and pages will run without asking, including tools that can delete data, send messages or make payments. Instructions hidden in a web page or a tool result could make the assistant use them without your approval.\n\nA badge above the message box shows while this is on. Tap its × to turn it off.",{title:"Turn on Bypass all?",confirmText:"Turn on",danger:true});
+     if(!ok)return;
+    }
+    db.permissionMode=id;save();renderStudioContext();renderPermissionSettings();
+   };
+   group.appendChild(b);
+  });
+  list.appendChild(group);
+  // Per-tool rules for connected MCP tools.
+  const servers=mcpServers().filter(s=>(s.tools||[]).length);
+  list.appendChild(el("div","settings-section-label","Tool rules"));
+  if(!servers.length) list.appendChild(el("div","settings-empty","No MCP tools yet. Add a server in Settings → MCP Servers."));
+  servers.forEach(server=>{
+   const g=el("div","settings-hub-group");const head=el("div","settings-row");head.innerHTML=`<div class="sr-text"><strong>${esc(server.name)}</strong><small>${server.tools.length} tools</small></div>`;g.appendChild(head);
+   server.tools.forEach(tool=>{
+    const key=toolRuleKey(server,tool),risk=toolRisk(tool),row=el("div","settings-row tool-rule-row");
+    row.innerHTML=`<div class="sr-text"><strong>${esc(tool.name)}</strong><small>${risk==="read"?"Read-only":risk==="destructive"?"Destructive":"Can change data"}</small></div>`;
+    const sel=el("select");sel.setAttribute("aria-label","Rule for "+tool.name);
+    sel.innerHTML=`<option value="">Ask</option>${risk==="destructive"?"":'<option value="allow">Always allow</option>'}<option value="block">Block</option>`;
+    sel.value=(db.toolRules||{})[key]||"";
+    sel.onchange=()=>{const rules={...(db.toolRules||{})};if(sel.value)rules[key]=sel.value;else delete rules[key];db.toolRules=rules;save();};
+    row.appendChild(sel);g.appendChild(row);
+   });
+   list.appendChild(g);
+  });
+  if(conv&&((conv.toolAllow||[]).length||(conv.siteAllow||[]).length)){
+   const reset=el("button","btn secondary",`Clear allowances for this chat (${(conv.toolAllow||[]).length+(conv.siteAllow||[]).length})`);
+   reset.onclick=()=>{conv.toolAllow=[];conv.siteAllow=[];save();renderPermissionSettings();toast("This chat will ask again");};list.appendChild(reset);
+  }
+  // Activity log of automatic approvals.
+  list.appendChild(el("div","settings-section-label","Ran without asking (latest first)"));
+  const log=(Array.isArray(db.toolActivity)?db.toolActivity:[]).slice().reverse().slice(0,30);
+  if(!log.length) list.appendChild(el("div","settings-empty","Nothing yet."));
+  else{
+   const g=el("div","settings-hub-group activity-log");
+   log.forEach(e=>{const row=el("div","settings-row");const text=el("div","sr-text");const t=el("strong");t.textContent=(e.server?e.server+" · ":"")+e.tool;const sm=el("small");sm.textContent=new Date(e.at).toLocaleString()+" · "+e.how+(e.args?" · "+e.args:"");text.append(t,sm);row.appendChild(text);g.appendChild(row);});
+   list.appendChild(g);
+   const clear=el("button","btn secondary","Clear activity log");clear.onclick=()=>{db.toolActivity=[];save();renderPermissionSettings();};list.appendChild(clear);
+  }
+ });
+}
 function renderMcpConnectorGallery(list){
   list.appendChild(el('div','settings-section-label','Connectors'));
   list.appendChild(el('div','hint','Add a known service in one tap. Tools still ask for your approval every time they run.'));
@@ -3435,7 +3498,7 @@ async function mcpCallTool(server,toolName,args){
 async function mcpRefreshTools(server){
  const tools=[];let cursor;const cursors=new Set();
  do{const r=await mcpRequest(server,'tools/list',cursor?{cursor}:{});tools.push(...(Array.isArray(r.tools)?r.tools:[]));cursor=r.nextCursor;if(cursor&&cursors.has(cursor))throw new Error('Repeated MCP pagination cursor');if(cursor)cursors.add(cursor);}while(cursor&&tools.length<100&&cursors.size<10);
- server.tools=tools.slice(0,100).filter(t=>typeof t.name==='string'&&t.name.length>0).map(t=>({name:t.name.slice(0,120),description:String(t.description||'').slice(0,500),inputSchema:t.inputSchema&&typeof t.inputSchema==='object'?t.inputSchema:{type:'object',properties:{}}}));
+ server.tools=tools.slice(0,100).filter(t=>typeof t.name==='string'&&t.name.length>0).map(t=>({name:t.name.slice(0,120),description:String(t.description||'').slice(0,500),annotations:{readOnlyHint:t.annotations?.readOnlyHint===true,destructiveHint:t.annotations?.destructiveHint===true},inputSchema:t.inputSchema&&typeof t.inputSchema==='object'?t.inputSchema:{type:'object',properties:{}}}));
  server.toolCount=server.tools.length;server.connectedAt=Date.now();save();return server.tools;
 }
 window.nazMcpOAuth=async payload=>{
@@ -3448,12 +3511,35 @@ window.nazMcpOAuth=async payload=>{
  if($('#setSheet').classList.contains('open')&&$('#setSheetTitle').textContent==='MCP Servers')renderMcpSettings();
 };
 setTimeout(()=>{try{const event=window.NazOAuth?.consumeEvent();if(event)window.nazMcpOAuth(event);}catch(e){}},100);
+/* Tool permissions. Modes: careful (ask for every call), balanced (default: read-only
+   tools run without asking) and bypass (approve everything, shown as a badge above the
+   composer). Per-tool rules (Always / Block) live in db.toolRules; "Allow for this chat"
+   lives on the conversation. Tools marked destructive are never "always allowed" by a
+   rule, only by Bypass all. Every automatic approval is written to the activity log. */
+const PERMISSION_MODES=["careful","balanced","bypass"];
+function permissionMode(){ return PERMISSION_MODES.includes(db.permissionMode) ? db.permissionMode : "balanced"; }
+function toolRuleKey(server,tool){ return server.id+":"+tool.name; }
+function toolRisk(tool){ const a=tool?.annotations||{}; return a.destructiveHint ? "destructive" : a.readOnlyHint ? "read" : "write"; }
+function logToolActivity(entry){ db.toolActivity=(Array.isArray(db.toolActivity)?db.toolActivity:[]).concat({...entry,at:Date.now()}).slice(-60); save(); }
 async function confirmMcpCall(name,args){
  const target=mcpToolTarget(name);if(!target)return false;
+ const key=toolRuleKey(target.server,target.tool),rule=(db.toolRules||{})[key],risk=toolRisk(target.tool),mode=permissionMode();
+ const log=how=>logToolActivity({kind:"tool",server:target.server.name,tool:target.tool.name,how,args:JSON.stringify(args).slice(0,240)});
+ if(rule==="block"){log("blocked");return false;}
+ if(mode==="bypass"){log("Bypass all");return true;}
+ if(rule==="allow"&&risk!=="destructive"){log("Always allowed");return true;}
+ if(conv&&(conv.toolAllow||[]).includes(key)){log("Allowed for this chat");return true;}
+ if(mode==="balanced"&&risk==="read"){log("Read-only");return true;}
  const signal=currentAbortSignal();if(signal?.aborted)return false;
  const abort=()=>$('#customDialogCancel')?.click();signal?.addEventListener('abort',abort,{once:true});
- try{return !!await confirmDialog('Allow an external tool to run?\n\nServer: '+target.server.name+'\nEndpoint: '+target.server.url+'\nTool: '+target.tool.name+'\nArguments: '+JSON.stringify(args).slice(0,1200)+'\n\nThis tool may change remote data. Stopping a request cannot undo changes.',{title:'Confirm MCP tool call',confirmText:'Allow once'});}
- finally{signal?.removeEventListener('abort',abort);}
+ const riskLine=risk==="read"?"Read-only tool.":risk==="destructive"?"Marked as destructive: it can delete, send or pay.":"This tool may change remote data.";
+ const choices=[{label:"Allow for this chat",value:"chat"}].concat(risk==="destructive"?[]:[{label:"Always allow this tool",value:"always"}]);
+ try{
+  const answer=await customDialog({title:"Allow this tool to run?",message:'Server: '+target.server.name+'\nEndpoint: '+target.server.url+'\nTool: '+target.tool.name+'\nArguments: '+JSON.stringify(args).slice(0,1200)+'\n\n'+riskLine+' Stopping a request cannot undo changes.',confirmText:"Allow once",cancelText:"Decline",choices});
+  if(answer==="chat"&&conv){conv.toolAllow=[...new Set([...(conv.toolAllow||[]),key])];save();}
+  if(answer==="always"){db.toolRules={...(db.toolRules||{}),[key]:"allow"};save();}
+  return !!answer;
+ }finally{signal?.removeEventListener('abort',abort);}
 }
 /* fetch_url opens a page without asking only when the user typed or pasted that exact
    address, or a web search in this answer returned it. Any other URL was composed by the
@@ -3480,10 +3566,17 @@ async function confirmFetchUrl(url, msg){
   const wanted=normalizeToolUrl(url); if(!wanted) return false;
   if(userProvidedUrls().has(wanted)) return true;
   if((msg?.sources||[]).some(s=>normalizeToolUrl(s.url)===wanted)) return true;
+  const origin=(()=>{ try{ return new URL(wanted).origin; }catch(e){ return ""; } })();
+  if(permissionMode()==="bypass"){ logToolActivity({kind:"page",tool:"fetch_url",how:"Bypass all",args:wanted.slice(0,240)}); return true; }
+  if(origin && (conv?.siteAllow||[]).includes(origin)){ logToolActivity({kind:"page",tool:"fetch_url",how:"Site allowed for this chat",args:wanted.slice(0,240)}); return true; }
   const signal=currentAbortSignal(); if(signal?.aborted) return false;
   const abort=()=>$('#customDialogCancel')?.click(); signal?.addEventListener('abort',abort,{once:true});
   const shown=wanted.length>600 ? wanted.slice(0,600)+"… ("+wanted.length+" characters)" : wanted;
-  try{ return !!await confirmDialog('The assistant wants to open a page you did not type and no search returned.\n\n'+shown+'\n\nA page address can carry text from this chat to that website. Only allow it if you expect this page.',{title:'Open this page?',confirmText:'Open once'}); }
+  try{
+    const answer=await customDialog({title:'Open this page?',message:'The assistant wants to open a page you did not type and no search returned.\n\n'+shown+'\n\nA page address can carry text from this chat to that website. Only allow it if you expect this page.',confirmText:'Open once',cancelText:'Cancel',choices:origin?[{label:'Allow '+new URL(origin).host+' for this chat',value:'site'}]:[]});
+    if(answer==='site'&&conv&&origin){conv.siteAllow=[...new Set([...(conv.siteAllow||[]),origin])];save();}
+    return !!answer;
+  }
   finally{ signal?.removeEventListener('abort',abort); }
 }
 /* The Search chip controls whether the web_search tool is offered; fetch_url stays available. */
@@ -4533,9 +4626,15 @@ $("#themeBtn").onclick = ()=>{
   db.theme = document.documentElement.dataset.theme==="dark"?"light":"dark";
   applyTheme(); save();
 };
+const ACCENTS = [
+  {id:"iris", name:"Iris"}, {id:"lagoon", name:"Lagoon"}, {id:"ocean", name:"Ocean"},
+  {id:"sunset", name:"Sunset"}, {id:"forest", name:"Forest"}
+];
 function applyTheme(){
   const light = db.theme === "light" || (db.theme === "system" && !studioSystemIsDark());
   document.documentElement.dataset.theme = light ? "light" : "dark";
+  const accent = ACCENTS.some(a=>a.id===db.accent) ? db.accent : "iris";
+  if(accent==="iris") delete document.documentElement.dataset.accent; else document.documentElement.dataset.accent = accent;
   const palette = getComputedStyle(document.documentElement);
   const bg = palette.getPropertyValue("--bg").trim();
   document.querySelector('meta[name=theme-color]').content = bg;

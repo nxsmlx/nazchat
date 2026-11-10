@@ -65,7 +65,7 @@ const assert=require('assert');
   await p.evaluate(()=>closeSheet('modelSheet'));
   await p.evaluate(()=>{renderProvList();openSheet('setSheet');});await p.waitForTimeout(100);
   const hub=await p.evaluate(()=>({title:document.querySelector('#setSheetTitle').textContent,rows:document.querySelectorAll('.settings-hub-row').length,providerCards:document.querySelectorAll('.provider-card').length}));
-  assert(hub.title==='Settings'&&hub.rows===7,'settings hub is not grouped: '+JSON.stringify(hub));
+  assert(hub.title==='Settings'&&hub.rows===8,'settings hub is not grouped: '+JSON.stringify(hub));
   assert(hub.providerCards===0,'provider list leaked into settings hub');
   await p.evaluate(()=>document.querySelector('.settings-hub-row').click());await p.waitForTimeout(100);
   assert(await p.locator('#setSheetTitle').filter({hasText:'Providers'}).count(),'provider drill-down did not open');
