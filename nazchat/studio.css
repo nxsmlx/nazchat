@@ -3614,3 +3614,6 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .code-check { margin: 10px 0 0; padding: 8px 12px; border-radius: 12px; font-size: 12.5px; line-height: 1.5; overflow-wrap: anywhere; }
 .code-check.ok { background: var(--accent-soft); color: var(--text); }
 .code-check.warn { border: 1px solid var(--border); background: var(--bg2); color: var(--text2); }
+/* Content regions are focused programmatically after navigation (screen readers start
+   there); they are not controls, so they draw no focus ring. */
+#workspaceView:focus, #chatScroll:focus, #empty:focus { outline: none; }
