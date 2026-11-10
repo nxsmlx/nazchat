@@ -1,9 +1,9 @@
 {
-  "version": "4.6.1",
-  "versionCode": 50,
+  "version": "4.7.0",
+  "versionCode": 52,
   "name": "Kita Chat",
-  "changelog": "Backups and downloads now save on Android, and MCP sign-in errors show the server's reason.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.6.1/NazChat.apk",
-  "sha256": "ef83b1147c9c5c956b5505985603521d27b8a46361e7a3ce21f4e2ef14e10c25",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.6.1"
+  "changelog": "Answers continue after a dropped connection, web pages are tested and fixed automatically, long chats are summarised, and a new glass navigation bar.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.7.0/NazChat.apk",
+  "sha256": "8bf5e58fc8860ceca0be24e464fa929d8c42f4710941f08c396709dec07e5832",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.7.0"
 }
