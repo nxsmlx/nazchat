@@ -1506,8 +1506,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.6.1";
-const APP_VERSION_CODE = 50;
+const APP_VERSION = "4.6.2";
+const APP_VERSION_CODE = 51;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2102,7 +2102,8 @@ function renderAssistant(bubble, msg, live){
     rg.setAttribute("aria-label","Regenerate"); rg.title="Regenerate";
     rg.onclick = ()=>regenerate(msg);
     bar.appendChild(cp); bar.appendChild(rg);
-    if(msg.failed){ const retry=el("button","act-btn act-primary","Try again"); retry.onclick=()=>regenerate(msg); bar.insertBefore(retry, cp); }
+    if(msg.failed && msg.interrupted && !msg.truncated){ const cont=el("button","act-btn act-primary","Continue"); cont.onclick=()=>{ if(generating) return; send("Continue exactly where your previous reply stopped. Do not repeat text that was already written.",{skipTitle:true}); }; bar.insertBefore(cont, cp); }
+    if(msg.failed){ const retry=el("button","act-btn","Try again"); retry.title="Start this answer again"; retry.onclick=()=>regenerate(msg); bar.insertBefore(retry, cp); }
     if(msg.truncated){const cont=el("button","act-btn","Continue");cont.onclick=()=>{if(generating)return;send("Continue exactly where you stopped. Do not repeat text that was already written.",{skipTitle:true});};bar.appendChild(cont);}
     if(msg.phases && !msg.steerContinuation && msg.phases.state==="paused" && (msg.phases.parts||[]).some(p=>p.status!=="done")){
       const resume=el("button","act-btn","Resume build");
@@ -3302,9 +3303,17 @@ const PHASE_BUILD = {
   planBudget: 1024,      // the plan call is deliberately tiny
 };
 /* Requests that look like a full artifact build get split into parts. */
+/* Models that reason natively (reasoning_effort / reasoning content). */
+function hasNativeReasoning(model){
+  const id=String(model?.modelId||"").toLowerCase();
+  if(model?.provider?.capabilities?.reasoning===true) return true;
+  return /(^|[\/:-])(o[1-9](-|$)|o[1-9]-mini|gpt-5|deepseek-r1|deepseek-reasoner|qwq|qwen3|claude-(opus|sonnet)-4|gemini-2\.5|gemini-3|grok-[34]|magistral|kimi-k2-thinking|glm-4\.[5-9])|reason|thinking/.test(id);
+}
 function isLongBuildRequest(text){
   const t=String(text||"");
-  if(t.length>180) return true;
+  // Length alone is not intent: a long question or pasted code must get a normal answer.
+  // Questions about existing code/errors are never builds.
+  if(/```|\b(error|ralat|bug|exception|traceback|typeerror|referenceerror|syntaxerror|kenapa|why|debug)\b/i.test(t)) return false;
   return /\b(landing page|web app|website|laman|halaman web|aplikasi web|dashboard|portfolio|portofolio|single[- ]page|html (page|page lengkap|lengkap)|full (page|site|html|report|article)|siap(?:kan)? (page|laman|laporan|artikel)|buat.*(page|laman|web|aplikasi|dashboard|laporan|artikel panjang)|write a (long|full|complete)|multi[- ]section)\b/i.test(t)
     && /\b(page|laman|web|site|app|aplikasi|dashboard|report|laporan|article|artikel|website)\b/i.test(t);
 }
@@ -3612,6 +3621,22 @@ function updateJumpLatest(){
   s.addEventListener("scroll", schedule, {passive:true});
   new MutationObserver(schedule).observe($("#chatInner"), {childList:true, subtree:true, characterData:true});
 })();
+/* Error notes appended to an answer are for the reader, not part of the model's text. */
+function stripErrorNote(text){ return String(text||"").replace(/\n*⚠️ \*\*Error:\*\*[\s\S]*$/,""); }
+/* Network drops, early stream ends and transient gateway errors are worth retrying. */
+function isInterruption(message){
+  const t=String(message||"");
+  if(/\bHTTP (502|503|504|520|522|524|529)\b/.test(t)) return true;
+  if(/\bHTTP [45]\d\d\b/.test(t)) return false;
+  return /network|connection|timed? ?out|stream ended early|socket|reset|unexpected end|failed to fetch|econn|eof|broken pipe|unreachable/i.test(t);
+}
+function continuationPrompt(partial){
+  const tail=String(partial||"").slice(-400);
+  return "Your previous reply was cut off by a connection problem. Continue exactly from the next character after this ending, without repeating anything, without restarting and without a preamble. If the ending is inside a code block, continue the code inside that block.\n[Ending of your reply so far]\n"+tail+"\n[End]";
+}
+function abortableDelay(ms){
+  return new Promise(resolve=>{ const sig=currentAbortSignal(); const t=setTimeout(resolve,ms); sig?.addEventListener("abort",()=>{clearTimeout(t);resolve();},{once:true}); });
+}
 /* Turns raw provider / network failures into a sentence people can act on.
    The original status line is kept underneath for troubleshooting. */
 function friendlyProviderError(raw, model){
@@ -3703,7 +3728,7 @@ async function sendResponse(text, opts, run){
   // Build a bounded request history. Active skills affect this request only and remain visible on the answer.
   const prevHtml = opts.review ? "" : lastHtmlArtifact();
   const editingPage = !steerMode && !!prevHtml && isEditRequest(text);
-  let history = conv_.messages.filter(m=>(m.role==="user"||m.role==="assistant") && m.id!==aiMsg.id && m.id!==opts.steerMessageId && m.steerState!=="cancelled" && (opts.editing || steerMode || m.id!==userMsg.id)).slice(-30).map(m=>({role:m.role, content:m.role==="user" ? apiContent(m.content,m.attachments||[]) : m.id===opts.steerSourceId ? (String(m.content||"").length>60000?"[Earlier output omitted from this request for context length. The full partial response remains in the conversation.]\n":"")+String(m.content||"").slice(-60000)+"\n[Interrupted response. Only the supplied output is available.]" : m.content}));
+  let history = conv_.messages.filter(m=>(m.role==="user"||m.role==="assistant") && m.id!==aiMsg.id && m.id!==opts.steerMessageId && m.steerState!=="cancelled" && (opts.editing || steerMode || m.id!==userMsg.id)).slice(-30).map(m=>({role:m.role, content:m.role==="user" ? apiContent(m.content,m.attachments||[]) : m.id===opts.steerSourceId ? (String(m.content||"").length>60000?"[Earlier output omitted from this request for context length. The full partial response remains in the conversation.]\n":"")+String(m.content||"").slice(-60000)+"\n[Interrupted response. Only the supplied output is available.]" : stripErrorNote(m.content)}));
   if(steerMode){
     const source=conv_.messages.find(m=>m.id===opts.steerSourceId);
     const continuation=source?.phases
@@ -3745,8 +3770,9 @@ async function sendResponse(text, opts, run){
   }
 
   // thinking param
-  if(db.thinking){
-    history = history.map(h=>h.role==="system"?h:h);
+  // Models with native reasoning get only the reasoning parameter; asking them to also
+  // write <think> tags makes them reason twice (slower, costlier). Others get the tag prompt.
+  if(db.thinking && !hasNativeReasoning(model)){
     history.unshift({role:"system", content:"Think step by step inside "+THINK_OPEN+"..."+THINK_CLOSE+" tags first, then give your final answer after the closing tag."});
   }
 
@@ -3860,13 +3886,21 @@ async function sendResponse(text, opts, run){
         const body = { model:model.modelId, messages:msgs, stream:true, temperature:.6, top_p:1, max_tokens: params0.max_tokens };
         let out = "", fin = null;
         const startedAt = Date.now();
-        try{
-          out = await collectStream(model, url, body, { onDelta:t=>{ out=t; part.chars=t.length; setPhaseStream(t); }, onFinish:fr=>{ fin=fr; } });
-        }catch(e){
-          if(e.name==="AbortError" || !generating){ part.status="pending"; paint(); cleanupStream(); finalizeAbort(); return; }
-          part.status = "failed"; part.error = String(e.message||e).slice(0,240); paint();
-          break; // keep the parts already written; the user can resume
+        // A dropped connection retries this one part (up to twice); finished parts are kept.
+        let partFailed = false;
+        for(let attempt=0;;attempt++){
+          try{
+            out = ""; fin = null;
+            out = await collectStream(model, url, body, { onDelta:t=>{ out=t; part.chars=t.length; setPhaseStream(t); }, onFinish:fr=>{ fin=fr; } });
+            break;
+          }catch(e){
+            if(e.name==="AbortError" || !generating){ part.status="pending"; paint(); cleanupStream(); finalizeAbort(); return; }
+            if(attempt < 2 && isInterruption(e.message)){ setPhaseNote(`Connection lost. Retrying part ${i+1} (${attempt+1}/2)…`); await abortableDelay((attempt+1)*2000); if(!generating||currentAbortSignal()?.aborted){ part.status="pending"; paint(); cleanupStream(); finalizeAbort(); return; } continue; }
+            part.status = "failed"; part.error = String(e.message||e).slice(0,240); paint();
+            partFailed = true; break;
+          }
         }
+        if(partFailed) break; // keep the parts already written; the user can resume
         out = String(out||"").trim();
         part.ms = Date.now()-startedAt;
         if(!out){ part.status = "skipped"; paint(); continue; }
@@ -3925,6 +3959,8 @@ async function sendResponse(text, opts, run){
     }
   }
 
+  // Reconnect state: text already received is carried into the next attempt.
+  let carried = "", autoContinues = 0, sawEnd = false, contPairAt = -1;
   while(true){
   if(currentAbortSignal()?.aborted)break;
   const params=modelParameters(model);
@@ -3932,8 +3968,8 @@ async function sendResponse(text, opts, run){
   const body = p.apiType==="responses"
     ? { model: model.modelId, input: history.map(h=>({role:h.role, content:h.content})), stream:true, temperature:params.temperature, top_p:params.top_p, max_output_tokens:params.max_tokens, ...(toolsOn?{tools:toolsToResponses(activeTools)}:{}), ...(db.thinking?{reasoning:{effort:db.reasoningEffort}}:{}) }
     : { model: model.modelId, messages: history, stream:true, temperature:params.temperature, top_p:params.top_p, max_tokens:params.max_tokens, ...(toolsOn?{tools:activeTools, tool_choice:"auto"}:{}), ...(db.thinking?{reasoning_effort:db.reasoningEffort}:{}) };
-  aiMsg.content=""; aiMsg.reasoning=""; aiMsg._thinkShown=false; thinkStart=null; lastPaint=0; lastDataAt=Date.now();
-  pendingToolCalls=[]; finishReason=null;
+  aiMsg.content=carried; aiMsg.reasoning=""; aiMsg._thinkShown=false; thinkStart=null; lastPaint=0; lastDataAt=Date.now();
+  pendingToolCalls=[]; finishReason=null; sawEnd=false;
   startWatchdog();
 
   let SSE_ITER = null;
@@ -3983,12 +4019,13 @@ async function sendResponse(text, opts, run){
         const t = (rawLine||"").trim();
         if(!t.startsWith("data:")) continue;
         const payload = t.slice(5).trim();
-        if(payload === "[DONE]") continue;
+        if(payload === "[DONE]"){ sawEnd = true; continue; }
         let j; try{ j = JSON.parse(payload); }catch(e){ continue; }
         // chat completions
         const choice = j.choices?.[0];
         const d = choice?.delta;
-        if(choice?.finish_reason) finishReason = choice.finish_reason;
+        if(choice?.finish_reason){ finishReason = choice.finish_reason; sawEnd = true; }
+        if(j.type === "response.completed" || j.type === "response.incomplete" || j.type === "response.done") sawEnd = true;
         if(d){
           // Reasoning cap: thinking is useful, but it must not eat the answer's budget.
           if(aiMsg.reasoning.length < REASONING_CHAR_CAP){
@@ -4032,12 +4069,33 @@ async function sendResponse(text, opts, run){
         if(j.usage) aiMsg.usage=j.usage;
         liveRender();
     }
+    // A stream that stops without an end marker after new text was cut off, not finished.
+    // (On a reconnect, an attempt that brings nothing and no end marker failed too.)
+    if(!sawEnd && !currentAbortSignal()?.aborted && (aiMsg.content.length > carried.length || autoContinues > 0)) throw new Error("Network error: the response stream ended early");
     cleanupStream();
     if(HAS_NATIVE && sid !== null){ try{ NazStream.close(sid); }catch(e){} }
   }catch(e){
     cleanupStream();
+    if(HAS_NATIVE && sid !== null){ try{ NazStream.close(sid); }catch(err){} }
     if(e.name !== "AbortError"){
       const msg = String(e.message||e);
+      // Connection lost: reconnect and continue from the text already received (twice).
+      if(autoContinues < 2 && isInterruption(msg) && !currentAbortSignal()?.aborted){
+        autoContinues++;
+        aiMsg.reconnects = autoContinues;
+        setStreamNote(`Connection lost. Reconnecting and continuing (${autoContinues}/2)…`);
+        await abortableDelay(autoContinues*2000);
+        if(currentAbortSignal()?.aborted) break;
+        const partial = aiMsg.content;
+        if(partial.trim()){
+          carried = partial;
+          if(contPairAt >= 0) history.splice(contPairAt, 2);
+          contPairAt = history.length;
+          history.push({role:"assistant", content:partial}, {role:"user", content:continuationPrompt(partial)});
+        }
+        aiMsg.reasoning=""; aiMsg._thinkShown=false;
+        continue;
+      }
       // Token ceilings are learned automatically on the first rejection, then retried silently.
       if(retries < 2 && isTokenLimitError(msg) && learnTokenCeiling(model, msg, modelParameters(model).max_tokens)){
         retries++; aiMsg.reasoning=""; aiMsg.content=""; aiMsg._thinkShown=false;
@@ -4049,6 +4107,7 @@ async function sendResponse(text, opts, run){
         retries++; aiMsg.reasoning=""; aiMsg.content=""; aiMsg._thinkShown=false;
         continue;
       }
+      if(aiMsg.content.trim()) aiMsg.interrupted = true;
       aiMsg.content += (aiMsg.content?"\n\n":"") + friendlyProviderError(msg, model);
       aiMsg.failed = true;
     }
@@ -4058,7 +4117,7 @@ async function sendResponse(text, opts, run){
   // Tools the model asked for are executed here, then the answer continues.
   const calls = pendingToolCalls.filter(c=>c && c.name);
   if(calls.length && toolsOn && rounds < MAX_TOOL_ROUNDS && generating && !currentAbortSignal()?.aborted){
-    rounds++;
+    rounds++; carried = ""; contPairAt = -1;
     const results = [];
     for(const c of calls){
       if(currentAbortSignal()?.aborted)break;
