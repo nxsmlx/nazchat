@@ -1075,6 +1075,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <script src="comfort.js"></script>
 <script src="provider-picker.js"></script>
 <script src="integrations.js"></script>
+<script src="agents.js"></script>
 <script>
 "use strict";
 const THINK_OPEN = "\u003Cthink\u003E", THINK_CLOSE = "\u003C/think\u003E";
@@ -1514,8 +1515,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.11.1";
-const APP_VERSION_CODE = 59;
+const APP_VERSION = "4.12.0";
+const APP_VERSION_CODE = 60;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2106,13 +2107,20 @@ function renderAssistant(bubble, msg, live){
         const meta = p.status==="running" ? `writing · ${(p.lines||0).toLocaleString()} line${p.lines===1?"":"s"}`
           : p.status==="done" ? `${(p.lines||String(p.text||"").split("\n").length).toLocaleString()} lines${p.ms?` · ${(p.ms/1000).toFixed(p.ms<10000?1:0)}s`:""}`
           : p.status==="waiting" ? "waiting" : p.status==="pending" && live ? "queued" : "";
-        li.innerHTML = `<span class="run-part-status" aria-hidden="true">${p.status==="done"?"\u2713":p.status==="running"?"\u25cc":p.status==="waiting"?"\u29d6":(p.status==="failed"||p.status==="skipped")?"!":"\u00b7"}</span><span class="run-part-title" title="${esc(p.title)}">Agent ${i+1} · ${esc(title)}</span>`
+        li.innerHTML = `<span class="run-part-status" aria-hidden="true">${p.status==="done"?"\u2713":p.status==="running"?"\u25cc":p.status==="waiting"?"\u29d6":(p.status==="failed"||p.status==="skipped")?"!":"\u00b7"}</span><span class="run-part-title" title="${esc(p.title)}">Coder ${i+1} · ${esc(title)}${p.fixing?" (fixing)":p.fixed?" · fixed":""}</span>`
           + (meta?`<span class="run-part-ms">${esc(meta)}</span>`:"")
           + ((p.status==="failed"||p.status==="waiting") && p.error?`<small>${esc(p.error)}</small>`:"");
         li.setAttribute("aria-label", "Part "+(i+1)+" "+p.status+": "+p.title);
         list.appendChild(li);
       });
+      const team = Array.isArray(msg.phases.team) ? msg.phases.team : [];
+      const teamRow = r=>{ const li=el("li","run-part team "+r.status); const role=(typeof AGENT_ROLES!=="undefined"?AGENT_ROLES.find(x=>x.id===r.role):null)?.name||r.role.replace(/^./,c=>c.toUpperCase()); li.innerHTML=`<span class="run-part-status" aria-hidden="true">${r.status==="done"?"\u2713":r.status==="running"?"\u25cc":r.status==="waiting"?"\u29d6":(r.status==="failed"||r.status==="skipped")?"!":"\u00b7"}</span><span class="run-part-title"><strong>${esc(role)}</strong>${r.note?" · "+esc(r.note):""}</span>`; li.dataset.role=r.role; return li; };
+      const before = el("ol","run-parts run-team"), after = el("ol","run-parts run-team");
+      team.filter(r=>["orchestrator","designer","database"].includes(r.role)).forEach(r=>before.appendChild(teamRow(r)));
+      team.filter(r=>["tester","reviewer","fixer"].includes(r.role)).forEach(r=>after.appendChild(teamRow(r)));
+      if(before.children.length) detail.appendChild(before);
       detail.appendChild(list);
+      if(after.children.length) detail.appendChild(after);
       if(phaseNoteText && live) detail.appendChild(el("div","run-note", esc(phaseNoteText)));
       if(msg.phases.validation) detail.appendChild(el("div","run-note", esc(msg.phases.validation)));
     }
@@ -2706,6 +2714,7 @@ function renderToolsSheet(){
   agentSel.innerHTML=[1,2,3,4].map(n=>`<option value="${n}" ${n===agentConcurrency()?"selected":""}>${n}${n===3?" (default)":""}</option>`).join("");
   agentSel.onchange=()=>{db.agentConcurrency=Number(agentSel.value);save();};
   agents.querySelector(".tools-row-actions").appendChild(agentSel);rows.appendChild(agents);
+  if(typeof renderAgentTeamSettings==="function") rows.appendChild(linkRow("Agent team","Roles and a model for each agent","Open agent team settings",()=>{closeSheet('toolsSheet');renderAgentTeamSettings();openSheet('setSheet');}));
   const bg=el("div","tools-row");
   bg.innerHTML=`<span><strong>Keep building in the background</strong><small>Android shows a notification while a long build runs and when it finishes</small></span>`;
   const bgSwitch=el("button","switch"+(db.backgroundWork!==false?" on":""));bgSwitch.type="button";bgSwitch.setAttribute("role","switch");bgSwitch.setAttribute("aria-checked",String(db.backgroundWork!==false));bgSwitch.setAttribute("aria-label","Keep building in the background");
@@ -3554,13 +3563,13 @@ function parsePlanParts(planText, kind){
   for(const line of src.split(/\n/)){
     if(items.length>=PHASE_BUILD.maxParts) break;
     const raw=line.trim();
-    if(!raw || /^```/.test(raw)) continue;
+    if(!raw || /^```/.test(raw) || /^(?:\*\*)?(?:DATABASE|CONTRACT|PARTS)(?:\*\*)?\s*:/i.test(raw)) continue;
     const clean=raw.replace(/^\s*(?:\d+[.)\]]|[-*•])\s*/,"").replace(/\*\*/g,"").replace(/^(?:part|bahagian)\s*\d*\s*[:-]?\s*/i,"").replace(/[\s:.]+$/," ").trim();
     if(clean && clean.length>=1 && clean.length<=160 && !/^(plan|pelan|parts|bahagian|here|ini|sure|certainly)\b/i.test(clean) && !/^\d+$/.test(clean)) items.push(clean);
   }
   return items;
 }
-function planPrompt(text, kind){
+function planPrompt(text, kind, opts={}){
   const task=String(text||"").slice(0,1500);
   const contractHint = kind==="html"
     ? "the CSS custom properties with exact values (colours, fonts, spacing, radius), the class-name prefix each part uses, the id of every section in page order, and the names of any shared JavaScript functions, data or events"
@@ -3568,6 +3577,7 @@ function planPrompt(text, kind){
   return "Break this task into "+PHASE_BUILD.minParts+" to "+PHASE_BUILD.maxParts+" self-contained parts that separate agents will write at the same time, then assembled: "+String.fromCharCode(34)+task+String.fromCharCode(34)
     +"\n\nReply in exactly this format:\nCONTRACT:\n<at most 25 short lines fixing "+contractHint+">\nPARTS:\n1. <part title> — <one-line brief>\n2. ...\n\nEach part must be small enough to write in about 80-150 lines."
     +(kind==="html"?" The first part is the <head> with all shared styles built on the contract's custom properties; then one part per section; the last part holds the footer and all scripts.":"")
+    +(opts.database?"\nAfter the parts add one line: DATABASE: <the data the app must store in its database, for example bookings, reviews> or DATABASE: none.":"")
     +" No code in the plan. Reply in the user's language.";
 }
 /* Plan reply → shared contract + part list (a plain numbered list still works). */
@@ -3589,6 +3599,12 @@ function segmentPrompt(kind, part, i, n, text, plan, contract){
    limit drops the build to one agent at a time. Finished parts are assembled in plan
    order as they arrive and saved, so a stop, a crash or a closed app loses nothing. */
 function agentConcurrency(){ const n=Math.round(Number(db.agentConcurrency)); return n>=1&&n<=4?n:3; }
+/* Assembles the finished parts in plan order (plus the Designer's shared styles). */
+function assembleBuild(msg){
+  const kind=msg.phases.kind, done=msg.phases.parts.filter(p=>p.status==="done").map(p=>p.text||"");
+  msg.content = kind==="html" ? assembleHtml(done) : done.join("\n\n");
+  if(kind==="html" && msg.phases.designCss && typeof withDesignSystem==="function") msg.content=withDesignSystem(msg.content,msg.phases.designCss);
+}
 async function runBuildAgents(ctx){
   const {msg, model, url, kind, sourceText, usedSkills, baseMessages, maxTokens, conv_, paint} = ctx;
   const parts=msg.phases.parts, plan=parts.map(p=>p.title), n=parts.length, contract=msg.phases.contract||"";
@@ -3596,7 +3612,7 @@ async function runBuildAgents(ctx){
   const queue=parts.map((_,i)=>i).filter(i=>!(parts[i].status==="done" && parts[i].text));
   queue.forEach(i=>{ parts[i].status="pending"; parts[i].error=null; });
   const aborted=()=>!generating || !!currentAbortSignal()?.aborted;
-  const assemble=()=>{ const done=parts.filter(p=>p.status==="done").map(p=>p.text||""); msg.content = kind==="html" ? assembleHtml(done) : done.join("\n\n"); };
+  const assemble=()=>assembleBuild(msg);
   const tick=force=>{
     const now=Date.now();
     if(force || now-lastPaint>250){ clearTimeout(paintTimer); paintTimer=null; lastPaint=now; paint(msg); kitaWorkProgress(msg); return; }
@@ -3610,7 +3626,7 @@ async function runBuildAgents(ctx){
     const part=parts[i];
     part.status="running"; part.chars=0; part.lines=0; part.error=null; note(); tick(true);
     const startedAt=Date.now();
-    const msgs=[{role:"system", content:skillSystemMessage(usedSkills||[],sourceText)+"\n\n"+(PHASE_KINDS[kind]||PHASE_KINDS.text).hint+" You are one of several agents writing ONE part of a larger build at the same time. Follow the shared contract exactly. Never restate other parts."}, ...baseMessages, {role:"user", content:segmentPrompt(kind, part.title, i, n, sourceText, plan, contract)}];
+    const msgs=[{role:"system", content:skillSystemMessage(usedSkills||[],sourceText)+(ctx.extraSystem?"\n\n"+ctx.extraSystem:"")+"\n\n"+(PHASE_KINDS[kind]||PHASE_KINDS.text).hint+" You are one of several coders writing ONE part of a larger build at the same time. Follow the shared contract exactly. Never restate other parts."}, ...baseMessages, {role:"user", content:segmentPrompt(kind, part.title, i, n, sourceText, plan, contract)}];
     const body={model:model.modelId, messages:msgs, stream:true, temperature:.6, top_p:1, max_tokens:maxTokens};
     let out="", fin=null;
     for(let attempt=0;;attempt++){
@@ -3677,7 +3693,8 @@ async function validateBuild(msg, kind){
   }
   const failed=msg.phases.parts.filter(p=>p.status!=="done");
   if(failed.length) issues.push(failed.length+" part(s) not completed");
-  if(kind==="html" && !failed.length && db.autoCheckCode!==false && generating && !currentAbortSignal()?.aborted){
+  if(msg.phases.tested){ const last=msg.codeChecks?.at(-1)?.errors||[]; if(last.length) issues.push(last.length+" error"+(last.length===1?"":"s")+" when the page runs: "+last[0]); }
+  else if(kind==="html" && !failed.length && db.autoCheckCode!==false && generating && !currentAbortSignal()?.aborted){
     const doc=runnableHtml(assembled);
     if(doc){
       phaseNoteText="Testing the assembled page…";
@@ -4348,10 +4365,13 @@ async function sendResponse(text, opts, run){
     setPhaseNote("Planning the build…");
     paint();
     let planText = "";
+    const orchestrator = typeof agentModel==="function" ? agentModel("orchestrator", model) : model;
+    const wantDb = codeMode && kind==="html" && typeof supabaseInCode==="function" && supabaseInCode() && agentTeam().database;
     try{
-      planText = await collectStream(model, url, { model:model.modelId, messages:[
+      if(typeof teamStep==="function") teamStep(aiMsg,"orchestrator",{status:"running",note:"Planning · "+prettyModel(orchestrator.modelId)});
+      planText = await collectStream(orchestrator, orchestrator===model?url:agentUrl(orchestrator), { model:orchestrator.modelId, messages:[
         {role:"system", content: planSystemMessage(kind)},
-        {role:"user", content: planPrompt(text, kind)}
+        {role:"user", content: planPrompt(text, kind, {database:wantDb})}
       ], stream:true, temperature:.3, top_p:1, max_tokens:PHASE_BUILD.planBudget }, { onDelta:t=>{ planText=t; setPhaseNote("Orchestrator planning the build…"); } });
     }catch(e){
       if(e.name==="AbortError" || !generating){ cleanupStream(); finalizeAbort(); return; }
@@ -4363,6 +4383,7 @@ async function sendResponse(text, opts, run){
       const plan = planned.slice(0, PHASE_BUILD.maxParts);
       aiMsg.phases.contract = parsedPlan.contract;
       aiMsg.phases.agents = agentConcurrency();
+      if(typeof teamStep==="function") teamStep(aiMsg,"orchestrator",{status:"done",note:"Planned "+plan.length+" parts"+(parsedPlan.contract?" and a shared contract":"")});
       aiMsg.phases.parts = plan.map(title=>({title, status:"pending", chars:0, ms:0}));
       aiMsg.phases.state = "execute";
       aiMsg.reasoning = "Build plan:\n"+plan.map((x,i)=>(i+1)+". "+x).join("\n")+(parsedPlan.contract?"\n\nShared contract:\n"+parsedPlan.contract:"");
@@ -4370,12 +4391,34 @@ async function sendResponse(text, opts, run){
       save(); paint();
       const baseMessages = history.filter(h=>h.role!=="system").slice(-4);
       kitaWorkStart(conv_.title && conv_.title!=="New chat" ? conv_.title : text);
-      const agents = await runBuildAgents({msg:aiMsg, model, url, kind, sourceText:text, usedSkills, baseMessages, maxTokens:params0.max_tokens, conv_, paint});
+      const team = typeof agentTeam==="function" ? agentTeam() : null;
+      if(team){
+        try{
+          if(kind==="html" && team.designer){
+            const design = await runDesigner(aiMsg,{model:agentModel("designer",model),task:text,contract:aiMsg.phases.contract||"",paint});
+            if(design){ aiMsg.phases.designCss=design.css; aiMsg.phases.contract=(aiMsg.phases.contract||"")+"\n[Design system — already included in the page head. Use these variables and classes; do not redefine them]\n"+design.css+(design.guide?"\n"+design.guide:""); }
+          }
+          const need = wantDb ? planDatabaseNeed(planText) : "";
+          if(need){
+            const schema = await runDatabaseAgent(aiMsg,{model:agentModel("database",model),task:text,need,contract:aiMsg.phases.contract||"",paint});
+            if(schema) aiMsg.phases.contract=(aiMsg.phases.contract||"")+"\n[Supabase tables ready for this app]\n"+schema;
+          }
+        }catch(e){
+          if(e.name==="AbortError" || !generating){ aiMsg.phases.state="paused"; cleanupStream(); finalizeAbort(); return; }
+          // A Designer or Database failure never stops the build; it is shown on the team list.
+          teamStep(aiMsg, aiMsg.phases.team?.some(r=>r.role==="database"&&r.status==="running")?"database":"designer", {status:"failed", note:String(e.message||e).slice(0,160)});
+        }
+        save(); paint();
+      }
+      const coder = team ? agentModel("coder", model) : model;
+      aiMsg.phases.models = team ? {coder:coder.provider.id+"::"+coder.modelId} : null;
+      const agents = await runBuildAgents({msg:aiMsg, model:coder, url:coder===model?url:agentUrl(coder), kind, sourceText:text, usedSkills, baseMessages, maxTokens:modelParameters(coder).max_tokens, conv_, paint, extraSystem: codeMode && typeof codeContextNote==="function" ? codeContextNote() : ""});
       if(agents.stopped){ aiMsg.phases.state="paused"; cleanupStream(); finalizeAbort(); return; }
       if(aiMsg.phases && generating && !currentAbortSignal()?.aborted){
         aiMsg.phases.state = "validate";
         setPhaseNote("Checking the assembled result…");
         paint();
+        if(team) await runQualityLoop(aiMsg,{model,task:text,kind,paint});
         await validateBuild(aiMsg, kind);
         const assembled = String(aiMsg.content||"");
         aiMsg.thinkSecs = aiMsg.thinkSecs || (thinkStart ? Math.round((Date.now()-thinkStart)/1000) : null);
@@ -4677,7 +4720,7 @@ async function sendResponse(text, opts, run){
     kitaWorkStart(conv_.title && conv_.title!=="New chat" ? conv_.title : sourceText);
     const agents = await runBuildAgents({msg, model, url, kind, sourceText, usedSkills, baseMessages, maxTokens:params0.max_tokens, conv_, paint});
     if(agents.stopped){ msg.phases.state="paused"; msg.stopped=true; }
-    else { msg.phases.state="validate"; paint(msg); await validateBuild(msg, kind); }
+    else { msg.phases.state="validate"; paint(msg); if(typeof agentTeam==="function") await runQualityLoop(msg,{model,task:sourceText,kind,paint}); await validateBuild(msg, kind); }
     cleanupStream(); setSendMode(false); abortCtl=null; conv_.updatedAt=Date.now(); save(); renderAll();
   }
   const p2 = extractThink(aiMsg.content);

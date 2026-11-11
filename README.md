@@ -1,6 +1,22 @@
-# Kita Chat 4.11.1
+# Kita Chat 4.12.0
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+Long builds in Code are done by a team of agents, each with its own role. This release also includes 4.11.1.
+
+- Orchestrator plans the build and fixes a shared contract. When Supabase is connected, it also says what data the app must store.
+- Designer writes a shared design system (CSS variables, base styles, components) before the coders start. Every coder gets it, and the page carries it once.
+- Database (only with Supabase connected and an app that stores data) writes the tables and Row Level Security policies. It always asks before running the SQL and never runs SQL that deletes anything. The coders then get the new tables, the project URL and the public key. If you decline, the app is built without new tables.
+- Coders write the parts at the same time (1 to 4 at once).
+- Tester runs the assembled page in the hidden test view.
+- Reviewer reads all the parts together with the Tester's errors and reports real problems part by part (JavaScript errors, missing ids or classes, broken layout, buttons that do nothing, missing content).
+- Fixer rewrites only the parts with problems, not the whole page. The Tester then runs the page again, and the card shows ✓ tested or the remaining errors.
+- The answer lists the team: what each agent did, the coders with their line counts, and which parts were fixed.
+- Tools → Agent team: choose a model for each role (for example a strong model for Orchestrator and Reviewer and a fast one for Coders), and turn the Designer, Reviewer and Fixer, and Database on or off. A model that is no longer available falls back to the chat model.
+- Fixed: a "DATABASE:" line in a plan could be read as an extra part.
+- VersionCode 60, same com.nazchat.app package and original signing identity. Tested with mocked providers and a mocked Supabase API, not on a real device.
+
+# Kita Chat 4.11.1
 
 - GitHub Pages now works when a repository with the same name already exists as private (for example after publishing it first as "GitHub repository"). GitHub Pages on a free plan needs a public repository, so Kita asks whether to make it public before committing anything. If you say no, nothing changes and Kita suggests another site name.
 - Publish → Versions: every publish is kept as a version (when, how many files, and whether it came from this page, an earlier answer or a rollback). Rollback publishes an earlier version again to the same site, the same way on Vercel, Cloudflare and GitHub, after a confirmation. The list shows the live version and the two before it, with "Show all" for the rest; the last 10 versions of each site are kept on the device.
