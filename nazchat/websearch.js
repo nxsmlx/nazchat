@@ -94,14 +94,25 @@ async function modelSearch(kind,q,signal){
   return rows;
 }
 /* The search every feature uses (tools, pre-search, agents). */
-async function webSearch(query,opts){
-  opts=opts||{};const q=String(query||'').slice(0,300);
+function webSearch(query,opts){
+  opts=opts||{};
+  const w=webSettings();
+  const configured=['openai','anthropic'].some(k=>w[k].on)||SEARCH_PROVIDERS.some(p=>searchKeyCount(p.id));
+  // Nothing set up: go straight to the built-in search, so Stop can cancel it at once.
+  if(!configured) return webSearchBuiltIn(query,opts);
+  return webSearchConfigured(query,opts);
+}
+async function webSearchConfigured(query,opts){
+  const q=String(query||'').slice(0,300),stopped=()=>!!opts.signal?.aborted;
   for(const kind of ['openai','anthropic']){
-    try{const rows=await modelSearch(kind,q,opts.signal);if(rows&&rows.length) return rows.slice(0,6);}catch(e){if(e.name==='AbortError')throw e;}
+    if(stopped()) return [];
+    try{const rows=await modelSearch(kind,q,opts.signal);if(rows&&rows.length) return rows.slice(0,6);}catch(e){if(e.name==='AbortError')return [];}
   }
   for(const p of SEARCH_PROVIDERS){
-    try{const rows=await searchWithKeys(p,q,opts.signal);if(rows&&rows.length) return rows.slice(0,6);}catch(e){if(e.name==='AbortError')throw e;}
+    if(stopped()) return [];
+    try{const rows=await searchWithKeys(p,q,opts.signal);if(rows&&rows.length) return rows.slice(0,6);}catch(e){if(e.name==='AbortError')return [];}
   }
+  if(stopped()) return [];
   return webSearchBuiltIn(query,opts);
 }
 

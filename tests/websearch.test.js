@@ -47,6 +47,12 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
    assert.equal(await page.evaluate(()=>searchKeyCount('brave')),0);
  });
 
+ await scenario('Stop during a configured search ends it without waiting',seed({webSearch:{keys:{brave:{count:1,hints:['0001']}}}}),async page=>{
+   await page.route('https://api.search.brave.com/**',()=>{}); // never answers
+   const r=await page.evaluate(async()=>{searchMemoryKeys.brave=['k-0001'];const ac=new AbortController();const p=webSearch('x',{signal:ac.signal});setTimeout(()=>ac.abort(),50);const t=Date.now();const rows=await p;return {rows,ms:Date.now()-t};});
+   assert.deepEqual(r.rows,[]);assert.ok(r.ms<3000,'stopped quickly: '+r.ms);
+ });
+
  await scenario('every search API is called in its own format',seed(),async page=>{
    const calls={};
    const rec=(id,resp)=>async r=>{calls[id]={method:r.request().method(),headers:r.request().headers(),body:r.request().postData()};json(r,200,resp);};
