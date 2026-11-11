@@ -1,9 +1,9 @@
 {
-  "version": "4.15.2",
-  "versionCode": 65,
+  "version": "4.16.0",
+  "versionCode": 66,
   "name": "Kita Chat",
-  "changelog": "Drop-down choices open a Kita picker that matches the theme, instead of the old grey Android dialog.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.15.2/NazChat.apk",
-  "sha256": "e3203cd41a896e2a7a646e7bc678af77c7b40cb4c3033114fc9fc9343b0515ee",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.15.2"
+  "changelog": "Ask Kita in Chat to scan your own Wi-Fi, check a device's open ports or audit a website. Kita runs the check and explains the results in the conversation.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.16.0/NazChat.apk",
+  "sha256": "443be5b734ba572979293375b4f942b47f13e04caab7b0ffe6ccbfc70d72e99e",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.16.0"
 }
