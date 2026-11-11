@@ -57,15 +57,53 @@ async function networkScanTool(){
   });
   return {network:subnetLabel(net.info),gateway:net.info.gateway||'',deviceCount:hosts.size,devices:scanToolHosts(hosts)};
 }
-async function networkPortsTool(ip,profile){
+function scanToolIp(ip){
+  ip=String(ip||'').trim();
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(ip)&&!ip.split('.').some(n=>Number(n)>255)?ip:'';
+}
+async function networkPortsTool(ip,profile,list){
   if(!hasNetScan())return {error:'Port checks require the installed app on Wi-Fi.'};
-  ip=String(ip||'').trim();profile=['quick','top'].includes(profile)?profile:'quick';
-  if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)||ip.split('.').some(n=>Number(n)>255))return {error:'Enter a valid IPv4 address on your Wi-Fi.'};
+  ip=scanToolIp(ip);profile=['quick','top','custom'].includes(profile)?profile:'quick';
+  if(!ip)return {error:'Enter a valid IPv4 address on your Wi-Fi.'};
+  const spec=profile==='custom'?String(list||'').replace(/\s+/g,''):profile;
+  if(profile==='custom'&&!/^\d+(-\d+)?(,\d+(-\d+)?)*$/.test(spec))return {error:'For a custom check, list ports like 22,80,8000-8100 (up to 1200).'};
   refreshNetInfo();
   if(!net.info?.scannable)return {error:'Connect to Wi-Fi first. Mobile data networks are never scanned.'};
   const ports=[];
-  await scanToolJob(()=>window.NazNetScan.ports(ip,profile),e=>{if(e.type==='port')ports.push({port:e.port,banner:String(e.banner||'').slice(0,200),note:portNote(e.port)[1],risk:portNote(e.port)[0]});});
-  return {ip,profile,openPorts:ports.sort((a,b)=>a.port-b.port)};
+  await scanToolJob(()=>{const id=window.NazNetScan.ports(ip,spec);if(id<0&&profile==='custom')throw new Error('Use up to 1200 ports, like 22,80,8000-8100, on a device on this Wi-Fi');return id;},e=>{if(e.type==='port')ports.push({port:e.port,banner:String(e.banner||'').slice(0,200),note:portNote(e.port)[1],risk:portNote(e.port)[0]});},profile==='quick'?90000:240000);
+  return {ip,profile,...(profile==='custom'?{ports:spec}:{}),openPorts:ports.sort((a,b)=>a.port-b.port)};
+}
+async function networkUdpTool(ip){
+  if(!hasNetScan())return {error:'UDP checks require the installed app on Wi-Fi.'};
+  ip=scanToolIp(ip);if(!ip)return {error:'Enter a valid IPv4 address on your Wi-Fi.'};
+  refreshNetInfo();
+  if(!net.info?.scannable)return {error:'Connect to Wi-Fi first. Mobile data networks are never scanned.'};
+  const found=[];
+  await scanToolJob(()=>window.NazNetScan.udp(ip),e=>{if(e.type==='udp'){const n=UDP_NOTES[e.port]||['info','UDP service'];found.push({port:e.port,info:String(e.info||'').slice(0,200),note:n[1],risk:n[0]});}});
+  return {ip,checked:'DNS 53, NTP 123, NetBIOS 137',udpServices:found.sort((a,b)=>a.port-b.port)};
+}
+async function networkDiscoverTool(){
+  if(!hasNetScan())return {error:'Service discovery requires the installed app on Wi-Fi.'};
+  refreshNetInfo();
+  if(!net.info?.scannable)return {error:'Connect to Wi-Fi first. Mobile data networks are never scanned.'};
+  const byIp=new Map();
+  await scanToolJob(()=>window.NazNetScan.discover(),e=>{
+    if(e.type!=='service')return;
+    const label=e.via==='ssdp'?[e.server,e.st].filter(Boolean).join(' · '):(e.names||[]).join(', ');
+    const d=byIp.get(e.ip)||{ip:e.ip,services:[]};
+    if(label&&!d.services.includes(label)&&d.services.length<20)d.services.push(String(label).slice(0,160));
+    byIp.set(e.ip,d);
+  });
+  const devices=[...byIp.values()].sort((a,b)=>NazIpSort(a.ip,b.ip));
+  return {network:subnetLabel(net.info),deviceCount:devices.length,devices};
+}
+async function websiteTestTool(domain){
+  if(typeof runWebTest!=='function')return {error:'Website test is not available.'};
+  // runWebTest reports each step before its request; stop there as soon as Stop is pressed.
+  const r=await runWebTest(domain,()=>{if(currentAbortSignal()?.aborted)throw cancellationError();});
+  const out={domain:r.domain,verified:r.verified,checks:r.checks.slice(0,60)};
+  if(!r.verified)out.note='Only passive checks ran. To look for exposed files and crawl the site, the owner must verify '+r.domain+' in Tools → Network → Website test.';
+  return out;
 }
 // A job ends with "done" (or "error"); forget its handler then, so finished Network-sheet
 // scans do not pile up. Chat tool jobs already remove themselves inside their handler.
