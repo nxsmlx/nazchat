@@ -134,9 +134,19 @@ async function connectIntegration(service,token,extra={}){
       state.accountId=chosen.id;state.accountName=chosen.name;state.accounts=list.map(a=>({id:a.id,name:a.name}));state.label=chosen.name;
       try{const sd=await integrationFetch('cloudflare','/client/v4/accounts/'+chosen.id+'/workers/subdomain');state.subdomain=sd.result?.subdomain||'';}catch(e){state.subdomain='';}
     }
+    if(service==='supabase'){
+      const list=await integrationFetch('supabase','/v1/projects');
+      state.projects=(Array.isArray(list)?list:[]).map(p=>({ref:p.ref||p.id,name:p.name,region:p.region||'',status:p.status||''})).filter(p=>p.ref);
+      if(!state.projects.length) throw new Error('This Supabase account has no projects yet. Create one at supabase.com first.');
+      state.label=state.projects.length+' project'+(state.projects.length===1?'':'s');state.useInCode=true;
+      setIntegrationState(service,state);
+      const pick=state.projects.find(p=>p.ref===extra.ref)||(state.projects.length===1?state.projects[0]:null);
+      if(pick) await supabaseLoadProject(pick.ref);
+      return integrationState(service);
+    }
     setIntegrationState(service,state);
     return state;
-  }catch(e){forgetIntegrationToken(service);throw e;}
+  }catch(e){forgetIntegrationToken(service);setIntegrationState(service,null);throw e;}
 }
 function disconnectIntegration(service){forgetIntegrationToken(service);setIntegrationState(service,null);}
 
@@ -285,9 +295,23 @@ function renderIntegrationsSettings(){
           const info=el('div','integration-note');info.textContent='Account: '+(st.accountName||st.accountId||'?')+(st.subdomain?' · workers.dev: '+st.subdomain:' · no workers.dev subdomain yet');card.appendChild(info);
           if((st.accounts||[]).length>1){const sel=el('select');sel.setAttribute('aria-label','Cloudflare account');sel.innerHTML=st.accounts.map(a=>'<option value="'+esc(a.id)+'"'+(a.id===st.accountId?' selected':'')+'>'+esc(a.name)+'</option>').join('');sel.onchange=async()=>{const a=st.accounts.find(x=>x.id===sel.value);let sub='';try{sub=(await integrationFetch('cloudflare','/client/v4/accounts/'+a.id+'/workers/subdomain')).result?.subdomain||'';}catch(e){}setIntegrationState('cloudflare',{...st,accountId:a.id,accountName:a.name,label:a.name,subdomain:sub});renderIntegrationsSettings();};card.appendChild(sel);}
         }
+        if(service==='supabase'){
+          const sel=el('select');sel.setAttribute('aria-label','Supabase project');
+          sel.innerHTML='<option value="">Choose a project…</option>'+(st.projects||[]).map(p=>'<option value="'+esc(p.ref)+'"'+(p.ref===st.ref?' selected':'')+'>'+esc(p.name+(p.region?' · '+p.region:''))+'</option>').join('');
+          sel.onchange=async()=>{if(!sel.value)return;sel.disabled=true;try{await supabaseLoadProject(sel.value);toast('Supabase project selected');}catch(e){toast(e.message);}renderIntegrationsSettings();};
+          card.appendChild(sel);
+          if(st.ref){
+            const info=el('div','integration-note');info.textContent=st.url+' · public key …'+String(st.anonKey||'').slice(-6)+' · '+(st.tables||0)+' table'+(st.tables===1?'':'s');card.appendChild(info);
+            const row=el('div','tools-row');row.innerHTML='<span><strong>Use in Code</strong><small>Apps you build can sign users in and store data in this project</small></span>';
+            const sw=el('button','switch'+(st.useInCode!==false?' on':''));sw.type='button';sw.setAttribute('role','switch');sw.setAttribute('aria-checked',String(st.useInCode!==false));sw.setAttribute('aria-label','Use Supabase in Code');
+            sw.onclick=()=>{setIntegrationState('supabase',{...integrationState('supabase'),useInCode:st.useInCode===false});renderIntegrationsSettings();};
+            row.appendChild(sw);card.appendChild(row);
+            if(st.schema){const pre=el('pre','supabase-schema');pre.textContent=st.schema;card.appendChild(pre);}
+          }
+        }
         if(service==='vercel'&&st.teamId){const info=el('div','integration-note');info.textContent='Team: '+st.teamId;card.appendChild(info);}
         const actions=el('div','integration-actions');
-        const test=el('button','mini-btn','Test');test.type='button';test.onclick=async()=>{test.disabled=true;try{if(service==='github')await integrationFetch('github','/user');if(service==='vercel')await integrationFetch('vercel','/v2/user');if(service==='cloudflare')await integrationFetch('cloudflare','/client/v4/user/tokens/verify');toast(meta.name+' connection works');}catch(e){toast(e.message);}finally{test.disabled=false;}};
+        const test=el('button','mini-btn','Test');test.type='button';test.onclick=async()=>{test.disabled=true;try{if(service==='github')await integrationFetch('github','/user');if(service==='vercel')await integrationFetch('vercel','/v2/user');if(service==='cloudflare')await integrationFetch('cloudflare','/client/v4/user/tokens/verify');if(service==='supabase'){await integrationFetch('supabase','/v1/projects');if(supabaseProject())await supabaseRefreshSchema();renderIntegrationsSettings();}toast(meta.name+' connection works');}catch(e){toast(e.message);}finally{test.disabled=false;}};
         const off=el('button','mini-btn danger','Disconnect');off.type='button';off.onclick=async()=>{if(await confirmDialog('Remove the '+meta.name+' token from this device? Sites you published stay online.',{title:'Disconnect '+meta.name,danger:true,confirmText:'Disconnect'})){disconnectIntegration(service);renderIntegrationsSettings();}};
         actions.append(test,off);card.appendChild(actions);
       }else{
@@ -450,3 +474,103 @@ function isCodeBuildRequest(text){
   return /\b(buat|bina|bikin|create|build|make|design|reka|generate)\b/i.test(t) && /\b(page|laman|web|site|app|aplikasi|dashboard|landing|portfolio|game|permainan|form|borang|kalkulator|calculator|ui|kedai|store|shop)\b/i.test(t);
 }
 const CODE_MODE_NOTE="Code mode: the user is designing and building something to run and publish. Return complete, runnable files (a whole HTML document with inline CSS and JS for pages), mobile-first and accessible, with no placeholders like 'add your code here'. Keep the explanation short and put it before the code.";
+
+/* ---------- Supabase (4.11.0) ---------- */
+/* A Supabase project gives generated apps a real database, sign-in and storage.
+   The personal access token (Management API) stays in Keystore and is only used
+   for api.supabase.com; generated pages get the project URL and the PUBLIC anon /
+   publishable key only. The service_role key is never fetched into the app. */
+INTEGRATIONS.supabase={name:'Supabase',origin:'https://api.supabase.com',tokenUrl:'https://supabase.com/dashboard/account/tokens',
+  steps:'Create an access token in your Supabase account settings and paste it here. Then choose the project your apps should use.'};
+function supabaseProject(){const st=integrationState('supabase');return st.connected&&st.ref?st:null;}
+function supabaseInCode(){const st=supabaseProject();return !!st&&st.useInCode!==false;}
+async function supabaseLoadProject(ref){
+  const st=integrationState('supabase');
+  const keys=await integrationFetch('supabase','/v1/projects/'+encodeURIComponent(ref)+'/api-keys');
+  // Only a public key is kept: the new publishable key, else the legacy anon key.
+  const pub=(Array.isArray(keys)?keys:[]).find(k=>k&&(k.type==='publishable'))||(Array.isArray(keys)?keys:[]).find(k=>k&&k.name==='anon');
+  if(!pub||!pub.api_key) throw new Error('Supabase did not return a public (anon) key for this project');
+  if(/service_role|sb_secret_/i.test(String(pub.name)+String(pub.api_key))) throw new Error('Refusing to use a secret key in apps');
+  const p=(st.projects||[]).find(x=>x.ref===ref)||{ref,name:ref};
+  const next={...st,ref,projectName:p.name,region:p.region||'',url:'https://'+ref+'.supabase.co',anonKey:pub.api_key,label:p.name};
+  setIntegrationState('supabase',next);
+  try{await supabaseRefreshSchema();}catch(e){}
+  return integrationState('supabase');
+}
+async function supabaseQuery(sql){
+  const st=supabaseProject();if(!st) throw new Error('Choose a Supabase project in Settings → Integrations');
+  return await integrationFetch('supabase','/v1/projects/'+encodeURIComponent(st.ref)+'/database/query',{method:'POST',body:{query:String(sql)},timeout:90000});
+}
+const SUPABASE_SCHEMA_SQL="select c.table_name, c.column_name, c.data_type, c.is_nullable, coalesce(t.rowsecurity,false) as rls from information_schema.columns c left join pg_tables t on t.schemaname=c.table_schema and t.tablename=c.table_name where c.table_schema='public' order by c.table_name, c.ordinal_position";
+async function supabaseRefreshSchema(){
+  const rows=await supabaseQuery(SUPABASE_SCHEMA_SQL);
+  const tables={};
+  (Array.isArray(rows)?rows:[]).forEach(r=>{const t=tables[r.table_name]=tables[r.table_name]||{rls:!!r.rls,cols:[]};t.cols.push(r.column_name+' '+r.data_type+(r.is_nullable==='YES'?'?':''));});
+  const text=Object.entries(tables).map(([n,t])=>n+(t.rls?' [RLS on]':' [RLS OFF]')+': '+t.cols.join(', ')).join('\n');
+  const st=integrationState('supabase');setIntegrationState('supabase',{...st,schema:text.slice(0,6000),tables:Object.keys(tables).length,schemaAt:Date.now()});
+  return text;
+}
+function supabaseContextNote(){
+  const st=supabaseProject();if(!st||st.useInCode===false) return '';
+  return '\n\n[Supabase project "'+st.projectName+'" is connected to this app]\nURL: '+st.url+'\nPublic anon key: '+st.anonKey+'\n(The anon key is safe in browser code. Never use, print or ask for the service_role or secret key.)\nTables in the public schema'+(st.schema?':\n'+st.schema:': none yet')
+    +'\nIn web pages use supabase-js v2: <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> then const supabase = window.supabase.createClient(URL, KEY). Use supabase.auth for sign-in and Row Level Security policies to protect every table.'
+    +' To create or change tables, policies or buckets, call the supabase_sql tool with the SQL (the user approves each run); if you cannot call tools, put the SQL in a ```sql block so the user can tap Run on Supabase.';
+}
+function codeContextNote(){return CODE_MODE_NOTE+supabaseContextNote();}
+/* SQL risk: reads, changes, and destructive changes (always shown in red). */
+function sqlRisk(sql){
+  const s=String(sql||'').replace(/--.*$/gm,'').replace(/\/\*[\s\S]*?\*\//g,'').trim();
+  if(/\b(drop|truncate|revoke)\b|\bdelete\s+from\b|\balter\s+table\b[\s\S]*?\bdrop\b|\bdisable\s+row\s+level\s+security\b/i.test(s)) return 'destructive';
+  if(/^(select|with|explain|show|table)\b/i.test(s)&&!/\b(insert|update|delete|create|alter|grant|drop|truncate|comment|copy|call|do)\b/i.test(s)) return 'read';
+  return 'write';
+}
+async function confirmSupabaseSql(sql,reason){
+  const risk=sqlRisk(sql),st=supabaseProject();
+  // Reads follow the permission mode; every change asks, also in Bypass all.
+  if(risk==='read'&&permissionMode()!=='careful') return true;
+  const shown=String(sql).length>900?String(sql).slice(0,900)+'\n…':String(sql);
+  return !!await customDialog({title:risk==='destructive'?'Destructive database change':'Run SQL on Supabase',
+    message:(reason?reason+'\n\n':'')+'Project: '+(st?.projectName||'?')+'\n\n'+shown+(risk==='destructive'?'\n\nThis can delete data and cannot be undone.':''),
+    confirmText:risk==='read'?'Run':'Run on Supabase',danger:risk==='destructive'});
+}
+function supabaseToolDefs(){
+  if(!supabaseInCode()||kitaMode()!=='code') return [];
+  return [
+    {type:'function',function:{name:'supabase_sql',description:'Run SQL on the connected Supabase project (Postgres). Use it to create tables, Row Level Security policies, functions and storage buckets, or to inspect data. The user approves every change.',parameters:{type:'object',properties:{query:{type:'string',description:'SQL to run'},purpose:{type:'string',description:'One short sentence explaining why'}},required:['query']}}},
+    {type:'function',function:{name:'supabase_schema',description:'Get the current tables and columns of the connected Supabase project.',parameters:{type:'object',properties:{}}}},
+  ];
+}
+async function runSupabaseTool(name,args){
+  try{
+    if(name==='supabase_schema') return {schema:await supabaseRefreshSchema()||'(no tables yet)'};
+    if(name==='supabase_sql'){
+      const rows=await supabaseQuery(String(args.query||''));
+      if(sqlRisk(args.query)!=='read'){try{await supabaseRefreshSchema();}catch(e){}}
+      const list=Array.isArray(rows)?rows:[];
+      return {ok:true,rows:list.slice(0,50),rowCount:list.length};
+    }
+  }catch(e){return {error:String(e.message||e)};}
+  return {error:'Unknown Supabase tool'};
+}
+/* "Run on Supabase" under SQL code blocks (models without tools, or SQL written by hand). */
+function supabaseRunButton(sql,wrap){
+  if(!supabaseProject()) return null;
+  const b=el('button','copy-btn supabase-run','Run on Supabase');b.type='button';
+  b.onclick=async()=>{
+    if(!await confirmSupabaseSql(sql)) return;
+    b.disabled=true;b.textContent='Running…';
+    let note=wrap.parentElement?.querySelector(':scope > .supabase-result');
+    try{
+      const rows=await supabaseQuery(sql);
+      if(sqlRisk(sql)!=='read'){try{await supabaseRefreshSchema();}catch(e){}}
+      const n=Array.isArray(rows)?rows.length:0;
+      if(!note){note=el('div','supabase-result');wrap.after(note);}
+      note.className='supabase-result ok';note.textContent='✓ Ran on '+supabaseProject().projectName+(n?' · '+n+' row'+(n===1?'':'s')+': '+JSON.stringify(rows.slice(0,3)).slice(0,300):'');
+      toast('SQL ran on Supabase');
+    }catch(e){
+      if(!note){note=el('div','supabase-result');wrap.after(note);}
+      note.className='supabase-result warn';note.textContent='✕ '+String(e.message||e);
+    }finally{b.disabled=false;b.textContent='Run on Supabase';}
+  };
+  return b;
+}

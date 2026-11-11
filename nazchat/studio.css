@@ -3842,3 +3842,10 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .artifact-btn.publish { flex: 1 1 auto; }
 .artifact-actions { flex-wrap: nowrap; }
 .artifact-btn { padding: 0 12px; }
+
+/* 4.11.0: Supabase */
+.supabase-schema { max-height: 180px; margin: 0; padding: 10px; overflow: auto; border-radius: 10px; background: var(--bg3); color: var(--text2); font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; }
+.supabase-result { margin: 6px 0 12px; padding: 8px 12px; border-radius: 10px; font-size: 12.5px; overflow-wrap: anywhere; }
+.supabase-result.ok { background: color-mix(in srgb, var(--success, #3fb950) 14%, var(--bg2)); color: var(--text); }
+.supabase-result.warn { background: color-mix(in srgb, var(--danger, #f85149) 14%, var(--bg2)); color: var(--text); }
+.copy-btn.supabase-run { color: var(--success, #3fb950); }

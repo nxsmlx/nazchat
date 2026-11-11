@@ -1,3 +1,19 @@
+# Kita Chat 4.11.0
+
+Supabase joins the integrations, so the apps you build in Code can have a real database, sign-in and storage. This release also includes everything in 4.10.0 (Chat | Code and publishing).
+
+- Settings → Integrations → Supabase:
+  - Paste a Supabase access token, then choose the project your apps should use. With one project, it is chosen for you.
+  - Kita keeps only the project URL and its public key (the publishable key, or the legacy anon key). The service_role or secret key is never fetched into the app, and the access token stays in Android Keystore and is only sent to api.supabase.com.
+  - Shows the tables in the public schema and whether Row Level Security is on. "Use in Code" turns the project on or off for building.
+- In Code, the model knows the project URL, the public key and the current tables, and writes pages that use supabase-js for data and sign-in, with Row Level Security.
+- Database changes:
+  - Models with tools can call supabase_sql (create tables, policies, buckets, or read data) and supabase_schema. Every change asks you first and shows the SQL; changes that can delete data (DROP, TRUNCATE, DELETE, dropping columns, turning off RLS) are marked as destructive. Bypass all never skips these. Reads follow your permission mode.
+  - For any SQL block in an answer, "Run on Supabase" runs it after the same confirmation and shows the result under the block.
+  - The table list is refreshed after every change.
+- Tool activity shows the SQL that ran.
+- VersionCode 58, same com.nazchat.app package and original signing identity. Tested against a mocked Supabase Management API, not a live project or a real device.
+
 # Kita Chat 4.10.0
 
 Chat and Code are now separate, and Code can publish what you design straight from your phone.

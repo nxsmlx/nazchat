@@ -1514,8 +1514,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.10.0";
-const APP_VERSION_CODE = 57;
+const APP_VERSION = "4.11.0";
+const APP_VERSION_CODE = 58;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1742,6 +1742,9 @@ function decorateCodeBlock(pre, code, opts){
     const pv = el("button","preview-btn","Preview");
     pv.onclick = ()=>openPreview(rawCode, {live:false});
     btnWrap.appendChild(pv);
+  }
+  if(/^(sql|pgsql|postgres|postgresql|plpgsql)$/.test(lang) && typeof supabaseRunButton==="function"){
+    const run=supabaseRunButton(rawCode, wrap); if(run) btnWrap.appendChild(run);
   }
   const dl = el("button","copy-btn","Download");
   dl.setAttribute("aria-label","Download "+name);
@@ -2168,7 +2171,7 @@ function renderAssistant(bubble, msg, live){
     box.appendChild(el("div","tool-trace-title", "🔧 "+msg.toolTrace.length+" tool "+(msg.toolTrace.length>1?"calls":"call")));
     msg.toolTrace.forEach(t=>{
       const row=el("div","tool-trace-row");
-      const what=t.name==="web_search" ? "Search: "+(t.args.query||"") : "Read: "+(t.args.url||"");
+      const what=t.name==="web_search" ? "Search: "+(t.args.query||"") : t.name==="fetch_url" ? "Read: "+(t.args.url||"") : t.name==="supabase_sql" ? "SQL: "+String(t.args.query||"").replace(/\s+/g," ") : "Tool: "+t.name.replace(/^mcp_/,"").replace(/_/g," ");
       row.innerHTML=`<span>${esc(what.slice(0,90))}</span><span class="tool-trace-ms">${t.ms}ms${t.ok?"":" · failed"}</span>`;
       box.appendChild(row);
     });
@@ -3755,7 +3758,7 @@ function mcpToolDefs(){
  for(const s of mcpEnabledServers())for(const t of s.tools||[]){const name=mcpNames(s,t);if(seen.has(name)||name.length>64)continue;seen.add(name);out.push({type:'function',function:{name,description:('External tool on '+s.name+': '+(t.description||t.name)).slice(0,450),parameters:t.inputSchema&&typeof t.inputSchema==='object'?t.inputSchema:{type:'object',properties:{}}}});if(out.length>=40)return out;}
  return out;
 }
-function kitaTools(){return (db.search?KITA_TOOLS:KITA_TOOLS.filter(t=>t.function.name!=='web_search')).concat(db.mcpEnabled!==false?mcpToolDefs():[]);}
+function kitaTools(){return (db.search?KITA_TOOLS:KITA_TOOLS.filter(t=>t.function.name!=='web_search')).concat(db.mcpEnabled!==false?mcpToolDefs():[]).concat(typeof supabaseToolDefs==='function'?supabaseToolDefs():[]);}
 function mcpRequest(server,method,params,signal){
  if(!window.NazMcp?.request)return Promise.reject(new Error('MCP requires the installed app'));
  if(signal?.aborted)return Promise.reject(cancellationError());
@@ -3899,6 +3902,7 @@ async function runKitaTool(name,args){
       return {url:u,status:res.status,text:String(text||"").slice(0,4000)};
     }catch(e){ return {error:String(e.message||e)}; }
   }
+  if(name.startsWith('supabase_') && typeof runSupabaseTool==="function") return await runSupabaseTool(name,args);
   if(name.startsWith('mcp_')){
     const target=mcpToolTarget(name);if(!target)return {error:'MCP tool or server is disabled'};
     return await mcpCallTool(target.server,target.tool.name,args);
@@ -4562,6 +4566,9 @@ async function sendResponse(text, opts, run){
     for(const c of calls){
       if(currentAbortSignal()?.aborted)break;
       let args = {}; try{ args = c.args?JSON.parse(c.args):{}; }catch(e){ args = {}; }
+      if(c.name==='supabase_sql'&&!await confirmSupabaseSql(String(args.query||''),String(args.purpose||''))){
+        results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined running this SQL.'}});continue;
+      }
       if(c.name.startsWith('mcp_')&&!await confirmMcpCall(c.name,args)){
         results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined or cancelled this MCP tool call.'}});continue;
       }
