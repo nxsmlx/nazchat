@@ -114,6 +114,8 @@ const {launch, appUrl, root} = require('./browser');
           conv={id:'theme-chat',title:'Theme verification',providerId:'theme-provider',modelId:'model-one',updatedAt:Date.now(),messages:[{id:'u',role:'user',content:'Build a readable page in both themes.'},assistant]};
           db.conversations=[conv];renderAll();
           // The viewer now renders as a tabbed code frame; open it before measuring.
+          // A whole page shows as an artifact card (4.8.2); reveal its code for the colour checks.
+          document.querySelector('.artifact-card')?.classList.add('show-code');
           const viewer=document.querySelector('.code-wrap');
           if(viewer) viewer.classList.remove('collapsed');
           const wrap=document.createElement('div');wrap.className='msg assistant';
