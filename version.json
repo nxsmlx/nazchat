@@ -1,9 +1,9 @@
 {
-  "version": "4.17.1",
-  "versionCode": 69,
+  "version": "4.17.2",
+  "versionCode": 70,
   "name": "Kita Chat",
-  "changelog": "Asking Kita to scan your Wi-Fi or check ports now runs the real network checks and explains the results. Before, the model could write an nmap-style script instead.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.17.1/NazChat.apk",
-  "sha256": "46a75cdd4a7417a950f182c5077cd30844fee7926d150de2cd83b518f4a98cb6",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.17.1"
+  "changelog": "Test connection now says why a provider cannot be reached (host not found, key locked to another URL, TLS, timeout, or the provider's own error) instead of a bare \"HTTP 0\".",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.17.2/NazChat.apk",
+  "sha256": "2c05be855991b99bcbed895b4603c62ec08782356c8a9d153481925fc7ca0357",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.17.2"
 }
