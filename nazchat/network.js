@@ -113,7 +113,10 @@ function netHost(ip){let h=net.hosts.get(ip);if(!h){h={ip,name:'',open:[],ports:
 function subnetLabel(i){return i&&i.ip?i.ip+'/'+i.prefix:'';}
 async function confirmNetworkUse(){
   if(net.agreed) return true;
-  const ok=await confirmDialog('Scan the network this phone is on ('+subnetLabel(net.info)+')? Only scan networks you own or have permission to test. Kita only checks private addresses on this Wi-Fi.',{title:'Scan your network',confirmText:'Scan'});
+  // Chat tools can ask before the Network sheet ever loaded the Wi-Fi details.
+  if(hasNetScan()&&!net.info?.ip) refreshNetInfo();
+  const label=subnetLabel(net.info);
+  const ok=await confirmDialog('Scan the network this phone is on'+(label?' ('+label+')':'')+'? Only scan networks you own or have permission to test. Kita only checks private addresses on this Wi-Fi.',{title:'Scan your network',confirmText:'Scan'});
   if(ok) net.agreed=true;
   return ok;
 }
