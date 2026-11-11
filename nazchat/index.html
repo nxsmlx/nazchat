@@ -3526,7 +3526,7 @@ function detectBuildKind(text){
 }
 /* Incremental execution: think → execute one part → evaluate → execute next. */
 function planSystemMessage(kind){
-  return "You are the orchestrator planning "+(kind==="html"?"a web page":"a written deliverable")+" for a team of agents. The agents write their parts at the same time and cannot see each other's work, so you first fix a short shared CONTRACT that keeps the parts consistent, then list the PARTS. Each part must be a self-contained unit of work (for HTML: head+base styles, each section/component, scripts). Follow the requested format exactly. No other prose.";
+  return "You are the build planner (orchestrator) for "+(kind==="html"?"a web page":"a written deliverable")+", written by a team of agents. The agents write their parts at the same time and cannot see each other's work, so you first fix a short shared CONTRACT that keeps the parts consistent, then list the PARTS. Each part must be a self-contained unit of work (for HTML: head+base styles, each section/component, scripts). Follow the requested format exactly. No other prose.";
 }
 function stillRelevant(fragment,plan){
   const probe=String(fragment||"").replace(/```[\w+-]*|```/g," ").toLowerCase();
