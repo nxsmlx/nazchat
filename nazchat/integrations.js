@@ -81,7 +81,7 @@ const PUBLISH_TARGETS=[
   {id:'github',service:'github',label:'GitHub repository',host:n=>'github.com/'+(integrationState('github').login||'<you>')+'/'+n},
 ];
 const integrationMemoryTokens={};
-function integrationState(service){db.integrations=db.integrations&&typeof db.integrations==='object'?db.integrations:{};return db.integrations[service]||{};}
+function integrationState(service){const all=db.integrations&&typeof db.integrations==='object'?db.integrations:null;return (all&&all[service])||{};}
 function setIntegrationState(service,state){db.integrations=db.integrations&&typeof db.integrations==='object'?db.integrations:{};if(state)db.integrations[service]=state;else delete db.integrations[service];save();}
 function integrationConnected(service){return !!integrationState(service).connected;}
 function integrationRef(service){return 'integration:'+service;}
