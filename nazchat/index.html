@@ -1519,8 +1519,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.15.0";
-const APP_VERSION_CODE = 63;
+const APP_VERSION = "4.15.1";
+const APP_VERSION_CODE = 64;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1685,12 +1685,13 @@ function fenceFileName(code){
 /* post-process: stable code viewer with line numbers, file tabs, copy and download. */
 function enhance(container, opts){
   const light = !!(opts && opts.light);
-  // Multi-file answers share one tabbed viewer instead of a stack of separate frames.
+  // Multi-file answers (named files, or a page with its styles and scripts) share one
+  // tabbed viewer. Snippets in an explanation stay where they are in the text.
   const blocks = [...container.querySelectorAll("pre > code")];
   const filtered = blocks.filter(code=>{
     const pre=code.parentElement; return !(pre.parentElement && pre.parentElement.classList.contains("code-wrap"));
   });
-  if(!light && blocks.length>1){
+  if(!light && blocks.length>1 && isMultiFileAnswer(filtered)){
     buildCodeTabs(container, filtered);
     filtered.forEach(code=>{
       const pre=code.parentElement;
@@ -1717,6 +1718,17 @@ function enhance(container, opts){
     renderMathInElement(container, {delimiters:[{left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false}], throwOnError:false});
   }catch(e){}
 }
+/* A set of blocks is a multi-file answer when at least two carry a file name, or when one
+   is a whole HTML page and the rest are its CSS / JavaScript / JSON. */
+function isMultiFileAnswer(codes){
+  const lang=c=>(String(c.className||"").trim().split(/\s+/)[0]||"text").toLowerCase();
+  const named=codes.filter(c=>fenceFileName(c)).length;
+  if(named>=2) return true;
+  const page=codes.some(c=>/^(html|htm|xhtml)$/.test(lang(c)) && /<(?:!doctype\s+html|html\b|body\b)/i.test(c.textContent||""));
+  return page && codes.every(c=>/^(html|htm|xhtml|css|js|javascript|json)$/.test(lang(c)));
+}
+const CODE_LANG_LABELS={sh:"Shell",bash:"Shell",shell:"Shell",zsh:"Shell",console:"Terminal",powershell:"PowerShell",ps1:"PowerShell",bat:"Batch",cmd:"Batch",conf:"Config",ini:"Config",toml:"TOML",yaml:"YAML",yml:"YAML",json:"JSON",js:"JavaScript",javascript:"JavaScript",ts:"TypeScript",typescript:"TypeScript",jsx:"JSX",tsx:"TSX",py:"Python",python:"Python",html:"HTML",css:"CSS",sql:"SQL",xml:"XML",java:"Java",kotlin:"Kotlin",kt:"Kotlin",go:"Go",rust:"Rust",rs:"Rust",php:"PHP",ruby:"Ruby",rb:"Ruby",c:"C",cpp:"C++",cs:"C#",swift:"Swift",dart:"Dart",md:"Markdown",markdown:"Markdown",diff:"Diff",dockerfile:"Dockerfile",nginx:"Nginx",apache:"Apache",text:"Text",plaintext:"Text",txt:"Text"};
+function codeLangLabel(lang){return CODE_LANG_LABELS[lang]||(lang&&lang!=="text"?lang.toUpperCase():"Text");}
 function decorateCodeBlock(pre, code, opts){
   const fenceInfo = String(code.className||"").trim().split(/\s+/).filter(Boolean);
   const lang = (fenceInfo[0] || opts.lang || "text").toLowerCase();
@@ -1729,10 +1741,13 @@ function decorateCodeBlock(pre, code, opts){
     else highlighted = hljs.highlightAuto(rawCode).value;
   }catch(e){}
   const name = opts.name || fenceFileName(code) || codeFileName(lang || opts.lang || "", rawCode);
+  // A block without a file name is labelled by its language ("Shell"), not "snippet.sh".
+  const generic = !opts.name && /^snippet\./.test(name);
+  const shown = generic ? codeLangLabel(lang) : name;
   const wrap = el("div","code-wrap collapsed");
   const head = el("div","code-head");
   const meta = el("div","code-meta code-file");
-  meta.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9ZM14 2v7h7"/></svg><span class="code-name" title="${esc(name)}">${esc(name)}</span><span class="code-lines">${esc(lang)} · ${count} line${count===1?"":"s"}</span>`;
+  meta.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9ZM14 2v7h7"/></svg><span class="code-name" title="${esc(shown)}">${esc(shown)}</span><span class="code-lines">${generic?"":esc(lang)+" · "}${count} line${count===1?"":"s"}</span>`;
   head.appendChild(meta);
   const btnWrap = el("div","code-actions");
   const toggle = el("button","code-toggle","Expand");
@@ -1849,7 +1864,9 @@ function buildCodeTabs(container, blocks){
     const pre = code.parentElement;
     const lang = (String(code.className||"").trim().split(/\s+/)[0] || "text").toLowerCase();
     const raw = code.textContent || "";
-    const name = fenceFileName(code) || codeFileName(lang, raw);
+    let name = fenceFileName(code) || codeFileName(lang, raw);
+    // Two unnamed blocks of the same language get numbered names instead of duplicates.
+    if(list.some(e=>e.name===name)){ const dot=name.lastIndexOf("."); let k=2; while(list.some(e=>e.name===(dot>0?name.slice(0,dot)+"-"+k+name.slice(dot):name+"-"+k))) k++; name=dot>0?name.slice(0,dot)+"-"+k+name.slice(dot):name+"-"+k; }
     const pane = el("div","code-tab-pane"); pane.hidden = i!==0;
     const holder = el("pre"); const clone = document.createElement("code");
     clone.className = code.className; clone.textContent = raw;
