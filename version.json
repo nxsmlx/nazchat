@@ -4,6 +4,6 @@
   "name": "Kita Chat",
   "changelog": "Agent team for long builds (Designer, Reviewer, Fixer, Database, a model per role), publish versions with rollback, and Web & DNS: DNS-over-HTTPS plus search with your API keys or model search.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.13.0/NazChat.apk",
-  "sha256": "d654a4f77566716ea5686819577218578cf813c7497c1279716e829c946cdfaa",
+  "sha256": "d138f7fc46062ebb5a36172656f9360d766ca455f61285717bb4f09f8f8142f6",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.13.0"
 }
