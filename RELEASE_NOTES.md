@@ -1,3 +1,19 @@
+# Kita Chat 4.13.0
+
+Web & DNS: reach blocked servers and get better search results. This release also includes 4.12.0 and 4.11.1.
+
+- Settings → Web & DNS → DNS: choose Cloudflare (1.1.1.1), Google (8.8.8.8), a custom DNS-over-HTTPS address, or System.
+  - Some networks answer DNS with a block page. With DNS-over-HTTPS, every request the app makes natively (models, web search, MCP, integrations, publishing, updates) looks the host up over encrypted HTTPS and goes to the real server.
+  - Certificates are still checked against the real site name, so security is unchanged.
+  - If a lookup fails, the request falls back to the phone's DNS.
+  - "Test lookup" shows what a host resolves to.
+  - Pages shown in Preview still use the phone's DNS.
+- Settings → Web & DNS → Web search, tried in this order:
+  - Model search (optional): OpenAI search (Responses API web search) and Anthropic search (Messages API web search) through one of your providers and its saved key, with the model you choose. The answer and its cited sources become the search results.
+  - Search APIs with your keys: Brave Search API, Tavily, Search1API, Exa and Serper. Paste several keys per service, one per line. They are used in turn, and a key that is refused, out of credit or rate limited hands over to the next. Keys are stored in Android Keystore and native code sends each one only to that service's API host, in that service's own header.
+  - The built-in DuckDuckGo search, with no key needed.
+- VersionCode 61, same com.nazchat.app package and original signing identity. Tested with mocked search APIs and host-JVM tests of the DNS-over-HTTPS rules, not on a real device or network.
+
 # Kita Chat 4.12.0
 
 Long builds in Code are done by a team of agents, each with its own role. This release also includes 4.11.1.

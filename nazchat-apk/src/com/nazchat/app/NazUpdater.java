@@ -57,7 +57,7 @@ public class NazUpdater {
                     if (!"https".equals(u.getProtocol()) || !"github.com".equals(u.getHost())
                             || !u.getPath().matches("/nxsmlx/nazchat/releases/download/v[0-9]+\\.[0-9]+\\.[0-9]+/NazChat\\.apk")
                             || u.getUserInfo() != null || u.getPort() != -1) throw new Exception("Unapproved update source");
-                    HttpURLConnection c = (HttpURLConnection) u.openConnection();
+                    HttpURLConnection c = NazDns.open(u);
                     c.setConnectTimeout(20000);
                     c.setReadTimeout(30000);
                     c.setRequestProperty("User-Agent", "NazChat-Updater");
@@ -73,7 +73,7 @@ public class NazUpdater {
                                 || !("github.com".equals(host) || "release-assets.githubusercontent.com".equals(host)
                                 || "objects.githubusercontent.com".equals(host))) throw new Exception("Unapproved update redirect");
                         c.disconnect();
-                        c = (HttpURLConnection) next.openConnection();
+                        c = NazDns.open(next);
                         c.setConnectTimeout(20000); c.setReadTimeout(30000);
                         c.setInstanceFollowRedirects(false);
                         c.setRequestProperty("User-Agent", "NazChat-Updater");

@@ -106,6 +106,13 @@ public final class NazSecrets {
      * and hosts other than the one the key is bound to.
      */
     static synchronized String keyForRequest(Context context, String ref, String url) throws java.io.IOException {
+        if (NazSecretPolicy.isSearchRef(ref)) {
+            NazSecretPolicy.authorizeSearch(ref, url);
+            String all = getStored(context, NazSecretPolicy.searchBase(ref));
+            if (all.length() == 0) return "";
+            String[] keys = all.split("\n");
+            return keys[NazSecretPolicy.searchIndex(ref) % keys.length].trim();
+        }
         if (NazSecretPolicy.isIntegrationRef(ref)) {
             NazSecretPolicy.authorizeIntegration(ref, url);
             return getStored(context, ref);

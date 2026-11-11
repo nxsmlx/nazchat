@@ -3864,3 +3864,20 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .agent-role { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg2); }
 .agent-role > span { display: flex; flex-direction: column; gap: 2px; }
 .agent-role small { color: var(--text2); font-size: 12px; }
+
+/* 4.13.0: Web & DNS */
+.dns-modes { display: flex; flex-direction: column; margin: 8px 0; border: 1px solid var(--border); border-radius: 16px; background: var(--bg2); overflow: hidden; }
+.dns-mode { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); text-align: left; }
+.dns-mode:last-child { border-bottom: 0; }
+.dns-mode > span:first-child { display: flex; flex: 1 1 auto; flex-direction: column; gap: 2px; }
+.dns-mode small { color: var(--text2); font-size: 12px; }
+.dns-check { width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 50%; }
+.dns-mode.on .dns-check { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 45%, transparent 50%); }
+.dns-custom { display: flex; gap: 8px; margin: 6px 0; }
+.dns-custom input { flex: 1 1 auto; }
+.search-card { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 16px; background: var(--bg2); }
+.search-card.on { border-color: color-mix(in srgb, var(--success, #3fb950) 45%, var(--border)); }
+.search-card small, .search-card.builtin small { color: var(--text2); font-size: 12.5px; }
+.search-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.search-head a { color: var(--link, var(--accent)); font-size: 13px; font-weight: 600; }
+.search-card textarea { min-height: 44px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }

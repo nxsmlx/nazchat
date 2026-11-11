@@ -80,6 +80,8 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NazStore(this), "NazStore");
         web.addJavascriptInterface(new NazShare(this), "NazShare");
         web.addJavascriptInterface(new NazClipboard(this), "NazClipboard");
+        // DNS-over-HTTPS for every native request (setting kept natively, see NazDns).
+        web.addJavascriptInterface(new NazDns(this), "NazDns");
         // Background builds: foreground service + progress / finished notifications.
         web.addJavascriptInterface(new NazWork(this), "NazWork");
         files = new NazFiles(this);

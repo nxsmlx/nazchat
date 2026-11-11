@@ -74,7 +74,7 @@ public class NazBridge {
                         // Refuses unknown refs, non-HTTPS, hosts a provider key is not bound to,
                         // and any host other than an integration token's official API.
                         key = NazSecrets.keyForRequest(NazApp.activity, secretRef, url);
-                        if (key.length() > 0) headers.put("Authorization", "Bearer " + key);
+                        if (key.length() > 0) headers.put(NazSecretPolicy.authHeaderName(secretRef), NazSecretPolicy.authHeaderValue(secretRef, key));
                     }
                     String current = url, currentMethod = method, currentBody = body;
                     java.net.HttpURLConnection c;
@@ -86,7 +86,7 @@ public class NazBridge {
                             if (u.getUserInfo() != null) throw new java.io.IOException("URLs with embedded credentials are refused");
                             McpHttp.requirePublicHost(u.getHost());
                         }
-                        c = (java.net.HttpURLConnection) u.openConnection();
+                        c = NazDns.open(u);
                         // Plain requests follow redirects here, after the host check; a key never follows one.
                         if (plain || key.length() > 0) c.setInstanceFollowRedirects(false);
                         c.setConnectTimeout(15000);

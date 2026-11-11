@@ -55,7 +55,7 @@ public class NazStream {
                         key = NazSecrets.keyForRequest(NazApp.activity, secretRef, urlStr);
                     }
                     URL u = new URL(urlStr);
-                    c = (HttpURLConnection) u.openConnection();
+                    c = NazDns.open(u);
                     // Never let a redirect carry the key to another host.
                     if (key.length() > 0) c.setInstanceFollowRedirects(false);
                     synchronized (NazStream.class) {

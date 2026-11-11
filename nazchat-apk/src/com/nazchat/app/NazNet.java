@@ -30,7 +30,7 @@ public class NazNet {
     public static String fetchJson(String urlStr, String method, Map<String, String> headers, String body) {
         try {
             URL u = new URL(urlStr);
-            HttpURLConnection c = (HttpURLConnection) u.openConnection();
+            HttpURLConnection c = NazDns.open(u);
             c.setConnectTimeout(15000);
             c.setReadTimeout(30000);
             c.setRequestMethod(method);
@@ -67,7 +67,7 @@ public class NazNet {
             String host = u.getHost();
             for (String h : SEARCH_HOSTS) {
                 if (h.equals(host)) {
-                    HttpURLConnection c = (HttpURLConnection) u.openConnection();
+                    HttpURLConnection c = NazDns.open(u);
                     c.setConnectTimeout(10000);
                     c.setReadTimeout(20000);
                     c.setRequestProperty("User-Agent",
