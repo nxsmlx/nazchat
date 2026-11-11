@@ -25,7 +25,7 @@ public final class NazScanCoreTest {
         // Ports.
         check(NazScanCore.ports("22, 80,8000-8002").length == 5, "port list and range");
         check(NazScanCore.ports("") .length == NazScanCore.COMMON_PORTS.length, "default common ports");
-        check(NazScanCore.ports("1-101") == null, "more than 100 ports refused");
+        check(NazScanCore.ports("1-1201") == null, "more than 1200 ports refused");
         check(NazScanCore.ports("0") == null && NazScanCore.ports("70000") == null && NazScanCore.ports("90-80") == null && NazScanCore.ports("x") == null, "invalid ports refused");
 
         // Banners and SSDP.
@@ -52,6 +52,30 @@ public final class NazScanCoreTest {
         List<String> names = NazScanCore.mdnsNames(reply, reply.length);
         check(names.size() == 1 && names.get(0).startsWith("_ipp._t"), "mdns PTR name with compression: " + names);
         check(NazScanCore.mdnsNames(new byte[5], 5).isEmpty(), "short packet ignored");
+        // Profiles.
+        int[] top = NazScanCore.profile("top");
+        check(top.length > 1100 && top.length <= NazScanCore.MAX_PORTS && top[0] == 1 && top[1023] == 1024, "top profile: 1-1024 plus high ports (" + top.length + ")");
+        check(NazScanCore.profile("quick").length == NazScanCore.COMMON_PORTS.length && NazScanCore.profile("").length == NazScanCore.COMMON_PORTS.length, "quick profile");
+        check(NazScanCore.profile("1-1024").length == 1024, "custom range up to 1024");
+        check(NazScanCore.profile("1-3000") == null, "custom over the limit refused");
+
+        // Version probes.
+        byte[] my = new byte[]{0x4a, 0, 0, 0, 10, '8', '.', '0', '.', '3', '6', 0, 1, 2};
+        check(NazScanCore.mysqlVersion(my, my.length).equals("8.0.36"), "mysql version");
+        check(NazScanCore.mysqlVersion(new byte[]{1, 0, 0, 0, (byte) 0xff, 'x'}, 6).isEmpty(), "mysql error packet");
+        byte[] ntp = new byte[48]; ntp[0] = 0x24; ntp[1] = 2;
+        check(NazScanCore.ntpInfo(ntp, 48).equals("NTP v4 · stratum 2"), "ntp reply");
+        check(NazScanCore.ntpInfo(NazScanCore.ntpQuery(), 48).isEmpty(), "ntp request is not a reply");
+        byte[] nb = new byte[57 + 36]; nb[56] = 2;
+        byte[] wk = "OFFICE-PC      ".getBytes(); System.arraycopy(wk, 0, nb, 57, 15); nb[57 + 15] = 0; nb[57 + 16] = 0x04;
+        byte[] grp = "WORKGROUP      ".getBytes(); System.arraycopy(grp, 0, nb, 75, 15); nb[75 + 15] = 0; nb[75 + 16] = (byte) 0x84;
+        check(NazScanCore.netbiosName(nb, nb.length).equals("OFFICE-PC"), "netbios workstation name");
+        check(NazScanCore.netbiosQuery().length == 50 && NazScanCore.netbiosQuery()[47] == 0x21, "netbios node status query");
+        byte[] dq = NazScanCore.dnsQuery();
+        byte[] dr = dq.clone(); dr[2] = (byte) 0x81; dr[3] = (byte) 0x80; dr[7] = 1;
+        check(NazScanCore.dnsInfo(dr, dr.length).equals("DNS server · answers lookups for any name (recursion on) · 1 answer"), "dns reply");
+        check(NazScanCore.dnsInfo(dq, dq.length).isEmpty(), "dns query is not a reply");
+
         System.out.println("RESULT NazScanCore passed; " + assertions + " assertions; production source; host JVM");
     }
 }

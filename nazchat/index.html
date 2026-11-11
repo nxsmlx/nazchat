@@ -911,7 +911,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
         <div class="attachment-inline" id="attachmentInline"></div>
         <div id="inputRow">
           <button id="attachBtn" aria-label="Attach documents" title="Attach document or code"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
-          <input id="fileInput" type="file" multiple accept=".pdf,.docx,.txt,.md,.markdown,.mdx,.csv,.tsv,.json,.yaml,.yml,.toml,.xml,.html,.htm,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.java,.kt,.go,.rs,.rb,.php,.swift,.dart,.c,.cpp,.h,.cs,.sql,.sh,.log,text/*,text/markdown,application/json">
+          <input id="fileInput" type="file" multiple accept=".pcap,.pcapng,.pdf,.docx,.txt,.md,.markdown,.mdx,.csv,.tsv,.json,.yaml,.yml,.toml,.xml,.html,.htm,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.java,.kt,.go,.rs,.rb,.php,.swift,.dart,.c,.cpp,.h,.cs,.sql,.sh,.log,text/*,text/markdown,application/json">
           <textarea id="promptInput" rows="1" placeholder="What’s on your mind?" aria-label="Message Kita"></textarea>
           <button id="steerBtn" type="button" aria-label="Steer response with this message" hidden>Steer</button>
           <button id="sendBtn" aria-label="Send message">
@@ -1078,6 +1078,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <script src="agents.js"></script>
 <script src="websearch.js"></script>
 <script src="network.js"></script>
+<script src="pcap.js"></script>
+<script src="webtest.js"></script>
 <script>
 "use strict";
 const THINK_OPEN = "\u003Cthink\u003E", THINK_CLOSE = "\u003C/think\u003E";
@@ -1517,8 +1519,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.14.0";
-const APP_VERSION_CODE = 62;
+const APP_VERSION = "4.15.0";
+const APP_VERSION_CODE = 63;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -4849,6 +4851,11 @@ function attachmentSize(text){
 async function handleFiles(files){
   for(const file of Array.from(files||[]).slice(0,8)){
     try{
+      if(/\.(pcap|pcapng|cap)$/i.test(file.name) && typeof captureFileToAttachment==="function"){
+        if(file.size>50*1024*1024){toast('Capture too large: '+file.name+' (maximum 50 MB)');continue;}
+        try{ pendingAttachments.push(await captureFileToAttachment(file)); toast('Capture summarised: '+file.name); }catch(e){ toast(String(e.message||e)); }
+        continue;
+      }
       const kind=attachableKind(file);
       if(kind==="image"){toast("Image attachments are not supported");continue;}
       if(!kind){toast("Can't read "+file.name+". Attach PDF, DOCX, Markdown, text or code files.");continue;}

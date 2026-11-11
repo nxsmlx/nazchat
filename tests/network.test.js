@@ -41,7 +41,7 @@ const mock=(info)=>`(()=>{let n=0;window.__scan=[];const emit=(id,o)=>setTimeout
    await page.waitForFunction(()=>document.querySelectorAll('.net-host[data-ip="192.168.1.40"] .net-port-notes li').length===3);
    const notes=await page.locator('.net-host[data-ip="192.168.1.40"] .net-port-notes li').allInnerTexts();
    assert.match(notes[0],/^23\s+Telnet: unencrypted remote login[\s\S]*BusyBox telnetd/);assert.match(notes[1],/^80\s+Web page without encryption[\s\S]*IPCam/);assert.match(notes[2],/^554\s+RTSP video stream/);
-   assert.deepEqual(await page.evaluate(()=>__scan.filter(x=>x[0]==='ports')),[['ports','192.168.1.40','']]);
+   assert.deepEqual(await page.evaluate(()=>__scan.filter(x=>x[0]==='ports')),[['ports','192.168.1.40','quick']]);
    // Discovery.
    await page.getByRole('button',{name:'Discover services'}).click();
    await page.waitForFunction(()=>/Discovery done/.test(document.querySelector('.net-progress')?.textContent||''));
