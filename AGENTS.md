@@ -64,8 +64,8 @@ UNSIGNED_ONLY=1 ./build.sh     # must end with "Built unsigned, aligned APK"
 
 ### Check the setup works
 ```sh
-node tests/comfort.test.js          # one quick browser test, prints PASS
-npm test                            # the full suite; must end with "All N test files passed."
+npm test -- comfort                 # one quick browser test, a few seconds
+npm test                            # the full suite (runs several files at once); ends with "All N test files passed in …"
 ```
 
 ---
@@ -121,17 +121,27 @@ The web app must keep working in a desktop browser where these are absent. Check
 4. **Change** the code in `nazchat/` (and `nazchat-apk/src/` only when native code is really needed).
 5. **Add or update a test** in `tests/` for the change (section 5).
    - Add any new test file to the list in `scripts/run-tests.cjs`.
-6. **Run tests:**
-   - First the related file, e.g. `node tests/network.test.js`.
-   - Then the full suite, `npm test`. It must end with `All N test files passed.`
+6. **Run only the related tests locally:** `npm test -- <names>`, e.g. `npm test -- network select-picker`.
+   - The names are parts of test file names; this takes seconds.
+   - Run the full `npm test` locally only when you changed shared core code: storage/`db`, streaming, `sendResponse`, the Markdown renderer or `studio.js` navigation. It runs several files at once.
+   - Otherwise let CI run the full suite.
 7. **Native or build changes:** if you changed Java, the manifest, `build.sh` or added a JS file, also run `UNSIGNED_ONLY=1 ./build.sh`.
 8. **Commit and push:**
    - Write clear commit messages that say what changed and why.
    - `git push -u origin feature/short-name`.
-9. **Open a pull request into `main`.** CI (`test.yml`) runs the suite; merge only when it is green.
+9. **Open a pull request into `main`.**
+   - CI (`test.yml`) runs the full suite on the PR in about 6 minutes.
+   - Merge only when it is green. If it fails, read the log, fix and push again.
 10. **Release** when the user asks for one (section 7).
 
-Never commit straight to `main` without the tests passing. Never force-push `main`.
+Never merge into `main` with red CI. Never force-push `main`.
+
+### Keep it fast
+- One task means one branch and one PR. Do not stack unrelated changes.
+- Do not run the full suite again and again. Run the related files while you work and let CI do the full run once.
+- Do not poll CI every few seconds. Check about once a minute, or use `gh pr checks <n> --watch`.
+- Commits are cheap. Commit as soon as the related tests pass; do not wait for a full local run first.
+- Read only the files you need. `index.html` is large, so search it with `grep -n` and read around the hit instead of the whole file.
 
 ---
 
@@ -210,9 +220,9 @@ Never commit straight to `main` without the tests passing. Never force-push `mai
   - Each prints `PASS …` and exits non-zero on failure.
 - **Native tests:** `tests/native-*.test.cjs`. These compile the pure Java `*Core` classes and run them on the host JVM. Run them with `node --test tests/native-dns.test.cjs` and so on.
 - **Full suite:** `npm test` (`scripts/run-tests.cjs`).
-  - It runs every file in order and retries a failing file up to twice.
-  - Files that pass only on retry are reported as FLAKY.
-  - A file that fails 3 times fails the run.
+  - It retries a failing file up to twice. Files that pass only on retry are reported as FLAKY; a file that fails 3 times fails the run.
+  - **Subset:** `npm test -- network comfort` runs only the files whose name contains one of the words.
+  - **Parallel:** by default it runs up to 4 files at once locally (half the CPU cores) and 1 at a time on CI. Override with `npm test -- --jobs 2` or `TEST_JOBS=2`.
 
 Writing a browser test:
 - Start from a similar existing test, such as `tests/select-picker.test.js` or `tests/comfort.test.js`.
@@ -267,13 +277,13 @@ Version numbers: `MAJOR.MINOR.PATCH`.
    - Go to GitHub → **Actions** → **Build, sign and release** → **Run workflow** on `main`. Leave "dry run" unticked.
    - With the CLI: `gh workflow run sign-release.yml --ref main`.
    - The workflow:
-     - runs the tests;
+     - reuses the green Tests run of that commit on `main`, or runs the tests if there is none;
      - checks that the version numbers match and are higher than the last release;
      - builds and signs with the keystore stored in repository secrets;
      - verifies the original signer;
      - commits `NazChat.apk` and `version.json` to `main`;
      - publishes the GitHub Release.
-   - It takes about 15 minutes.
+   - It takes about 7–15 minutes.
 6. **Verify:**
    - Check that https://github.com/nxsmlx/nazchat/releases/latest shows `vX.Y.Z` with `NazChat.apk`.
    - Phones will offer the update from Settings → About → Check for updates.
@@ -298,7 +308,7 @@ Download link to share (always the newest APK): https://github.com/nxsmlx/nazcha
 - [ ] No secrets in code, logs or commits, and no new network calls the user did not ask for.
 - [ ] Any new JS file is in the `build.sh` asset list.
 - [ ] A test covers the change and is listed in `scripts/run-tests.cjs`.
-- [ ] `npm test` ends with `All N test files passed.`
+- [ ] The related tests pass locally, and CI is green on the PR.
 - [ ] For native or build changes, `UNSIGNED_ONLY=1 ./build.sh` succeeds.
 - [ ] For a release, the version is bumped in all places, the notes are on top, and the workflow is green.
 - [ ] You told the user what changed, what you tested, and anything you could not test (e.g. on a real phone).
