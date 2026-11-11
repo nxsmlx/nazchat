@@ -1,9 +1,9 @@
 {
-  "version": "4.15.0",
-  "versionCode": 63,
+  "version": "4.15.1",
+  "versionCode": 64,
   "name": "Kita Chat",
-  "changelog": "Website test (passive on any site, active after you verify the domain), Quick/Top/Custom port profiles with service versions and UDP checks, saved reports, and analysis of PCAPdroid captures.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.15.0/NazChat.apk",
-  "sha256": "c04297e0edb012e1db798a5b8be1ad222e1adb9bdf7eaeefc8001c1943333b15",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.15.0"
+  "changelog": "Code snippets in explanations stay where they belong in the text, labelled by language; tabs only for real multi-file answers.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.15.1/NazChat.apk",
+  "sha256": "27e657bfbf3a4a791571bb7ac672b94755d6f6f099b2f6ff5be4765f3c919c82",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.15.1"
 }
