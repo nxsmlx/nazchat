@@ -192,6 +192,51 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
    assert.equal(JSON.parse(puts[0].body).content,Buffer.from(PAGE).toString('base64'));
  });
 
+ await scenario('GitHub Pages on an existing private repo: ask to make it public; decline commits nothing',seed(),async page=>{
+   const calls=[];
+   await page.route('https://api.github.com/**',async r=>{const u=new URL(r.request().url()),m=r.request().method(),p=u.pathname;calls.push({m,p,body:r.request().postData()});
+     if(p==='/user') return json(r,200,{login:'nxsmlx'});
+     if(p==='/repos/nxsmlx/kopi'&&m==='GET') return json(r,200,{name:'kopi',private:true,default_branch:'main',html_url:'https://github.com/nxsmlx/kopi'});
+     if(p==='/repos/nxsmlx/kopi'&&m==='PATCH') return json(r,200,{name:'kopi',private:false,default_branch:'main',html_url:'https://github.com/nxsmlx/kopi'});
+     if(p.endsWith('/git/ref/heads/main')) return json(r,200,{object:{sha:'c0'}});
+     if(p.endsWith('/git/commits/c0')) return json(r,200,{tree:{sha:'t0'}});
+     if(p.endsWith('/git/trees')) return json(r,201,{sha:'t1'});
+     if(p.endsWith('/git/commits')) return json(r,201,{sha:'c1'});
+     if(p.endsWith('/git/refs/heads/main')) return json(r,200,{});
+     if(p.endsWith('/pages')&&m==='GET') return json(r,404,{message:'Not Found'});
+     if(p.endsWith('/pages')&&m==='POST') return json(r,201,{html_url:'https://nxsmlx.github.io/kopi/'});
+     return json(r,404,{message:'unexpected '+m+' '+p});});
+   await connect(page,'github');
+   // Declined: a clear message, and nothing is changed or committed.
+   const err=await page.evaluate(PAGE=>publishSite('github-pages','kopi',[{path:'index.html',content:PAGE}],()=>{},{confirmPublic:async()=>false}).then(()=>'ok',e=>e.message),PAGE);
+   assert.match(err,/nxsmlx\/kopi is private, and GitHub Pages on a free plan needs a public repository/);
+   assert.equal(calls.filter(c=>c.m!=='GET').length,0);
+   // Accepted: made public, then committed, then Pages.
+   calls.length=0;let asked='';
+   const r=await page.evaluate(PAGE=>{window.__asked='';return publishSite('github-pages','kopi',[{path:'index.html',content:PAGE}],()=>{},{confirmPublic:async full=>{window.__asked=full;return true;}});},PAGE);
+   assert.equal(await page.evaluate(()=>window.__asked),'nxsmlx/kopi');
+   assert.equal(r.url,'https://nxsmlx.github.io/kopi/');
+   const writes=calls.filter(c=>c.m!=='GET').map(c=>c.m+' '+c.p);
+   assert.deepEqual(writes,['PATCH /repos/nxsmlx/kopi','POST /repos/nxsmlx/kopi/git/trees','POST /repos/nxsmlx/kopi/git/commits','PATCH /repos/nxsmlx/kopi/git/refs/heads/main','POST /repos/nxsmlx/kopi/pages']);
+   assert.deepEqual(JSON.parse(calls.find(c=>c.m==='PATCH'&&c.p==='/repos/nxsmlx/kopi').body),{private:false});
+   // A plan error from Pages reads as advice.
+   await page.unroute('https://api.github.com/**');
+   await page.route('https://api.github.com/**',async r=>{const u=new URL(r.request().url()),m=r.request().method(),p=u.pathname;
+     if(p==='/repos/nxsmlx/kopi'&&m==='GET') return json(r,200,{name:'kopi',private:false,default_branch:'main'});
+     if(p.endsWith('/git/ref/heads/main')) return json(r,200,{object:{sha:'c0'}});
+     if(p.endsWith('/git/commits/c0')) return json(r,200,{tree:{sha:'t0'}});
+     if(p.endsWith('/git/trees')) return json(r,201,{sha:'t1'});
+     if(p.endsWith('/git/commits')) return json(r,201,{sha:'c1'});
+     if(p.endsWith('/git/refs/heads/main')) return json(r,200,{});
+     if(p.endsWith('/pages')&&m==='GET') return json(r,404,{message:'Not Found'});
+     if(p.endsWith('/pages')&&m==='POST') return json(r,422,{message:'Your current plan does not support GitHub Pages for this repository.'});
+     return json(r,404,{message:'unexpected'});});
+   const err2=await page.evaluate(PAGE=>publishSite('github-pages','kopi',[{path:'index.html',content:PAGE}]).then(()=>'ok',e=>e.message),PAGE);
+   assert.match(err2,/GitHub Pages is not available for nxsmlx\/kopi on your plan\. Make the repository public/);
+   // Default names are short and cut at a word.
+   assert.equal(await page.evaluate(()=>siteSlug('Kopi Pelita — Pemanggang kelompok kecil, ruang kopi kampung')),'kopi-pelita-pemanggang-kelompok-kecil');
+ });
+
  await scenario('Android: tokens go to Keystore and only through the native secret path',seed(),async page=>{
    // HAS_NATIVE is fixed at page load, so the request builder is checked directly.
    const req=await page.evaluate(async()=>{

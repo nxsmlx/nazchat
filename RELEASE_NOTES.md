@@ -1,3 +1,11 @@
+# Kita Chat 4.11.1
+
+- GitHub Pages now works when a repository with the same name already exists as private (for example after publishing it first as "GitHub repository"). GitHub Pages on a free plan needs a public repository, so Kita asks whether to make it public before committing anything. If you say no, nothing changes and Kita suggests another site name.
+- A Pages "plan" error from GitHub now explains what to do instead of showing only the raw message.
+- The Publish sheet no longer shows the result of an earlier publish under a new attempt.
+- Default site names are shorter (about 40 characters, cut between words).
+- VersionCode 59, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.11.0
 
 Supabase joins the integrations, so the apps you build in Code can have a real database, sign-in and storage. This release also includes everything in 4.10.0 (Chat | Code and publishing).

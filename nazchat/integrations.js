@@ -152,7 +152,12 @@ function disconnectIntegration(service){forgetIntegrationToken(service);setInteg
 
 /* ---------- Files to publish ---------- */
 function utf8Base64(text){const bytes=new TextEncoder().encode(String(text));let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(s);}
-function siteSlug(text){return String(text||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,50).replace(/-+$/,'')||'kita-site';}
+function siteSlug(text){
+  let s=String(text||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  // Default names stay short: cut at a word boundary around 40 characters.
+  if(s.length>40){const cut=s.slice(0,41).lastIndexOf('-');s=s.slice(0,cut>=12?cut:40);}
+  return s.replace(/-+$/,'')||'kita-site';
+}
 const SITE_TYPES={html:'text/html; charset=utf-8',htm:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'text/javascript; charset=utf-8',mjs:'text/javascript; charset=utf-8',json:'application/json',svg:'image/svg+xml',txt:'text/plain; charset=utf-8',md:'text/markdown; charset=utf-8',xml:'application/xml',webmanifest:'application/manifest+json'};
 function siteType(path){return SITE_TYPES[(String(path).split('.').pop()||'').toLowerCase()]||'text/plain; charset=utf-8';}
 /* Files from an answer: the page becomes index.html; named files keep their names. */
@@ -244,11 +249,20 @@ async function githubRepo(login,name,pages,log){
   log('Creating repository '+login+'/'+name+'…');
   return await integrationFetch('github','/user/repos',{method:'POST',body:{name,private:!pages,auto_init:true,description:'Published from Kita Chat'}});
 }
-async function publishGitHub(name,files,log,pages){
+async function publishGitHub(name,files,log,pages,opts={}){
   let login=integrationState('github').login;
   if(!login){login=(await integrationFetch('github','/user')).login;setIntegrationState('github',{...integrationState('github'),login});}
-  const repo=await githubRepo(login,name,pages,log);
+  let repo=await githubRepo(login,name,pages,log);
   const branch=repo.default_branch||'main',base='/repos/'+login+'/'+name;
+  // GitHub Pages on a free plan needs a public repository. An existing private one (for
+  // example published earlier as "GitHub repository") is made public only if the user agrees,
+  // and nothing is committed before that is settled.
+  if(pages&&repo.private){
+    const ok=opts.confirmPublic?await opts.confirmPublic(login+'/'+name):false;
+    if(!ok) throw new Error(login+'/'+name+' is private, and GitHub Pages on a free plan needs a public repository. Choose another site name, or allow making it public.');
+    log('Making '+login+'/'+name+' public…');
+    repo=await integrationFetch('github',base,{method:'PATCH',body:{private:false}});
+  }
   let ref=null,empty=false;
   for(let i=0;i<6&&!ref;i++){try{ref=await integrationFetch('github',base+'/git/ref/heads/'+branch);}catch(e){if(e.status!==404&&e.status!==409)throw e;empty=e.status===409;if(empty)break;await new Promise(r=>setTimeout(r,1500));}}
   if(!ref&&empty){
@@ -268,15 +282,19 @@ async function publishGitHub(name,files,log,pages){
   log('Turning on GitHub Pages…');
   let site=null;
   try{site=await integrationFetch('github',base+'/pages');}
-  catch(e){ if(e.status!==404) throw e; site=await integrationFetch('github',base+'/pages',{method:'POST',body:{source:{branch,path:'/'}}}); }
+  catch(e){
+    if(e.status!==404) throw e;
+    try{ site=await integrationFetch('github',base+'/pages',{method:'POST',body:{source:{branch,path:'/'}}}); }
+    catch(err){ if(err.status===422&&/plan/i.test(err.message)) throw new Error('GitHub Pages is not available for '+login+'/'+name+' on your plan. Make the repository public in its GitHub settings, or publish under another site name.'); throw err; }
+  }
   return {url:site?.html_url||('https://'+login.toLowerCase()+'.github.io/'+name+'/'),detail:'GitHub Pages goes live in about a minute',repo:repo.html_url};
 }
-async function publishSite(targetId,name,files,log=()=>{}){
+async function publishSite(targetId,name,files,log=()=>{},opts={}){
   const slug=siteSlug(name);
   if(targetId==='vercel') return publishVercel(slug,files,log);
   if(targetId==='cloudflare-pages') return publishCloudflarePages(slug,files,log);
   if(targetId==='cloudflare-workers') return publishCloudflareWorker(slug,files,log);
-  if(targetId==='github-pages') return publishGitHub(slug,files,log,true);
+  if(targetId==='github-pages') return publishGitHub(slug,files,log,true,opts);
   if(targetId==='github') return publishGitHub(slug,files,log,false);
   throw new Error('Unknown publish target');
 }
@@ -368,10 +386,10 @@ function openPublishSheet(info){
     const slug=siteSlug(name.value),t=chosen;if(!t||!slug)return;name.value=slug;
     const where='https://'+t.host(slug);
     if(!await confirmDialog('Publish '+files.length+' file'+(files.length===1?'':'s')+' to '+where+'? '+(t.id==='github'?'The repository is private.':'Anyone with the link can open it.'),{title:'Publish to '+t.label,confirmText:'Publish'}))return;
-    go.disabled=true;go.textContent='Publishing…';progress.innerHTML='';
+    go.disabled=true;go.textContent='Publishing…';progress.innerHTML='';body.querySelectorAll('.publish-done').forEach(n=>n.remove());
     const log=m=>{const li=el('li');li.textContent=m;progress.appendChild(li);};
     try{
-      const r=await publishSite(t.id,slug,files,log);
+      const r=await publishSite(t.id,slug,files,log,{confirmPublic:full=>confirmDialog(full+' is a private repository. GitHub Pages on a free plan only works with public repositories. Make it public so the site can go live? Anyone will be able to see its files.',{title:'Make repository public?',confirmText:'Make public',danger:true})});
       if(c){c.sites=c.sites||{};c.sites[t.id]={target:t.id,name:slug,url:r.url,at:Date.now()};c.updatedAt=Date.now();save();}
       log('✓ '+(r.detail||'Published'));
       const done=el('div','publish-done');
