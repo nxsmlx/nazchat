@@ -1,3 +1,10 @@
+# Kita Chat 4.17.1
+
+- Asking Kita to scan your Wi-Fi or check ports now runs the real network checks and explains the results. Before, the model could write an nmap-style script instead.
+- Network checks also work in the Code tab.
+- A script that contains an HTML template (for example a Python report generator) is no longer opened as a broken page in Preview.
+- VersionCode 69, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.17.0
 
 - Chat can now run every Network check: custom port lists (like 22,80,8000-8100, up to 1200 ports), UDP check (DNS, NTP, NetBIOS name), finding devices that announce services (printers, TVs, cameras) and the website security test.

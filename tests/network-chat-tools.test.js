@@ -143,12 +143,19 @@ const answer=text=>enc({choices:[{delta:{content:text},finish_reason:'stop'}]})+
  const isNetworkToolName=n=>/^network_|^website_/.test(n);
  assert(defs.chat.includes('network_scan')&&defs.chat.includes('website_audit'));
  assert(defs.chat.includes('network_udp')&&defs.chat.includes('network_discover')&&defs.chat.includes('website_test'));
- assert(!defs.code.some(n=>isNetworkToolName(n)));
+ // Code mode offers them too: asked to scan in Code, the model must not write a scanner script.
+ assert(defs.code.includes('network_scan')&&defs.code.includes('website_test'));
+ const note=await page.evaluate(()=>toolSystemNote(kitaTools('code')));
+ assert.match(note,/call the matching tools/);assert.match(note,/Do not write a scanner script/);
+ // A Python answer that carries an HTML template string is not a page to preview.
+ const py='Here is the script:\n\n```python\nINDEX_HTML = \"\"\"<!doctype html><html><body>{rows}</body></html>\"\"\"\nprint(1)\n```\n';
+ assert.equal(await page.evaluate(t=>extractHtmlBlock(t),py),'');
+ assert.match(await page.evaluate(()=>extractHtmlBlock('Page:\n<!doctype html><html><body>Hi</body></html>')),/<body>Hi/);
  assert.equal(await page.evaluate(()=>net.hosts.size),0,'tool scans polluted the Network sheet');
  // Finished jobs (chat or Network sheet) leave no handler behind.
  assert.equal(await page.evaluate(()=>{scanJobs.set(99,()=>{});nazScanEvent(99,JSON.stringify({type:'done'}));return scanJobs.size;}),0);
  assert.deepEqual(errors,[]);
- console.log('PASS network chat tools stay out of Code mode and keep the sheet state separate');
+ console.log('PASS network tools work in Chat and Code, steer away from scripts, keep the sheet state separate; HTML inside code is not previewed');
  console.log('PASS network chat tools: scans, ports, permission, website audit and chat isolation');
  await b.close();
 })().catch(e=>{console.error(e);process.exit(1);});
