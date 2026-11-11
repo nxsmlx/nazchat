@@ -1519,8 +1519,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.17.1";
-const APP_VERSION_CODE = 69;
+const APP_VERSION = "4.17.2";
+const APP_VERSION_CODE = 70;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -3013,7 +3013,11 @@ async function deleteProvider(id){
     toast('Provider deleted. Conversations kept.');return true;
   }finally{providerDeletionBusy=false;}
 }
+/* The key typed into an open provider form. Kept in memory only (never saved in db) so a
+   re-test after fixing the URL can bind the key to the new URL. Cleared when the form opens. */
+let provDraftKey = "";
 function openProvForm(p, preset){
+  provDraftKey = "";
   const base=p ? {...p} : {...(preset||{}),id:null, name:preset?.name||"", baseUrl:preset?.baseUrl||"", endpointMode:"base", apiType:preset?.apiType||"chat_completions", apiKey:"", headers:[], selectedModels:[], capabilities:{}, secretRef:"draft:"+uid()};
   // Match how requests are built: only "full" / "responses" are special, so a provider
   // saved without these fields (older backups) must show Base URL / Chat Completions.
@@ -3070,8 +3074,8 @@ function renderProvForm(){
 
   const key = el("label","fld","API key");
   const pw = el("div","pw-wrap");
-  const keyIn = el("input"); keyIn.type="password"; keyIn.value = f.apiKey||""; keyIn.placeholder = hasNativeSecrets() && f.id && hasProviderSecret(f) ? "Stored securely — enter a new key to replace" : "sk-...";
-  keyIn.oninput = ()=>f.apiKey = keyIn.value;
+  const keyIn = el("input"); keyIn.type="password"; keyIn.value = f.apiKey||provDraftKey||""; keyIn.placeholder = hasNativeSecrets() && f.id && hasProviderSecret(f) ? "Stored securely — enter a new key to replace" : "sk-...";
+  keyIn.oninput = ()=>{ f.apiKey = keyIn.value; provDraftKey = keyIn.value.trim(); };
   const eyeIcon = open=>open
     ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0112 6c5 0 8.5 4.5 9.5 6-.5.8-1.6 2.3-3.2 3.6M6.4 7.6C4.6 8.9 3.2 10.7 2.5 12c1 1.5 4.5 6 9.5 6 1.5 0 2.9-.4 4.1-1M9.9 9.9a3 3 0 004.2 4.2"/></svg>'
     : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12C3.5 10.5 7 6 12 6s8.5 4.5 9.5 6c-1 1.5-4.5 6-9.5 6s-8.5-4.5-9.5-6z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -3090,7 +3094,7 @@ function renderProvForm(){
     const applyPick = ()=>{
       const ref = sel.value;
       f.secretRef = ref || f._draftRef;
-      if(ref){ f.apiKey=""; keyIn.value=""; }
+      if(ref){ f.apiKey=""; keyIn.value=""; provDraftKey=""; }
       keyIn.disabled = !!ref;
       keyIn.placeholder = ref ? "Using "+orphanKeyLabel(orphans.find(k=>k.ref===ref)) : "sk-...";
     };
@@ -3118,6 +3122,10 @@ function renderProvForm(){
   const test = el("button","btn secondary","Test connection & fetch models"); test.type="button";
   const status = el("div","status-line");
   test.onclick = async ()=>{
+    // Saving the typed key again binds it to the URL being tested now. Without this, a key
+    // first tested against a mistyped URL stayed locked to that URL and every retry failed.
+    const typedKey = keyIn.disabled ? "" : (keyIn.value.trim() || provDraftKey);
+    if(typedKey){ f.apiKey = typedKey; provDraftKey = typedKey; }
     prepareProviderSecret(f);
     if(!f.baseUrl || (!f.apiKey && !hasProviderSecret(f))){ status.className="status-line err"; status.textContent="Enter URL and API key first"; return; }
     status.className="status-line"; status.innerHTML = `<span class="spin" style="width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:rot .8s linear infinite"></span> Testing…`;
@@ -3125,7 +3133,7 @@ function renderProvForm(){
       const modelsUrl = f.endpointMode==="base" ? f.baseUrl.replace(/\/+$/,"") + "/models" : f.baseUrl.replace(/\/(chat\/completions|responses|models)$/,"") + "/models";
       prepareProviderSecret(f);
       const res = await netFetch(modelsUrl, { headers: buildHeaders(f), secretRef:f.secretRef });
-      if(!res.ok) throw new Error("HTTP "+res.status);
+      if(!res.ok) throw new Error(providerTestError(res.status, await res.text().catch(()=>"")));
       const data = await res.json();
       const rawModels = data.data||data.models||data||[];
       f.modelMeta = Object.fromEntries(rawModels.filter(m=>m && typeof m==="object" && (m.id||m.name)).map(m=>[m.id||m.name,m]));
@@ -3133,7 +3141,7 @@ function renderProvForm(){
       status.className="status-line ok"; status.textContent = `✓ Connected — ${f.fetchedModels.length} models found`;
       renderModelPick();
     }catch(e){
-      status.className="status-line err"; status.textContent = e.message+" (check URL/key/CORS)";
+      status.className="status-line err"; status.textContent = e.message;
     }
   };
   form.appendChild(test); form.appendChild(status);
@@ -4202,6 +4210,16 @@ function continuationPrompt(partial){
 }
 function abortableDelay(ms){
   return new Promise(resolve=>{ const sig=currentAbortSignal(); const t=setTimeout(resolve,ms); sig?.addEventListener("abort",()=>{clearTimeout(t);resolve();},{once:true}); });
+}
+/* Test connection: say why it failed instead of a bare "HTTP 0". */
+function providerTestError(status, body){
+  const text=String(body||"").trim();
+  let detail=text;
+  try{ const j=JSON.parse(text); detail=j?.error?.message||j?.message||j?.detail||(typeof j?.error==="string"?j.error:"")||text; }catch(e){}
+  detail=String(detail).replace(/^Network error:\s*/i,"").replace(/\s+/g," ").trim().slice(0,240);
+  if(!status) return "Could not connect"+(detail?": "+detail:"")+(/locked to/i.test(detail)?"":" (check the URL, your connection and Web & DNS settings)");
+  const hint=status===401?" (check the API key)":status===404?" (check the URL: it usually ends in /v1)":"";
+  return "HTTP "+status+(detail?": "+detail:"")+hint;
 }
 /* Turns raw provider / network failures into a sentence people can act on.
    The original status line is kept underneath for troubleshooting. */

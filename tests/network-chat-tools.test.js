@@ -52,6 +52,7 @@ const answer=text=>enc({choices:[{delta:{content:text},finish_reason:'stop'}]})+
  await ask('Scan my Wi-Fi for devices');
  await page.waitForSelector('#customDialogScrim.open');
  assert.match(await page.locator('#customDialogMessage').textContent(),/Only scan networks you own/);
+ assert.match(await page.locator('#customDialogMessage').textContent(),/this phone is on \(192\.168\.1\.23\/24\)\?/);
  assert.deepEqual(await page.evaluate(()=>__scan),[]);
  await page.click('#customDialogConfirm');await done();
  let out=lastTool();

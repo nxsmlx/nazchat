@@ -1,3 +1,10 @@
+# Kita Chat 4.17.2
+
+- Test connection now says why a provider cannot be reached (host not found, key locked to another URL, TLS, timeout, or the provider's own error) instead of a bare "HTTP 0".
+- Fixing a mistyped provider URL and testing again now works: the typed key is moved to the new URL. Before, it stayed locked to the first URL and every retry failed.
+- The network permission prompt from Chat shows your Wi-Fi subnet again.
+- VersionCode 70, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.17.1
 
 - Asking Kita to scan your Wi-Fi or check ports now runs the real network checks and explains the results. Before, the model could write an nmap-style script instead.
