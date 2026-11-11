@@ -1519,8 +1519,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.17.2";
-const APP_VERSION_CODE = 70;
+const APP_VERSION = "4.17.3";
+const APP_VERSION_CODE = 71;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -4217,7 +4217,11 @@ function providerTestError(status, body){
   let detail=text;
   try{ const j=JSON.parse(text); detail=j?.error?.message||j?.message||j?.detail||(typeof j?.error==="string"?j.error:"")||text; }catch(e){}
   detail=String(detail).replace(/^Network error:\s*/i,"").replace(/\s+/g," ").trim().slice(0,240);
-  if(!status) return "Could not connect"+(detail?": "+detail:"")+(/locked to/i.test(detail)?"":" (check the URL, your connection and Web & DNS settings)");
+  if(!status){
+    let dohOn=false; try{ dohOn=typeof window.NazDns?.getMode==="function" && window.NazDns.getMode()!=="system"; }catch(e){}
+    const hint=/locked to/i.test(detail)?"":(dohOn&&/ssl|tls|certificate|not verified|handshake/i.test(detail))?" (DNS-over-HTTPS is on: if other sites fail too, set Settings → Web & DNS to System)":" (check the URL, your connection and Web & DNS settings)";
+    return "Could not connect"+(detail?": "+detail:"")+hint;
+  }
   const hint=status===401?" (check the API key)":status===404?" (check the URL: it usually ends in /v1)":"";
   return "HTTP "+status+(detail?": "+detail:"")+hint;
 }

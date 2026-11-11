@@ -1,6 +1,12 @@
-# Kita Chat 4.17.2
+# Kita Chat 4.17.3
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+- Fixed: with DNS-over-HTTPS on (Settings → Web & DNS), providers and other sites could fail with "Hostname … not verified" or "TLSV1_ALERT_INTERNAL_ERROR". Android replaced the site name sent during the secure handshake with the IP address, so servers that host many sites (Caddy, Cloudflare, shared hosting) did not know which site was meant. Kita now finishes the handshake with the real site name.
+- If a TLS error happens while DNS-over-HTTPS is on, Test connection now suggests switching Web & DNS to System.
+- VersionCode 71, same com.nazchat.app package and original signing identity.
+
+# Kita Chat 4.17.2
 
 - Test connection now says why a provider cannot be reached (host not found, key locked to another URL, TLS, timeout, or the provider's own error) instead of a bare "HTTP 0".
 - Fixing a mistyped provider URL and testing again now works: the typed key is moved to the new URL. Before, it stayed locked to the first URL and every retry failed.
