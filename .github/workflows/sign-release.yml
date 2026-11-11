@@ -20,6 +20,11 @@ on:
         description: One-line summary shown by the in-app updater (empty = first bullet of the release notes)
         required: false
         type: string
+      dry_run:
+        description: Check only - build and sign with the secret keystore and verify the signer, without tests, commit or release
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -30,6 +35,7 @@ concurrency:
 
 jobs:
   test:
+    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -55,6 +61,7 @@ jobs:
 
   release:
     needs: test
+    if: ${{ !cancelled() && (needs.test.result == 'success' || (inputs.dry_run && needs.test.result == 'skipped')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -89,9 +96,11 @@ jobs:
           grep -q "^const APP_VERSION_CODE = $code;" nazchat/index.html || { echo "APP_VERSION_CODE in nazchat/index.html is not $code" >&2; exit 1; }
           test "$(jq -r .version package.json)" = "$version" || { echo "package.json version is not $version" >&2; exit 1; }
           grep -qx "# Kita Chat $version" RELEASE_NOTES.md || { echo "RELEASE_NOTES.md has no '# Kita Chat $version' section" >&2; exit 1; }
-          old=$(jq -r .versionCode version.json)
-          [ "$code" -gt "$old" ] || { echo "versionCode $code must be higher than the released $old" >&2; exit 1; }
-          if gh release view "v$version" >/dev/null 2>&1; then echo "Release v$version already exists" >&2; exit 1; fi
+          if [ '${{ inputs.dry_run }}' != true ]; then
+            old=$(jq -r .versionCode version.json)
+            [ "$code" -gt "$old" ] || { echo "versionCode $code must be higher than the released $old" >&2; exit 1; }
+            if gh release view "v$version" >/dev/null 2>&1; then echo "Release v$version already exists" >&2; exit 1; fi
+          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "code=$code" >> "$GITHUB_OUTPUT"
 
@@ -121,8 +130,11 @@ jobs:
           java -jar "$BT/lib/apksigner.jar" verify --print-certs NazChat.apk > "$RUNNER_TEMP/certs.txt"
           test "$(grep -c 'certificate SHA-256 digest' "$RUNNER_TEMP/certs.txt")" = 1
           grep -q "certificate SHA-256 digest: $EXPECTED_SIGNER" "$RUNNER_TEMP/certs.txt" || { echo "APK is not signed with the original Kita Chat key" >&2; exit 1; }
+          echo "Signed with the original Kita Chat key ($EXPECTED_SIGNER)."
+          if [ '${{ inputs.dry_run }}' = true ]; then echo "### Dry run OK: secrets work and the APK is signed with the original key" >> "$GITHUB_STEP_SUMMARY"; fi
 
       - name: Write version.json
+        if: ${{ !inputs.dry_run }}
         env:
           CHANGELOG_INPUT: ${{ inputs.changelog }}
         run: |
@@ -142,6 +154,7 @@ jobs:
           cat version.json
 
       - name: Commit APK and version.json
+        if: ${{ !inputs.dry_run }}
         id: commit
         run: |
           set -eu
@@ -157,6 +170,7 @@ jobs:
           fi
 
       - name: Publish release
+        if: ${{ !inputs.dry_run }}
         run: |
           set -eu
           version='${{ steps.meta.outputs.version }}'
@@ -173,6 +187,7 @@ jobs:
             --notes-file "$RUNNER_TEMP/body.md" --latest
 
       - name: Check the published asset
+        if: ${{ !inputs.dry_run }}
         run: |
           set -eu
           version='${{ steps.meta.outputs.version }}'
