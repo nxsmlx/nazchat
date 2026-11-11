@@ -1,6 +1,29 @@
-# Kita Chat 4.13.0
+# Kita Chat 4.14.0
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+Network tools: check the network you are on and your own websites, from your phone (Tools → Network).
+
+- Scan devices:
+  - Finds the devices on the Wi-Fi the phone is on, with their names, and marks the router.
+  - Only private addresses on the phone's own subnet are scanned, at most one /24, and it asks you first (once per session).
+  - Mobile data networks belong to your carrier and are never scanned.
+- Check ports:
+  - For one device, shows which common ports are open and what each service says (web page title and server, or its first line).
+  - Each port gets a plain explanation and a risk level, for example "Telnet: unencrypted remote login, often with a default password" or "Android debugging (ADB) over the network".
+- Discover services: lists devices that announce themselves on the network (UPnP/SSDP and mDNS), such as routers, printers, TVs and Chromecasts.
+- Audit a website:
+  - The certificate (issuer, days until it expires).
+  - Whether http:// redirects to https://.
+  - Security headers (HSTS, Content-Security-Policy, clickjacking protection, nosniff, Referrer-Policy) and a Server header that shows a version.
+  - DNS records (address, SPF and DMARC for mail, CAA).
+- Ask Kita about these results: sends the report as an attachment to a Chat message that asks which devices and services are risky and what to fix first.
+- There are no attack features: no password guessing, no exploits, no scans of public addresses.
+- The limits are enforced in native code and tested on a host JVM.
+- New Android permissions: Wi-Fi state, and Wi-Fi multicast (to hear devices that announce themselves).
+- VersionCode 62, same com.nazchat.app package and original signing identity. Tested with a mocked scanner; not tested on a real device or network.
+
+# Kita Chat 4.13.0
 
 Web & DNS: reach blocked servers and get better search results. This release also includes 4.12.0 and 4.11.1.
 

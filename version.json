@@ -1,9 +1,9 @@
 {
-  "version": "4.13.0",
-  "versionCode": 61,
+  "version": "4.14.0",
+  "versionCode": 62,
   "name": "Kita Chat",
-  "changelog": "Agent team for long builds (Designer, Reviewer, Fixer, Database, a model per role), publish versions with rollback, and Web & DNS: DNS-over-HTTPS plus search with your API keys or model search.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.13.0/NazChat.apk",
-  "sha256": "d138f7fc46062ebb5a36172656f9360d766ca455f61285717bb4f09f8f8142f6",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.13.0"
+  "changelog": "Network tools: scan the devices on your Wi-Fi, check their open ports with plain risk notes, discover devices that announce themselves, audit your own website, and ask Kita what to fix.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.14.0/NazChat.apk",
+  "sha256": "5b78a6026350866db0668a4ff7409b1337ccee2c29721f07bc1d8fc6d0c4e044",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.14.0"
 }

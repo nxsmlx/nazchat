@@ -1077,6 +1077,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <script src="integrations.js"></script>
 <script src="agents.js"></script>
 <script src="websearch.js"></script>
+<script src="network.js"></script>
 <script>
 "use strict";
 const THINK_OPEN = "\u003Cthink\u003E", THINK_CLOSE = "\u003C/think\u003E";
@@ -1516,8 +1517,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.13.0";
-const APP_VERSION_CODE = 61;
+const APP_VERSION = "4.14.0";
+const APP_VERSION_CODE = 62;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2715,6 +2716,7 @@ function renderToolsSheet(){
   agentSel.innerHTML=[1,2,3,4].map(n=>`<option value="${n}" ${n===agentConcurrency()?"selected":""}>${n}${n===3?" (default)":""}</option>`).join("");
   agentSel.onchange=()=>{db.agentConcurrency=Number(agentSel.value);save();};
   agents.querySelector(".tools-row-actions").appendChild(agentSel);rows.appendChild(agents);
+  if(typeof openNetworkSheet==="function") rows.appendChild(linkRow("Network","Scan your Wi-Fi and audit your websites","Open network tools",()=>openNetworkSheet()));
   if(typeof renderAgentTeamSettings==="function") rows.appendChild(linkRow("Agent team","Roles and a model for each agent","Open agent team settings",()=>{closeSheet('toolsSheet');renderAgentTeamSettings();openSheet('setSheet');}));
   const bg=el("div","tools-row");
   bg.innerHTML=`<span><strong>Keep building in the background</strong><small>Android shows a notification while a long build runs and when it finishes</small></span>`;
