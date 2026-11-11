@@ -1,9 +1,9 @@
 {
-  "version": "4.15.1",
-  "versionCode": 64,
+  "version": "4.15.2",
+  "versionCode": 65,
   "name": "Kita Chat",
-  "changelog": "Code snippets in explanations stay where they belong in the text, labelled by language; tabs only for real multi-file answers.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.15.1/NazChat.apk",
-  "sha256": "27e657bfbf3a4a791571bb7ac672b94755d6f6f099b2f6ff5be4765f3c919c82",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.15.1"
+  "changelog": "Drop-down choices open a Kita picker that matches the theme, instead of the old grey Android dialog.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.15.2/NazChat.apk",
+  "sha256": "e3203cd41a896e2a7a646e7bc678af77c7b40cb4c3033114fc9fc9343b0515ee",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.15.2"
 }
