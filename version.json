@@ -1,9 +1,9 @@
 {
-  "version": "4.16.0",
-  "versionCode": 66,
+  "version": "4.16.1",
+  "versionCode": 67,
   "name": "Kita Chat",
-  "changelog": "Ask Kita in Chat to scan your own Wi-Fi, check a device's open ports or audit a website. Kita runs the check and explains the results in the conversation.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.16.0/NazChat.apk",
-  "sha256": "443be5b734ba572979293375b4f942b47f13e04caab7b0ffe6ccbfc70d72e99e",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.16.0"
+  "changelog": "Website audit from Chat now asks first when the assistant picks a site you did not name, like opening a page. You can audit it once or allow that site for the whole chat; a site you typed yourself, or Bypass all, runs without asking.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.16.1/NazChat.apk",
+  "sha256": "252feda0ed53b2f1946739977060c83cb2d18234ba208d7c8bf4183d8baf9c0d",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.16.1"
 }
