@@ -1,9 +1,9 @@
 {
-  "version": "4.8.0",
-  "versionCode": 53,
+  "version": "4.8.1",
+  "versionCode": 54,
   "name": "Kita Chat",
-  "changelog": "Pick an accent colour, and choose how much tools may do without asking (Careful, Balanced or Bypass all).",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.8.0/NazChat.apk",
-  "sha256": "8963a116217cff4af5c86609308a9df91ba316dbb1942e155ac66570d9b07dba",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.8.0"
+  "changelog": "Code blocks render cleanly even when the fence is glued to text, and About now credits the author (Nazz).",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.8.1/NazChat.apk",
+  "sha256": "9c5fd642159f6c4565f70bd6280a0ac15d2860f642de5fe751b536ddf3ff67d1",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.8.1"
 }

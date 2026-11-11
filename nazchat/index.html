@@ -1507,8 +1507,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.8.0";
-const APP_VERSION_CODE = 53;
+const APP_VERSION = "4.8.1";
+const APP_VERSION_CODE = 54;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1597,8 +1597,27 @@ function extractThink(text){
   }
   return {think, content};
 }
+/* Some providers glue a code fence to the previous text ("…5.5.```html") or put the
+   closing fence after code ("</html>```"). Markdown only recognises a fence at the start
+   of a line, so the code would render as prose and fragments. Move such fences onto
+   their own line; fences already on their own line and inline code are left alone. */
+function normalizeFences(text){
+  const lines=String(text||"").split("\n"), out=[];
+  let open=false;
+  for(const line of lines){
+    if(/^\s{0,3}```/.test(line)){ open=!open; out.push(line); continue; }
+    const at=line.indexOf("```");
+    if(at>0){
+      const before=line.slice(0,at), after=line.slice(at+3);
+      if(!open && /^[\w+#.-]*\s*$/.test(after) && after.trim()){ out.push(before, "```"+after.trim()); open=true; continue; }
+      if(open && /^\s*$/.test(after)){ out.push(before, "```"); open=false; continue; }
+    }
+    out.push(line);
+  }
+  return out.join("\n");
+}
 function renderMarkdown(src){
-  const source=String(src||'');
+  const source=normalizeFences(String(src||''));
   // Incremental assembly and some providers return a bare HTML document.
   // Keep the WHOLE document in a single viewer, not a mix of Markdown and HTML.
   if(/^\s*(?:<!doctype\s+html|<html\b|<head\b|<body\b)/i.test(source))
@@ -2642,7 +2661,7 @@ function renderSettingsHub(){
   group.appendChild(settingsHubRow("permissions","Permissions",({careful:"Ask before every tool",balanced:"Read-only tools run without asking",bypass:"Bypass all is on"})[permissionMode()],renderPermissionSettings));
   group.appendChild(settingsHubRow("mcp","MCP Servers",`${mcpEnabledServers().length} enabled · ${mcpToolDefs().length} tools`,renderMcpSettings));
   group.appendChild(settingsHubRow("appearance","Appearance",`${studioThemeName()} theme · ${(ACCENTS.find(a=>a.id===db.accent)||ACCENTS[0]).name} accent`,()=>renderSettingsAppearance()));
-  group.appendChild(settingsHubRow("about","About",`Kita Chat ${APP_VERSION} · Private BYOK`,()=>renderSettingsAbout()));
+  group.appendChild(settingsHubRow("about","About",`Kita Chat ${APP_VERSION} · by Nazz`,()=>renderSettingsAbout()));
   list.appendChild(group);
 }
 function renderSettingsAppearance(){renderStudioAppearance();}
@@ -2806,7 +2825,7 @@ function openMemoryForm(existing){
   closeSheet("setSheet");openSheet("provSheet");ta.focus();
 }
 function renderSettingsAbout(){
-  renderSettingsPage("About",null,null,list=>{const card=el("div","settings-card");card.innerHTML=`<h4>Kita Chat ${APP_VERSION}</h4><p>Private, local-first Android BYOK chat for OpenAI-compatible providers.</p><p style="margin-top:10px">API keys stay in Android Keystore storage. Conversations and workspaces remain on this device.</p>`;list.appendChild(card);const update=el("button","btn secondary","Check for updates");update.id="checkUpdateBtn";update.onclick=checkForUpdate;list.appendChild(update);const status=el("div","update-badge");status.id="updateStatus";status.style.display="none";list.appendChild(status);const diagnostics=el('button','btn secondary','Copy safe diagnostics');diagnostics.dataset.safeDiagnostics='true';list.appendChild(diagnostics);});
+  renderSettingsPage("About",null,null,list=>{const card=el("div","settings-card");card.innerHTML=`<h4>Kita Chat ${APP_VERSION}</h4><p class="about-author">Made by Nazz · © 2026 Nazz. All rights reserved.</p><p>Private, local-first Android BYOK chat for OpenAI-compatible providers.</p><p style="margin-top:10px">API keys stay in Android Keystore storage. Conversations and workspaces remain on this device.</p>`;list.appendChild(card);const update=el("button","btn secondary","Check for updates");update.id="checkUpdateBtn";update.onclick=checkForUpdate;list.appendChild(update);const status=el("div","update-badge");status.id="updateStatus";status.style.display="none";list.appendChild(status);const diagnostics=el('button','btn secondary','Copy safe diagnostics');diagnostics.dataset.safeDiagnostics='true';list.appendChild(diagnostics);});
 }
 function renderProvidersSubView(){
   renderSettingsPage("Providers","Add",()=>openProvForm(null),list=>{
