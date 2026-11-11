@@ -1,6 +1,12 @@
-# Kita Chat 4.16.0
+# Kita Chat 4.16.1
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+- Website audit from Chat now asks first when the assistant picks a site you did not name, like opening a page. You can audit it once or allow that site for the whole chat; a site you typed yourself, or Bypass all, runs without asking.
+- Finished Network scans no longer leave background listeners behind.
+- VersionCode 67, same com.nazchat.app package and original signing identity.
+
+# Kita Chat 4.16.0
 
 - Ask Kita in Chat to scan your own Wi-Fi, check a device's open ports or audit a website. Kita runs the check and explains the results in the conversation.
 - Network scans still ask for permission first, work only on the phone's private Wi-Fi subnet and never scan mobile data or public IP addresses.

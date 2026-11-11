@@ -67,7 +67,9 @@ async function networkPortsTool(ip,profile){
   await scanToolJob(()=>window.NazNetScan.ports(ip,profile),e=>{if(e.type==='port')ports.push({port:e.port,banner:String(e.banner||'').slice(0,200),note:portNote(e.port)[1],risk:portNote(e.port)[0]});});
   return {ip,profile,openPorts:ports.sort((a,b)=>a.port-b.port)};
 }
-window.nazScanEvent=(job,text)=>{let e;try{e=JSON.parse(text);}catch(x){return;}const fn=scanJobs.get(job);if(fn)fn(e);};
+// A job ends with "done" (or "error"); forget its handler then, so finished Network-sheet
+// scans do not pile up. Chat tool jobs already remove themselves inside their handler.
+window.nazScanEvent=(job,text)=>{let e;try{e=JSON.parse(text);}catch(x){return;}const fn=scanJobs.get(job);if(fn)fn(e);if(e.type==='done'||e.type==='error')scanJobs.delete(job);};
 function hasNetScan(){return typeof window.NazNetScan==='object'&&typeof window.NazNetScan.sweep==='function';}
 function netHost(ip){let h=net.hosts.get(ip);if(!h){h={ip,name:'',open:[],ports:[],services:[],udp:[]};net.hosts.set(ip,h);}return h;}
 function subnetLabel(i){return i&&i.ip?i.ip+'/'+i.prefix:'';}

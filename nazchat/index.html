@@ -1519,8 +1519,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.16.0";
-const APP_VERSION_CODE = 66;
+const APP_VERSION = "4.16.1";
+const APP_VERSION_CODE = 67;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -3909,6 +3909,35 @@ async function confirmFetchUrl(url, msg){
   }
   finally{ signal?.removeEventListener('abort',abort); }
 }
+/* website_audit contacts a site the model picked, like fetch_url. Run it without asking only
+   when the user named that domain in this chat, allowed the site for this chat, or chose
+   Bypass all. */
+function auditDomain(d){ return String(d||"").trim().toLowerCase().replace(/^https?:\/\//,"").replace(/[/?#].*$/,"").replace(/:\d+$/,"").replace(/\.$/,""); }
+function userProvidedDomains(){
+  const set=new Set();
+  for(const m of (conv?.messages||[])){
+    if(m.role!=="user") continue;
+    const text=(typeof m.content==="string"?m.content:JSON.stringify(m.content||"")).toLowerCase();
+    for(const d of text.match(/\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}\b/g)||[]) set.add(d.replace(/^www\./,""));
+  }
+  return set;
+}
+async function confirmWebsiteAudit(domain){
+  const d=auditDomain(domain);
+  if(!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)) return true; // auditSite rejects it with a clear error
+  if(userProvidedDomains().has(d.replace(/^www\./,""))) return true;
+  const origin="https://"+d;
+  if(permissionMode()==="bypass"){ logToolActivity({kind:"page",tool:"website_audit",how:"Bypass all",args:d}); return true; }
+  if((conv?.siteAllow||[]).includes(origin)){ logToolActivity({kind:"page",tool:"website_audit",how:"Site allowed for this chat",args:d}); return true; }
+  const signal=currentAbortSignal(); if(signal?.aborted) return false;
+  const abort=()=>$('#customDialogCancel')?.click(); signal?.addEventListener('abort',abort,{once:true});
+  try{
+    const answer=await customDialog({title:'Audit this website?',message:'The assistant wants to check '+d+': its certificate, HTTPS redirect, security headers and DNS records. You did not name this site in the chat.\n\nOnly allow it if you expect this check.',confirmText:'Audit once',cancelText:'Cancel',choices:[{label:'Allow '+d+' for this chat',value:'site'}]});
+    if(answer==='site'&&conv){conv.siteAllow=[...new Set([...(conv.siteAllow||[]),origin])];save();}
+    return !!answer;
+  }
+  finally{ signal?.removeEventListener('abort',abort); }
+}
 /* The Search chip controls whether the web_search tool is offered; fetch_url stays available. */
 function toolsSupported(model){
   const p=model&&model.provider; if(!p) return false;
@@ -4647,6 +4676,9 @@ async function sendResponse(text, opts, run){
     for(const c of calls){
       if(currentAbortSignal()?.aborted)break;
       let args = {}; try{ args = c.args?JSON.parse(c.args):{}; }catch(e){ args = {}; }
+      if(c.name==='website_audit'&&!await confirmWebsiteAudit(args.domain)){
+        results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined auditing this website.'}});continue;
+      }
       if(c.name.startsWith('network_')&&!await confirmNetworkUse()){
         results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined scanning this network.'}});continue;
       }

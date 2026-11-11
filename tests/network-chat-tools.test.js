@@ -72,19 +72,36 @@ const answer=text=>enc({choices:[{delta:{content:text},finish_reason:'stop'}]})+
  assert.match(lastTool().error,/declined/);assert.deepEqual(await page.evaluate(()=>__scan),[]);
  console.log('PASS declining a chat network scan starts nothing');
 
- // 4. Public website audit is read-only and returns structured checks.
+ // 4. Public website audit is read-only and returns structured checks. The user named
+ //    the domain, so it runs without asking.
  nextTool='website_audit';args={domain:'https://Kopi.example.com/menu'};
- await ask('Audit my website');await done();out=lastTool();
+ await ask('Audit my website kopi.example.com');await done();out=lastTool();
+ assert.equal(await page.locator('#customDialogScrim.open').count(),0,'asked for a domain the user typed');
  assert.equal(out.domain,'kopi.example.com');
  assert(out.checks.some(c=>c.label==='Certificate'&&c.level==='ok'));
  assert(out.checks.some(c=>c.label==='DNS address'&&/203\.0\.113\.7/.test(c.detail)));
  console.log('PASS chat website audit returns TLS, headers and DNS checks');
+
+ // 4b. A domain the user never named needs approval, like fetch_url. Declining audits nothing.
+ nextTool='website_audit';args={domain:'other.example.org'};
+ await ask('Audit my website');await page.waitForSelector('#customDialogScrim.open');
+ assert.match(await page.locator('#customDialogMessage').textContent(),/other\.example\.org/);
+ await page.click('#customDialogCancel');await done();
+ assert.match(lastTool().error,/declined auditing/);
+ // Allowing the site for this chat lets later audits of it run without asking.
+ await ask('Audit my website');await page.waitForSelector('#customDialogScrim.open');
+ await page.getByRole('button',{name:'Allow other.example.org for this chat'}).click();await done();
+ assert.equal(lastTool().domain,'other.example.org');
+ assert.deepEqual(await page.evaluate(()=>conv.siteAllow),['https://other.example.org']);
+ console.log('PASS chat website audit asks before an unnamed site; decline and allow-for-chat work');
 
  // 5. Chat tools do not leak into Code mode or into the Network sheet results.
  const defs=await page.evaluate(()=>({chat:kitaTools('chat').map(t=>t.function.name),code:kitaTools('code').map(t=>t.function.name)}));
  assert(defs.chat.includes('network_scan')&&defs.chat.includes('website_audit'));
  assert(!defs.code.includes('network_scan')&&!defs.code.includes('network_ports')&&!defs.code.includes('website_audit'));
  assert.equal(await page.evaluate(()=>net.hosts.size),0,'tool scans polluted the Network sheet');
+ // Finished jobs (chat or Network sheet) leave no handler behind.
+ assert.equal(await page.evaluate(()=>{scanJobs.set(99,()=>{});nazScanEvent(99,JSON.stringify({type:'done'}));return scanJobs.size;}),0);
  assert.deepEqual(errors,[]);
  console.log('PASS network chat tools stay out of Code mode and keep the sheet state separate');
  console.log('PASS network chat tools: scans, ports, permission, website audit and chat isolation');
