@@ -400,12 +400,15 @@ function openPublishSheet(info){
   name.oninput=refresh;
   // Every publish is kept as a version (its files, the answer it came from, when and where).
   // Rollback publishes an earlier version again to the same site, the same way on every service.
+  // Short by default: the live version and the two before it; the rest on request.
+  let showAllVersions=false;
+  const VERSIONS_SHOWN=3;
   const renderVersions=()=>{
     versions.innerHTML='';
     const list=chosen?siteVersions(c,chosen.id,siteSlug(name.value)):[];
     if(!list.length) return;
     versions.appendChild(el('p','studio-section-title','Versions'));
-    list.forEach((v,i)=>{
+    (showAllVersions?list:list.slice(0,VERSIONS_SHOWN)).forEach((v,i)=>{
       const row=el('div','publish-version'+(i===0?' live':''));
       const when=new Date(v.at).toLocaleString([], {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
       const from=v.rollbackOf?'rollback to version '+(siteVersionNumber(c,v.rollbackOf)||'?'):(v.messageId&&v.messageId===info.messageId?'this page':'an earlier answer');
@@ -413,6 +416,12 @@ function openPublishSheet(info){
       if(i>0){const rb=el('button','mini-btn','Rollback');rb.type='button';rb.setAttribute('aria-label','Roll back to version '+v.n);rb.onclick=()=>publishNow(v.files,{rollbackOf:v.id,label:'version '+v.n});row.appendChild(rb);}
       versions.appendChild(row);
     });
+    if(list.length>VERSIONS_SHOWN){
+      const more=el('button','publish-more',showAllVersions?'Show fewer':'Show all '+list.length+' versions');more.type='button';
+      more.setAttribute('aria-expanded',String(showAllVersions));
+      more.onclick=()=>{showAllVersions=!showAllVersions;renderVersions();};
+      versions.appendChild(more);
+    }
   };
   const publishNow=async(sendFiles,opts={})=>{
     const slug=siteSlug(name.value),t=chosen;if(!t||!slug)return;name.value=slug;

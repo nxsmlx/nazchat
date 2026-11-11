@@ -3855,3 +3855,4 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .publish-version > span { display: flex; flex: 1 1 auto; flex-direction: column; gap: 2px; min-width: 0; }
 .publish-version small { color: var(--text2); font-size: 12px; }
 .publish-version.live { border-color: color-mix(in srgb, var(--success, #3fb950) 45%, var(--border)); }
+.publish-more { align-self: flex-start; min-height: 40px; padding: 0 4px; border: 0; background: none; color: var(--link, var(--accent)); font-size: 13px; font-weight: 600; }

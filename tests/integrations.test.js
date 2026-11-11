@@ -135,6 +135,13 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
    // Only the last 10 versions of a site are kept.
    const kept=await page.evaluate(()=>{for(let i=0;i<12;i++)recordSiteVersion(conv,{target:'vercel',name:'kopi-kita',url:'u',files:[{path:'index.html',content:'v'+i}]});return siteVersions(conv,'vercel','kopi-kita').map(v=>v.n);});
    assert.equal(kept.length,10);assert.equal(kept[0],15);assert.equal(kept.at(-1),6);
+   // The sheet stays short: live + 2 earlier versions, the rest behind "Show all".
+   await page.evaluate(()=>closeSheet('toolsSheet'));await page.locator('.artifact-btn.publish').nth(1).click();await page.locator('.publish-target[data-target="vercel"]').click();
+   assert.equal(await page.locator('.publish-version').count(),3);
+   await page.getByRole('button',{name:'Show all 10 versions'}).click();
+   assert.equal(await page.locator('.publish-version').count(),10);
+   await page.getByRole('button',{name:'Show fewer'}).click();
+   assert.equal(await page.locator('.publish-version').count(),3);
  });
 
  await scenario('Publish to Cloudflare Pages: project, BLAKE3 upload, manifest deployment',seed(),async page=>{
