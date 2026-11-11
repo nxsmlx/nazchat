@@ -1,9 +1,9 @@
 {
-  "version": "4.8.2",
-  "versionCode": 55,
+  "version": "4.9.0",
+  "versionCode": 56,
   "name": "Kita Chat",
-  "changelog": "Markdown files attach again, long pastes become attachments, pages show as artifact cards, and long answers survive the internet dropping or the app closing.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.8.2/NazChat.apk",
-  "sha256": "c49bc457233500a5c42aaa46493391d540b567cf8cc648dbfa8d8cf6daadc28a",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.8.2"
+  "changelog": "Long builds are written by a team of agents at the same time (orchestrator + sub-agents), keep running in the background with a notification, and show the agents instead of a long terminal.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.9.0/NazChat.apk",
+  "sha256": "456cb3cdc8ac8255ec4f59756c08e127a6e3337f10174a2ae9a0128904fabd1e",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.9.0"
 }

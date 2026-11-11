@@ -77,6 +77,8 @@ const assert=require('node:assert/strict');
   assert.equal(await p.evaluate(()=>conv.messages.length),0);
   console.log('PASS conversation identity guarded at handoff');
 
+  // This scenario checks steer handoff on a build part by part, so one agent at a time.
+  await p.evaluate(()=>{db.agentConcurrency=1;});
   await start('buat landing page lengkap');await waitCalls(6);
   await p.evaluate(()=>{streamMock.push(5,'1. Head and styles\n2. Hero section\n3. Footer');streamMock.finish(5);});await waitCalls(7);
   await p.evaluate(()=>{streamMock.push(6,'```html\n<head><title>Retained title</title><style>body{color:red}</style></head>\n```');streamMock.finish(6);});await waitCalls(8);

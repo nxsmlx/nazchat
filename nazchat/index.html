@@ -1513,8 +1513,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.8.2";
-const APP_VERSION_CODE = 55;
+const APP_VERSION = "4.9.0";
+const APP_VERSION_CODE = 56;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2071,26 +2071,32 @@ function renderAssistant(bubble, msg, live){
     const box = el("div","run-status");
     const state = msg.phases ? msg.phases.state : (msg.content ? "execute" : msg.reasoning ? "think" : "waiting");
     const busy = !!live && state!=="done" && state!=="incomplete";
-    const label = msg.phases ? phaseStatusLabel(state) : (!live ? (msg.stopped?'Stopped':msg.toolCall?'Incomplete':'Reasoning') : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider"));
     const parts = msg.phases && msg.phases.parts && msg.phases.parts.length ? msg.phases.parts : null;
+    const label = msg.phases ? (state==="execute" && parts && parts.length ? `${parts.filter(p=>p.status==="running").length||"Agents"} agent${parts.filter(p=>p.status==="running").length===1?"":"s"} working` : phaseStatusLabel(state)) : (!live ? (msg.stopped?'Stopped':msg.toolCall?'Incomplete':'Reasoning') : (msg.content ? "Writing the answer" : msg.reasoning ? "Thinking" : "Waiting for the provider"));
     const head = el("button","run-summary");
-    head.setAttribute("aria-expanded", String(!!msg._runOpen));
+    // A build in progress shows its agents unless the reader folds the list away.
+    const runOpen = msg._runOpen ?? (!!live && !!parts);
+    head.setAttribute("aria-expanded", String(runOpen));
     head.innerHTML = `<span class="run-dot${busy?" busy":""}" aria-hidden="true"></span><span class="run-label">${esc(label)}</span>`
       + (parts ? `<span class="run-count">${parts.filter(p=>p.status==="done").length}/${parts.length}</span>` : "")
       + (busy && msg.reasoning && !parts ? `<span class="run-live">${esc(String(msg.reasoning).replace(/\s+/g," ").trim().slice(-70))}</span>` : "")
       + (msg.thinkSecs ? `<span class="run-time">${msg.thinkSecs}s</span>` : "")
       + `<span class="run-chev" aria-hidden="true">\u2304</span>`;
-    head.onclick = ()=>{ msg._runOpen = !msg._runOpen; box.classList.toggle("open", !!msg._runOpen); head.setAttribute("aria-expanded", String(!!msg._runOpen)); };
-    if(msg._runOpen) box.classList.add("open");
+    head.onclick = ()=>{ msg._runOpen = !(msg._runOpen ?? (!!live && !!parts)); box.classList.toggle("open", msg._runOpen); head.setAttribute("aria-expanded", String(msg._runOpen)); };
+    if(runOpen) box.classList.add("open");
     box.appendChild(head);
     const detail = el("div","run-detail");
     if(parts){
       const list = el("ol","run-parts");
       parts.forEach((p,i)=>{
         const li = el("li", "run-part "+p.status);
-        li.innerHTML = `<span class="run-part-status" aria-hidden="true">${p.status==="done"?"\u2713":p.status==="running"?"\u25cc":(p.status==="failed"||p.status==="skipped")?"!":"\u00b7"}</span><span class="run-part-title">${esc(p.title)}</span>`
-          + (p.ms?`<span class="run-part-ms">${p.ms}ms</span>`:"")
-          + (p.status==="failed" && p.error?`<small>${esc(p.error)}</small>`:"");
+        const title = String(p.title||"").split(/\s+[—–]\s+/)[0];
+        const meta = p.status==="running" ? `writing · ${(p.lines||0).toLocaleString()} line${p.lines===1?"":"s"}`
+          : p.status==="done" ? `${(p.lines||String(p.text||"").split("\n").length).toLocaleString()} lines${p.ms?` · ${(p.ms/1000).toFixed(p.ms<10000?1:0)}s`:""}`
+          : p.status==="waiting" ? "waiting" : p.status==="pending" && live ? "queued" : "";
+        li.innerHTML = `<span class="run-part-status" aria-hidden="true">${p.status==="done"?"\u2713":p.status==="running"?"\u25cc":p.status==="waiting"?"\u29d6":(p.status==="failed"||p.status==="skipped")?"!":"\u00b7"}</span><span class="run-part-title" title="${esc(p.title)}">Agent ${i+1} · ${esc(title)}</span>`
+          + (meta?`<span class="run-part-ms">${esc(meta)}</span>`:"")
+          + ((p.status==="failed"||p.status==="waiting") && p.error?`<small>${esc(p.error)}</small>`:"");
         li.setAttribute("aria-label", "Part "+(i+1)+" "+p.status+": "+p.title);
         list.appendChild(li);
       });
@@ -2105,20 +2111,6 @@ function renderAssistant(bubble, msg, live){
     }
     if(detail.childNodes.length) box.appendChild(detail);
     bubble.appendChild(box);
-  }
-  // Live frame for the part currently being written (never grows past its own scroll area).
-  if(live && msg.phases && msg.phases.state==="execute"){
-    const running = (msg.phases.parts||[]).find(p=>p.status==="running");
-    if(running){
-      const frame = el("div","code-live");
-      const head = el("div","code-live-head");
-      head.innerHTML = `<span class="term-dots"><i></i><i></i><i></i></span><span>${esc(running.title)}</span><span class="code-live-meta">${running.chars||0} chars</span>`;
-      frame.appendChild(head);
-      const body = el("pre","code-live-body");
-      frame.appendChild(body);
-      bubble.appendChild(frame);
-      requestAnimationFrame(()=>{ body.scrollTop = body.scrollHeight; });
-    }
   }
   // content
   const md = el("div","md");
@@ -2695,6 +2687,18 @@ function renderToolsSheet(){
   const testSwitch=el("button","switch"+(db.autoCheckCode!==false?" on":""));testSwitch.type="button";testSwitch.setAttribute("role","switch");testSwitch.setAttribute("aria-checked",String(db.autoCheckCode!==false));testSwitch.setAttribute("aria-label","Test web pages");
   testSwitch.onclick=()=>{db.autoCheckCode=db.autoCheckCode===false;save();renderToolsSheet();};
   test.appendChild(testSwitch);rows.appendChild(test);
+  // Orchestrator: how many agents write parts of a long build at the same time.
+  const agents=el("div","tools-row");
+  agents.innerHTML=`<span><strong>Agents for long builds</strong><small>Parts written at the same time. More is faster but uses more tokens at once</small></span><span class="tools-row-actions"></span>`;
+  const agentSel=el("select");agentSel.id="agentConcurrency";agentSel.setAttribute("aria-label","Agents for long builds");
+  agentSel.innerHTML=[1,2,3,4].map(n=>`<option value="${n}" ${n===agentConcurrency()?"selected":""}>${n}${n===3?" (default)":""}</option>`).join("");
+  agentSel.onchange=()=>{db.agentConcurrency=Number(agentSel.value);save();};
+  agents.querySelector(".tools-row-actions").appendChild(agentSel);rows.appendChild(agents);
+  const bg=el("div","tools-row");
+  bg.innerHTML=`<span><strong>Keep building in the background</strong><small>Android shows a notification while a long build runs and when it finishes</small></span>`;
+  const bgSwitch=el("button","switch"+(db.backgroundWork!==false?" on":""));bgSwitch.type="button";bgSwitch.setAttribute("role","switch");bgSwitch.setAttribute("aria-checked",String(db.backgroundWork!==false));bgSwitch.setAttribute("aria-label","Keep building in the background");
+  bgSwitch.onclick=()=>{db.backgroundWork=db.backgroundWork===false;save();renderToolsSheet();};
+  bg.appendChild(bgSwitch);rows.appendChild(bg);
   rows.appendChild(linkRow("Library","Saved prompts and artifacts","Open prompt & artifact library",()=>{closeSheet('toolsSheet');studioNavigate('library');}));
   body.appendChild(rows);
   $("#voiceInputBtn").onclick=()=>startVoiceInput();$("#speakLastBtn").onclick=()=>{const last=conv?.messages?.slice().reverse().find(x=>x.role==="assistant"&&x.content);if(last)speakText(last.content);else toast("No answer to read yet");};
@@ -3424,6 +3428,17 @@ async function netFetch(url, opts){
 /* Push-based native SSE iterator: yields "data: ..." lines via JS callbacks pushed by Java.
    An AbortController is honoured here, so Stop really ends a native stream immediately
    instead of waiting for the next provider chunk. */
+/* Native stream callbacks are dispatched per stream id, so several agents can stream at
+   once without one stream's handlers replacing another's. */
+const nativeStreamSlots = new Map();
+function nativeStreamSlot(id){
+  let s = nativeStreamSlots.get(id);
+  if(!s){ s = {line:null, status:null, statusFns:new Set(), doneFns:new Set(), doneErr:undefined}; nativeStreamSlots.set(id, s); }
+  return s;
+}
+window.nazStreamOnLine = (id, line)=>{ nativeStreamSlots.get(id)?.line?.(line); };
+window.nazStreamOnStatus = (id, code)=>{ const s=nativeStreamSlots.get(id); if(!s) return; s.status=code; [...s.statusFns].forEach(f=>f(code)); };
+window.nazStreamOnDone = (id, error)=>{ const s=nativeStreamSlots.get(id); if(!s) return; s.doneErr=error||null; [...s.doneFns].forEach(f=>f(error||null)); };
 function nativeSSE(sid, signal){
   const queue = [];
   let done = false, err = null, waiter = null, aborted = false;
@@ -3438,9 +3453,10 @@ function nativeSSE(sid, signal){
   const onOffline = ()=>fail("Network connection lost (offline)");
   window.addEventListener("offline", onOffline);
   const stall = setInterval(()=>{ if(done||aborted){ clearInterval(stall); window.removeEventListener("offline", onOffline); return; } if(lastLineAt && Date.now()-lastLineAt > STREAM_STALL_MS) fail("Network connection timed out (no data for "+Math.round(STREAM_STALL_MS/1000)+"s)"); }, 5000);
-  window.nazStreamOnLine = (id, line)=>{ if(id!==sid||done||aborted) return; lastLineAt = Date.now(); queue.push(line); drain(); };
-  window.nazStreamOnStatus = (id, code)=>{ if(id!==sid) return; /* handled by waitStreamStatus */ };
-  window.nazStreamOnDone = (id, error)=>{ if(id!==sid) return; done = true; err = error||null; drain(); };
+  const slot = nativeStreamSlot(sid);
+  slot.line = line=>{ if(done||aborted) return; lastLineAt = Date.now(); queue.push(line); drain(); };
+  const onDone = error=>{ if(done) return; done = true; err = error||null; drain(); };
+  slot.doneFns.add(onDone);
   return (async function* (){
     try{
       while(true){
@@ -3453,7 +3469,7 @@ function nativeSSE(sid, signal){
         }
         await new Promise(r=>{ waiter = r; });
       }
-    } finally { if(signal) signal.removeEventListener("abort", onAbort); window.removeEventListener("offline", onOffline); clearInterval(stall); }
+    } finally { if(signal) signal.removeEventListener("abort", onAbort); window.removeEventListener("offline", onOffline); clearInterval(stall); slot.doneFns.delete(onDone); slot.line=null; if(!slot.statusFns.size) nativeStreamSlots.delete(sid); }
   })();
 }
 let STREAM_STALL_MS = 120000;
@@ -3467,11 +3483,12 @@ function cancellationError(){const error=new Error('Stopped by user');error.name
 function waitStreamStatus(sid, signal=currentAbortSignal()){
   return new Promise((resolve,reject)=>{
     let settled=false,timer;
-    const prevStatus=window.nazStreamOnStatus,prevDone=window.nazStreamOnDone;
-    const finish=(code,aborted=false)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',onAbort);if(aborted)reject(cancellationError());else resolve(code);};
+    const slot=nativeStreamSlot(sid);
+    const onStatus=code=>finish(code), onDone=()=>finish(slot.status??0);
+    const finish=(code,aborted=false)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',onAbort);slot.statusFns.delete(onStatus);slot.doneFns.delete(onDone);if(aborted)reject(cancellationError());else resolve(code);};
     const onAbort=()=>finish(0,true);
-    window.nazStreamOnStatus=(id,code)=>{if(id===sid)finish(code);prevStatus?.(id,code);};
-    window.nazStreamOnDone=(id,error)=>{if(id===sid)finish(0);prevDone?.(id,error);};
+    slot.statusFns.add(onStatus);slot.doneFns.add(onDone);
+    if(slot.status!=null) queueMicrotask(()=>finish(slot.status));
     timer=setTimeout(()=>finish(0),window.__streamStatusTimeoutMs||STREAM_STATUS_TIMEOUT_MS);
     if(signal?.aborted)onAbort();else signal?.addEventListener('abort',onAbort,{once:true});
   });
@@ -3483,7 +3500,7 @@ const PHASE_BUILD = {
   minParts: 3,
   maxParts: 7,
   segmentBudget: 4096,   // tokens per build call — one part never nears the output limit
-  planBudget: 1024,      // the plan call is deliberately tiny
+  planBudget: 1024,      // the plan (contract + part list) is deliberately small
 };
 /* Requests that look like a full artifact build get split into parts. */
 /* Models that reason natively (reasoning_effort / reasoning content). */
@@ -3509,7 +3526,7 @@ function detectBuildKind(text){
 }
 /* Incremental execution: think → execute one part → evaluate → execute next. */
 function planSystemMessage(kind){
-  return "You are a build planner for "+(kind==="html"?"a web page":"a written deliverable")+". Reply with ONLY a numbered list of parts that will be generated one at a time by separate calls. Each part must be a self-contained unit of work (for HTML: head+base styles, each section/component, scripts). No prose, no code, no explanations, no title other than the numbered list.";
+  return "You are the build planner (orchestrator) for "+(kind==="html"?"a web page":"a written deliverable")+", written by a team of agents. The agents write their parts at the same time and cannot see each other's work, so you first fix a short shared CONTRACT that keeps the parts consistent, then list the PARTS. Each part must be a self-contained unit of work (for HTML: head+base styles, each section/component, scripts). Follow the requested format exactly. No other prose.";
 }
 function stillRelevant(fragment,plan){
   const probe=String(fragment||"").replace(/```[\w+-]*|```/g," ").toLowerCase();
@@ -3526,17 +3543,161 @@ function parsePlanParts(planText, kind){
     const raw=line.trim();
     if(!raw || /^```/.test(raw)) continue;
     const clean=raw.replace(/^\s*(?:\d+[.)\]]|[-*•])\s*/,"").replace(/\*\*/g,"").replace(/^(?:part|bahagian)\s*\d*\s*[:-]?\s*/i,"").replace(/[\s:.]+$/," ").trim();
-    if(clean && clean.length>=1 && clean.length<=80 && !/^(plan|pelan|parts|bahagian|here|ini|sure|certainly)\b/i.test(clean) && !/^\d+$/.test(clean)) items.push(clean);
+    if(clean && clean.length>=1 && clean.length<=160 && !/^(plan|pelan|parts|bahagian|here|ini|sure|certainly)\b/i.test(clean) && !/^\d+$/.test(clean)) items.push(clean);
   }
   return items;
 }
 function planPrompt(text, kind){
-  const task=String(text||"").slice(0,500);
-  return "Break this task into "+PHASE_BUILD.minParts+" to "+PHASE_BUILD.maxParts+" self-contained parts that will each be generated separately and then assembled: "+String.fromCharCode(34)+task+String.fromCharCode(34)+"\n\nReply with ONLY a numbered list of part titles (one line each, no prose, no code). Each part must be small enough to write in about 60-100 lines. For HTML, include head+styles, hero, each content section, footer and scripts as separate parts. Reply in the user's language.";
+  const task=String(text||"").slice(0,1500);
+  const contractHint = kind==="html"
+    ? "the CSS custom properties with exact values (colours, fonts, spacing, radius), the class-name prefix each part uses, the id of every section in page order, and the names of any shared JavaScript functions, data or events"
+    : "the audience, tone, key terms, and the heading level and format every section uses";
+  return "Break this task into "+PHASE_BUILD.minParts+" to "+PHASE_BUILD.maxParts+" self-contained parts that separate agents will write at the same time, then assembled: "+String.fromCharCode(34)+task+String.fromCharCode(34)
+    +"\n\nReply in exactly this format:\nCONTRACT:\n<at most 25 short lines fixing "+contractHint+">\nPARTS:\n1. <part title> — <one-line brief>\n2. ...\n\nEach part must be small enough to write in about 80-150 lines."
+    +(kind==="html"?" The first part is the <head> with all shared styles built on the contract's custom properties; then one part per section; the last part holds the footer and all scripts.":"")
+    +" No code in the plan. Reply in the user's language.";
 }
-function segmentPrompt(kind, part, i, n, text, plan){
+/* Plan reply → shared contract + part list (a plain numbered list still works). */
+function parseBuildPlan(planText, kind){
+  const src=String(planText||"");
+  const m=src.match(/CONTRACT\s*:?[^\n]*\n([\s\S]*?)\n\s*(?:\*\*)?(?:PARTS|BAHAGIAN)(?:\*\*)?\s*:?[^\n]*\n([\s\S]*)$/i);
+  if(m) return {contract:m[1].trim().slice(0,3000), parts:parsePlanParts(m[2],kind)};
+  return {contract:"", parts:parsePlanParts(src,kind)};
+}
+function segmentPrompt(kind, part, i, n, text, plan, contract){
   const K=PHASE_KINDS[kind]||PHASE_KINDS.text;
-  return "Task: "+String(text).slice(0,400)+"\n\nFull part plan (for context only, do not write other parts):\n"+plan.map((p,x)=>(x+1)+". "+p).join("\n")+"\n\nNow write ONLY part "+(i+1)+" of "+n+": "+part+"\n\n"+K.hint;
+  return "Task: "+String(text).slice(0,1500)
+    +(contract?"\n\n[Shared contract — follow it exactly so your part fits the parts other agents are writing]\n"+contract+"\n[End contract]":"")
+    +"\n\nFull part plan (other agents write the other parts at the same time; do not write them):\n"+plan.map((p,x)=>(x+1)+". "+p).join("\n")+"\n\nNow write ONLY part "+(i+1)+" of "+n+": "+part+"\n\n"+K.hint;
+}
+/* ===================== Orchestrator: parallel sub-agents ===================== */
+/* Sub-agents write the planned parts at the same time (Settings: 1-4, default 3).
+   Each part retries on its own: a dropped connection waits for the network, a rate
+   limit drops the build to one agent at a time. Finished parts are assembled in plan
+   order as they arrive and saved, so a stop, a crash or a closed app loses nothing. */
+function agentConcurrency(){ const n=Math.round(Number(db.agentConcurrency)); return n>=1&&n<=4?n:3; }
+async function runBuildAgents(ctx){
+  const {msg, model, url, kind, sourceText, usedSkills, baseMessages, maxTokens, conv_, paint} = ctx;
+  const parts=msg.phases.parts, plan=parts.map(p=>p.title), n=parts.length, contract=msg.phases.contract||"";
+  let limit=agentConcurrency(), active=0, stopped=false, lastPaint=0, paintTimer=null;
+  const queue=parts.map((_,i)=>i).filter(i=>!(parts[i].status==="done" && parts[i].text));
+  queue.forEach(i=>{ parts[i].status="pending"; parts[i].error=null; });
+  const aborted=()=>!generating || !!currentAbortSignal()?.aborted;
+  const assemble=()=>{ const done=parts.filter(p=>p.status==="done").map(p=>p.text||""); msg.content = kind==="html" ? assembleHtml(done) : done.join("\n\n"); };
+  const tick=force=>{
+    const now=Date.now();
+    if(force || now-lastPaint>250){ clearTimeout(paintTimer); paintTimer=null; lastPaint=now; paint(msg); kitaWorkProgress(msg); return; }
+    if(!paintTimer) paintTimer=setTimeout(()=>{ paintTimer=null; lastPaint=Date.now(); paint(msg); }, 250);
+  };
+  const note=()=>{
+    const running=parts.filter(p=>p.status==="running").length, done=parts.filter(p=>p.status==="done").length;
+    phaseNoteText=`${running} agent${running===1?"":"s"} writing · ${done}/${n} parts done`+(limit<agentConcurrency()?" · one agent at a time (provider rate limit)":"");
+  };
+  async function work(i){
+    const part=parts[i];
+    part.status="running"; part.chars=0; part.lines=0; part.error=null; note(); tick(true);
+    const startedAt=Date.now();
+    const msgs=[{role:"system", content:skillSystemMessage(usedSkills||[],sourceText)+"\n\n"+(PHASE_KINDS[kind]||PHASE_KINDS.text).hint+" You are one of several agents writing ONE part of a larger build at the same time. Follow the shared contract exactly. Never restate other parts."}, ...baseMessages, {role:"user", content:segmentPrompt(kind, part.title, i, n, sourceText, plan, contract)}];
+    const body={model:model.modelId, messages:msgs, stream:true, temperature:.6, top_p:1, max_tokens:maxTokens};
+    let out="", fin=null;
+    for(let attempt=0;;attempt++){
+      try{
+        out=""; fin=null;
+        out=await collectStream(model, url, body, {requireEnd:true, onDelta:t=>{ out=t; part.chars=t.length; part.lines=t.split("\n").length; tick(); }, onFinish:fr=>{ fin=fr; }});
+        break;
+      }catch(e){
+        if(e.name==="AbortError" || aborted()){ part.status="pending"; stopped=true; return; }
+        const m=String(e.message||e);
+        if(/\bHTTP 429\b/.test(m) && attempt<6){
+          limit=1; part.status="waiting"; part.error="Provider is busy. Waiting to retry…"; note(); tick(true);
+          await abortableDelay(Math.min(30000, 5000*(attempt+1)));
+          if(aborted()){ part.status="pending"; stopped=true; return; }
+          part.status="running"; part.error=null; continue;
+        }
+        if(attempt<RECONNECT_DELAYS.length && isInterruption(m)){
+          part.status="waiting"; part.error=navigator.onLine===false?"Offline. Waiting for the connection…":"Connection lost. Retrying…"; tick(true);
+          if(navigator.onLine===false) await waitForOnline(OFFLINE_WAIT_MS);
+          await abortableDelay(RECONNECT_DELAYS[attempt]);
+          if(aborted()){ part.status="pending"; stopped=true; return; }
+          part.status="running"; part.error=null; continue;
+        }
+        part.status="failed"; part.error=m.slice(0,240); note(); tick(true); return;
+      }
+    }
+    out=String(out||"").trim();
+    if(fin==="length" && out){
+      // One continuation for a part that hit the per-call output limit — still the same part.
+      try{
+        const more=await collectStream(model, url, {...body, messages:[...msgs, {role:"assistant", content:out.slice(-4000)}, {role:"user", content:"Continue this same part exactly where it stopped. No repetition, no other parts."}]}, {onDelta:t=>{ part.chars=out.length+t.length; tick(); }});
+        out=(out+"\n"+more).trim();
+      }catch(e){ if(e.name==="AbortError" || aborted()){ part.status="pending"; stopped=true; return; } }
+    }
+    part.ms=Date.now()-startedAt; part.text=out; part.lines=out.split("\n").length; part.status=out?"done":"skipped"; part.error=null;
+    msg.phases.segments=msg.phases.segments||[]; msg.phases.segments[i]=out;
+    assemble(); conv_.updatedAt=Date.now(); save(); note(); tick(true);
+  }
+  await new Promise(resolve=>{
+    const pump=()=>{
+      if(stopped || aborted()){ if(!active) resolve(); return; }
+      while(active<limit && queue.length){
+        const i=queue.shift(); active++;
+        work(i).catch(e=>{ parts[i].status="failed"; parts[i].error=String(e.message||e).slice(0,240); }).finally(()=>{ active--; pump(); });
+      }
+      if(!active && !queue.length) resolve();
+    };
+    pump();
+  });
+  clearTimeout(paintTimer);
+  parts.forEach(p=>{ if(p.status==="running" || p.status==="waiting") p.status="pending"; });
+  assemble();
+  return {stopped: stopped || aborted()};
+}
+/* Checks the assembled build; HTML pages are also run once in the hidden test view. */
+async function validateBuild(msg, kind){
+  const assembled=String(msg.content||""), issues=[];
+  if(kind==="html"){
+    const opens=(assembled.match(/<(div|section|main|header|footer|nav|article|aside|ul|ol|form)\b/gi)||[]).length;
+    const closes=(assembled.match(/<\/(div|section|main|header|footer|nav|article|aside|ul|ol|form)>/gi)||[]).length;
+    if(opens!==closes) issues.push(Math.abs(opens-closes)+" mismatched block element(s)");
+    if(!/<body[\s>]/i.test(assembled)) issues.push("missing body");
+    if(!/<!doctype/i.test(assembled)) issues.push("missing doctype");
+  }
+  const failed=msg.phases.parts.filter(p=>p.status!=="done");
+  if(failed.length) issues.push(failed.length+" part(s) not completed");
+  if(kind==="html" && !failed.length && db.autoCheckCode!==false && generating && !currentAbortSignal()?.aborted){
+    const doc=runnableHtml(assembled);
+    if(doc){
+      phaseNoteText="Testing the assembled page…";
+      try{ const errors=await checkHtmlRuns(doc); msg.codeChecks=[{round:1, errors}]; if(errors.length) issues.push(errors.length+" error"+(errors.length===1?"":"s")+" when the page runs: "+errors[0]); }catch(e){}
+    }
+  }
+  msg.phases.validation = issues.length ? issues.join(" · ") : "All parts assembled";
+  msg.phases.state = issues.length ? "incomplete" : "done";
+}
+/* Background work (Android): a foreground service keeps a long build running while the
+   app is in the background, with a progress notification and a "finished" notification. */
+let kitaWorkActive=false, kitaWorkLast={done:-1,at:0};
+window.kitaStopFromNotification=()=>{ if(generating) stopGeneration(); };
+function hasNazWork(){ return typeof window.NazWork==="object" && typeof window.NazWork.start==="function"; }
+function kitaWorkStart(title){
+  if(db.backgroundWork===false || !hasNazWork()) return;
+  try{ NazWork.start(String(title||"Kita Chat").slice(0,80), "Planning the build…"); kitaWorkActive=true; kitaWorkLast={done:-1,at:0}; }catch(e){}
+}
+function kitaWorkProgress(msg){
+  if(!kitaWorkActive) return;
+  const parts=msg?.phases?.parts||[], done=parts.filter(p=>p.status==="done").length, now=Date.now();
+  if(done===kitaWorkLast.done && now-kitaWorkLast.at<3000) return;
+  kitaWorkLast={done,at:now};
+  const running=parts.filter(p=>p.status==="running").length;
+  try{ NazWork.update(`${done}/${parts.length} parts done · ${running} agent${running===1?"":"s"} writing`, done, parts.length); }catch(e){}
+}
+function kitaWorkFinish(msg){
+  if(!kitaWorkActive) return;
+  kitaWorkActive=false;
+  const st=msg?.phases?.state, parts=msg?.phases?.parts||[];
+  const ok=st==="done", title=ok?"Build finished":st==="incomplete"?"Build finished with warnings":"Build stopped";
+  const text=ok?`${parts.length} parts assembled. Tap to open.`:(msg?.phases?.validation||"Open Kita Chat to resume.");
+  try{ NazWork.finish(title, String(text).slice(0,200), ok); }catch(e){}
 }
 /* Mechanical HTML assembly: stitch parts into one document without another model call. */
 function assembleHtml(parts){
@@ -3743,7 +3904,7 @@ function toolSystemNote(tools){
 async function collectStream(model, url, body, hooks){
   const p = model.provider;
   const h = hooks||{};
-  let out = "", finish = null;
+  let out = "", finish = null, sawEnd = false;
   let SSE_ITER = null, sid = null;
   try{
     if(HAS_NATIVE){
@@ -3783,10 +3944,11 @@ async function collectStream(model, url, body, hooks){
       const t = (rawLine||"").trim();
       if(!t.startsWith("data:")) continue;
       const payload = t.slice(5).trim();
-      if(payload === "[DONE]") continue;
+      if(payload === "[DONE]"){ sawEnd = true; continue; }
       let j; try{ j = JSON.parse(payload); }catch(e){ continue; }
       const choice = j.choices?.[0];
-      if(choice?.finish_reason) finish = choice.finish_reason;
+      if(choice?.finish_reason){ finish = choice.finish_reason; sawEnd = true; }
+      if(j.type === "response.completed") sawEnd = true;
       const d = choice?.delta;
       if(d && d.content){
         if(typeof d.content === "string") out += d.content;
@@ -3797,6 +3959,8 @@ async function collectStream(model, url, body, hooks){
       if(j.type === "response.completed" && j.response?.status === "incomplete") finish = j.response?.incomplete_details?.reason || "length";
     }
     if(HAS_NATIVE && sid !== null){ try{ NazStream.close(sid); }catch(e){} }
+    // An agent's stream that stops without an end marker was cut off, not finished.
+    if(h.requireEnd && !sawEnd && out && !currentAbortSignal()?.aborted) throw new Error("Network error: the response stream ended early");
   }catch(e){
     if(HAS_NATIVE && sid !== null){ try{ NazStream.close(sid); }catch(_){} }
     throw e;
@@ -3973,6 +4137,7 @@ function beginRun(){
 }
 function finishRun(run){
   if(run.message) delete run.message.streaming;
+  kitaWorkFinish(run.message);
   try{run.cleanup?.();}finally{
     try{if(activeRun===run){activeRun=null;abortCtl=null;setSendMode(false);save();renderAll();}}
     finally{run.settle();}
@@ -4170,91 +4335,32 @@ async function sendResponse(text, opts, run){
       planText = await collectStream(model, url, { model:model.modelId, messages:[
         {role:"system", content: planSystemMessage(kind)},
         {role:"user", content: planPrompt(text, kind)}
-      ], stream:true, temperature:.3, top_p:1, max_tokens:PHASE_BUILD.planBudget }, { onDelta:t=>{ planText=t; setPhaseNote("Planning the build… "+t.trim().split(/\n/).filter(Boolean).length+" parts"); } });
+      ], stream:true, temperature:.3, top_p:1, max_tokens:PHASE_BUILD.planBudget }, { onDelta:t=>{ planText=t; setPhaseNote("Orchestrator planning the build…"); } });
     }catch(e){
       if(e.name==="AbortError" || !generating){ cleanupStream(); finalizeAbort(); return; }
       aiMsg.phases=null;
     }
-    const planned = aiMsg.phases ? parsePlanParts(planText, kind) : [];
+    const parsedPlan = aiMsg.phases ? parseBuildPlan(planText, kind) : {contract:"", parts:[]};
+    const planned = parsedPlan.parts;
     if(aiMsg.phases && planned.length >= PHASE_BUILD.minParts){
       const plan = planned.slice(0, PHASE_BUILD.maxParts);
+      aiMsg.phases.contract = parsedPlan.contract;
+      aiMsg.phases.agents = agentConcurrency();
       aiMsg.phases.parts = plan.map(title=>({title, status:"pending", chars:0, ms:0}));
       aiMsg.phases.state = "execute";
-      aiMsg.reasoning = "Build plan:\n"+plan.map((x,i)=>(i+1)+". "+x).join("\n");
+      aiMsg.reasoning = "Build plan:\n"+plan.map((x,i)=>(i+1)+". "+x).join("\n")+(parsedPlan.contract?"\n\nShared contract:\n"+parsedPlan.contract:"");
       aiMsg.thinkSecs = aiMsg.thinkSecs || (thinkStart ? Math.round((Date.now()-thinkStart)/1000) : null);
       save(); paint();
       const baseMessages = history.filter(h=>h.role!=="system").slice(-4);
-      for(let i=0;i<plan.length && generating && !currentAbortSignal()?.aborted;i++){
-        const part = aiMsg.phases.parts[i];
-        part.status = "running"; paint();
-        setPhaseNote("Writing part "+(i+1)+" of "+plan.length+" · "+part.title);
-        const msgs = [
-          {role:"system", content: skillSystemMessage(usedSkills,text)+"\n\n"+(PHASE_KINDS[kind]||PHASE_KINDS.text).hint+" You are writing ONE part of a larger build. Never restate other parts."},
-          ...baseMessages,
-          {role:"user", content: segmentPrompt(kind, part.title, i, plan.length, text, plan)}
-        ];
-        const body = { model:model.modelId, messages:msgs, stream:true, temperature:.6, top_p:1, max_tokens: params0.max_tokens };
-        let out = "", fin = null;
-        const startedAt = Date.now();
-        // A dropped connection retries this one part (up to twice); finished parts are kept.
-        let partFailed = false;
-        for(let attempt=0;;attempt++){
-          try{
-            out = ""; fin = null;
-            out = await collectStream(model, url, body, { onDelta:t=>{ out=t; part.chars=t.length; setPhaseStream(t); }, onFinish:fr=>{ fin=fr; } });
-            break;
-          }catch(e){
-            if(e.name==="AbortError" || !generating){ part.status="pending"; paint(); cleanupStream(); finalizeAbort(); return; }
-            if(attempt < 2 && isInterruption(e.message)){ setPhaseNote(`Connection lost. Retrying part ${i+1} (${attempt+1}/2)…`); await abortableDelay((attempt+1)*2000); if(!generating||currentAbortSignal()?.aborted){ part.status="pending"; paint(); cleanupStream(); finalizeAbort(); return; } continue; }
-            part.status = "failed"; part.error = String(e.message||e).slice(0,240); paint();
-            partFailed = true; break;
-          }
-        }
-        if(partFailed) break; // keep the parts already written; the user can resume
-        out = String(out||"").trim();
-        part.ms = Date.now()-startedAt;
-        if(!out){ part.status = "skipped"; paint(); continue; }
-        if(fin==="length"){
-          // One continuation for a part that hit the per-call output limit — still the same part.
-          try{
-            const more = await collectStream(model, url, {...body, messages:[...msgs,
-              {role:"assistant", content:out.slice(-4000)},
-              {role:"user", content:"Continue this same part exactly where it stopped. No repetition, no other parts."}]},
-              { onDelta:t=>{ out = out+"\n"+t; part.chars=out.length; setPhaseStream(out); } });
-            out = out.trim();
-          }catch(e){ if(e.name==="AbortError" || !generating){ part.status="pending"; paint(); cleanupStream(); finalizeAbort(); return; } }
-        }
-        if(i===0 && fin==="stop" && !/[<>{}\[\]#*`]/.test(out)){
-          // The model ignored the part contract on the first call: answer normally instead.
-          aiMsg.phases = null; aiMsg.reasoning = ""; aiMsg.content = "";
-          break;
-        }
-        part.text = out;
-        part.status = "done";
-        aiMsg.phases.segments = aiMsg.phases.segments||[]; aiMsg.phases.segments[i] = out;
-        aiMsg.content = kind==="html"
-          ? assembleHtml(aiMsg.phases.parts.filter(p=>p.status==="done").map(p=>p.text||""))
-          : aiMsg.phases.parts.filter(p=>p.status==="done").map(p=>p.text||"").join("\n\n");
-        conv_.updatedAt = Date.now(); save(); paint();
-        setPhaseNote("Part "+(i+1)+" of "+plan.length+" done · "+part.ms+"ms");
-      }
+      kitaWorkStart(conv_.title && conv_.title!=="New chat" ? conv_.title : text);
+      const agents = await runBuildAgents({msg:aiMsg, model, url, kind, sourceText:text, usedSkills, baseMessages, maxTokens:params0.max_tokens, conv_, paint});
+      if(agents.stopped){ aiMsg.phases.state="paused"; cleanupStream(); finalizeAbort(); return; }
       if(aiMsg.phases && generating && !currentAbortSignal()?.aborted){
         aiMsg.phases.state = "validate";
         setPhaseNote("Checking the assembled result…");
         paint();
+        await validateBuild(aiMsg, kind);
         const assembled = String(aiMsg.content||"");
-        const issues = [];
-        if(kind==="html"){
-          const opens=(assembled.match(/<(div|section|main|header|footer|nav|article|aside|ul|ol|form)\b/gi)||[]).length;
-          const closes=(assembled.match(/<\/(div|section|main|header|footer|nav|article|aside|ul|ol|form)>/gi)||[]).length;
-          if(opens!==closes) issues.push(Math.abs(opens-closes)+" mismatched block element(s)");
-          if(!/<body[\s>]/i.test(assembled)) issues.push("missing body");
-          if(!/<!doctype/i.test(assembled)) issues.push("missing doctype");
-        }
-        const failed = aiMsg.phases.parts.filter(p=>p.status!=="done");
-        if(failed.length) issues.push(failed.length+" part(s) not completed");
-        aiMsg.phases.validation = issues.length ? issues.join(" · ") : "All parts assembled";
-        aiMsg.phases.state = issues.length ? "incomplete" : "done";
         aiMsg.thinkSecs = aiMsg.thinkSecs || (thinkStart ? Math.round((Date.now()-thinkStart)/1000) : null);
         aiMsg.usage = aiMsg.usage || {prompt_tokens:0, completion_tokens:estimateTokens(assembled)};
         aiMsg.estimatedCost = estimateCost(model, 0, Number(aiMsg.usage.completion_tokens||0));
@@ -4543,29 +4649,15 @@ async function sendResponse(text, opts, run){
   /* Resume a stopped incremental build: only the parts without text are requested again. */
   async function resumeBuild(msg, sourceText, usedSkills){
     if(!msg.phases || !msg.phases.parts) return;
-    const kind = msg.phases.kind||"text", plan = msg.phases.parts.map(p=>p.title);
+    const kind = msg.phases.kind||"text";
     const params0 = modelParameters(model);
     msg.phases.state = "execute"; msg.phases.validation = "";delete msg.stopped;
     save(); renderAll();
     const baseMessages = [{role:"user", content:String(sourceText||"")}];
-    let stopped = false;
-    for(let i=0;i<msg.phases.parts.length && generating && !currentAbortSignal()?.aborted;i++){
-      const part = msg.phases.parts[i];
-      if(part.status==="done" && part.text) continue;
-      part.status="running"; part.error=null; paint(msg);
-      setPhaseNote("Writing part "+(i+1)+" of "+plan.length+" · "+part.title);
-      const msgs=[{role:"system", content:skillSystemMessage(usedSkills||[],sourceText)+"\n\n"+(PHASE_KINDS[kind]||PHASE_KINDS.text).hint+" You are writing ONE part of a larger build. Never restate other parts."}, ...baseMessages, {role:"user", content:segmentPrompt(kind, part.title, i, plan.length, sourceText, plan)}];
-      let out=""; const startedAt=Date.now();
-      try{ out = await collectStream(model, url, {model:model.modelId, messages:msgs, stream:true, temperature:.6, top_p:1, max_tokens:params0.max_tokens}, {onDelta:t=>{ out=t; part.chars=t.length; setPhaseStream(t); }}); }
-      catch(e){stopped=e.name==="AbortError"||!!currentAbortSignal()?.aborted;part.status=stopped?"pending":"failed";part.error=stopped?null:String(e.message||e).slice(0,200);paint(msg);break;}
-      part.ms=Date.now()-startedAt; part.text=String(out||"").trim(); part.status=part.text?"done":"skipped";
-      msg.content = kind==="html" ? assembleHtml(msg.phases.parts.filter(p=>p.status==="done").map(p=>p.text||"")) : msg.phases.parts.filter(p=>p.status==="done").map(p=>p.text||"").join("\n\n");
-      conv_.updatedAt=Date.now(); save(); paint(msg);
-    }
-    if(stopped || currentAbortSignal()?.aborted){msg.phases.state="paused";msg.stopped=true;}else {
-      const issues = msg.phases.parts.filter(p=>p.status!=="done").length ? msg.phases.parts.filter(p=>p.status!=="done").length+" part(s) not completed" : "All parts assembled";
-      msg.phases.validation = issues; msg.phases.state = /not completed/.test(issues) ? "incomplete" : "done";
-    }
+    kitaWorkStart(conv_.title && conv_.title!=="New chat" ? conv_.title : sourceText);
+    const agents = await runBuildAgents({msg, model, url, kind, sourceText, usedSkills, baseMessages, maxTokens:params0.max_tokens, conv_, paint});
+    if(agents.stopped){ msg.phases.state="paused"; msg.stopped=true; }
+    else { msg.phases.state="validate"; paint(msg); await validateBuild(msg, kind); }
     cleanupStream(); setSendMode(false); abortCtl=null; conv_.updatedAt=Date.now(); save(); renderAll();
   }
   const p2 = extractThink(aiMsg.content);
