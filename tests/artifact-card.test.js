@@ -8,6 +8,7 @@ const assert=require('assert');
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route(/^https?:\/\//,r=>r.fulfill({status:503,body:'{}'}));
  await page.goto(appUrl);await page.waitForFunction(()=>typeof renderAll==='function');
+ await page.locator('#onboardingSkip').click();
  const html='<!DOCTYPE html>\n<html>\n<head>\n<title>Kedai Kopi &amp; Teh</title>\n</head>\n<body>\n<h1>Hello</h1>\n</body>\n</html>';
  const show=(content,extra)=>page.evaluate(([content,extra])=>{conv={id:'c',title:'t',messages:[{id:'u',role:'user',content:'q'},{id:'a',role:'assistant',content,...extra}]};renderAll();
    const bb=document.querySelector('.msg.assistant .bubble');
