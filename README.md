@@ -1,6 +1,18 @@
-# Kita Chat 4.8.2
+# Kita Chat 4.9.0
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+Long builds are now done by a team of agents instead of one long stream.
+
+- Orchestrator: a long build (website, landing page, dashboard, long report) is planned first. The plan fixes a short shared contract (colours and fonts as CSS variables, class prefixes, section ids, shared script names; or tone and headings for documents) and splits the work into 3 to 7 parts.
+- Sub-agents: the parts are written at the same time by separate agents, 3 at once by default (Tools → Agents for long builds: 1 to 4). Every agent gets the contract, so the parts fit together. Finished parts are assembled in plan order as they arrive and saved straight away.
+- Instead of a terminal with thousands of lines, the answer shows the agents: which part each one is writing, its line count, waiting or queued, and the time taken. The finished page is one artifact card, and it is run once in the hidden test view (✓ tested or N errors).
+- Each part retries on its own: a dropped connection waits for the network and retries only that part; a rate limit (HTTP 429) drops the build to one agent at a time. Parts already written are never redone, and Resume build continues only the missing ones.
+- Background (Android): while a build runs, Kita keeps working when you leave the app. A notification shows progress ("3/6 parts done · 2 agents writing") with a Stop button, and a "Build finished" notification appears when it is done if the app is not open. Android 13+ asks once for notification permission. Turn it off in Tools → Keep building in the background.
+- Several streams can now run at once on Android (native stream callbacks are routed per stream).
+- VersionCode 56, same com.nazchat.app package and original signing identity. New Android permissions: notifications, foreground service (data sync) and wake lock (only held while a build runs, at most 45 minutes). Not tested on a real device.
+
+# Kita Chat 4.8.2
 
 - Markdown files can be attached again. Android's file picker was given only the first allowed type (PDF), and Android has no file type for .md, so Markdown files were greyed out. The picker now shows every file, and Kita checks what it can read: PDF, DOCX, Markdown and other text or code files (including files without an extension, such as README). Binary files such as ZIP or APK are refused with a message.
 - A long paste (2,000+ characters or 40+ lines) becomes an attachment chip with a one-line preview and its line count, instead of filling the message box. The full text is sent to the model as a document, and the sent message shows "Pasted text · N lines". Short pastes still go into the box as before.

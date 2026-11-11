@@ -21,6 +21,7 @@ import java.util.Map;
 
 public class MainActivity extends Activity {
     static WebView web;
+    static volatile boolean visible = false;
     private ValueCallback<Uri[]> fileCallback;
     private NazVoice voice;
     private NazTheme theme;
@@ -79,6 +80,8 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NazStore(this), "NazStore");
         web.addJavascriptInterface(new NazShare(this), "NazShare");
         web.addJavascriptInterface(new NazClipboard(this), "NazClipboard");
+        // Background builds: foreground service + progress / finished notifications.
+        web.addJavascriptInterface(new NazWork(this), "NazWork");
         files = new NazFiles(this);
         web.addJavascriptInterface(files, "NazFiles");
         web.addJavascriptInterface(new NazCodeCheck(this), "NazCodeCheck");
@@ -177,7 +180,7 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onPause() { if (web != null) web.onPause(); super.onPause(); }
+    protected void onPause() { visible = false; if (web != null) web.onPause(); super.onPause(); }
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -188,7 +191,7 @@ public class MainActivity extends Activity {
         }
     }
     @Override
-    protected void onResume() { super.onResume(); if (web != null) web.onResume(); if (theme != null) theme.refreshSystemTheme(); }
+    protected void onResume() { super.onResume(); visible = true; if (web != null) web.onResume(); if (theme != null) theme.refreshSystemTheme(); }
     @Override
     public void onConfigurationChanged(Configuration configuration) {
         super.onConfigurationChanged(configuration);
