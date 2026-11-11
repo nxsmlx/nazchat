@@ -18,11 +18,11 @@ const PORT_NOTES={
   32400:['info','Plex media server'],49152:['medium','UPnP device service'],62078:['info','Apple device sync (iPhone / iPad)'],
 };
 function portNote(p){return PORT_NOTES[p]||['info','Open port'];}
-const net={info:null,hosts:new Map(),services:[],sweep:null,ports:new Set(),progress:'',audit:null,agreed:false};
+const net={info:null,hosts:new Map(),services:[],sweep:null,ports:new Set(),progress:'',audit:null,agreed:false,profile:'quick',custom:'',webtest:null,webStep:'',capture:null};
 const scanJobs=new Map();
 window.nazScanEvent=(job,text)=>{let e;try{e=JSON.parse(text);}catch(x){return;}const fn=scanJobs.get(job);if(fn)fn(e);if(e.type==='done')scanJobs.delete(job);};
 function hasNetScan(){return typeof window.NazNetScan==='object'&&typeof window.NazNetScan.sweep==='function';}
-function netHost(ip){let h=net.hosts.get(ip);if(!h){h={ip,name:'',open:[],ports:[],services:[]};net.hosts.set(ip,h);}return h;}
+function netHost(ip){let h=net.hosts.get(ip);if(!h){h={ip,name:'',open:[],ports:[],services:[],udp:[]};net.hosts.set(ip,h);}return h;}
 function subnetLabel(i){return i&&i.ip?i.ip+'/'+i.prefix:'';}
 async function confirmNetworkUse(){
   if(net.agreed) return true;
@@ -57,15 +57,30 @@ async function startDiscover(){
 }
 async function startPorts(ip){
   if(!await confirmNetworkUse()) return;
-  const id=window.NazNetScan.ports(ip,'');if(id<0){toast('Only devices on this Wi-Fi can be checked');return;}
-  const h=netHost(ip);h.ports=[];net.ports.add(ip);
+  const spec=net.profile==='custom'?net.custom.trim():net.profile;
+  const id=window.NazNetScan.ports(ip,spec);if(id<0){toast(net.profile==='custom'?'Use up to 1200 ports, like 22,80,8000-8100':'Only devices on this Wi-Fi can be checked');return;}
+  const h=netHost(ip);h.ports=[];net.ports.add(ip);h.scanNote='';
   scanJobs.set(id,e=>{
+    if(e.type==='progress'){h.scanNote='Checked '+e.done+' of '+e.total+' ports';}
     if(e.type==='port'){h.ports=h.ports.filter(p=>p.port!==e.port).concat({port:e.port,banner:e.banner||''}).sort((a,b)=>a.port-b.port);if(!h.open.includes(e.port))h.open=[...h.open,e.port].sort((a,b)=>a-b);}
-    if(e.type==='done'){net.ports.delete(ip);h.checked=true;}
+    if(e.type==='done'){net.ports.delete(ip);h.checked=true;h.scanNote=(e.cancelled?'Stopped · ':'')+h.ports.length+' open port'+(h.ports.length===1?'':'s')+(spec==='top'?' of ~1100 checked':'');}
     renderNetworkBody();
   });
   renderNetworkBody();
 }
+async function startUdp(ip){
+  if(!await confirmNetworkUse()) return;
+  const id=window.NazNetScan.udp(ip);if(id<0){toast('Only devices on this Wi-Fi can be checked');return;}
+  const h=netHost(ip);h.udp=[];h.udpChecking=true;
+  scanJobs.set(id,e=>{
+    if(e.type==='udp') h.udp=h.udp.filter(u=>u.port!==e.port).concat({port:e.port,info:e.info});
+    if(e.type==='done'){h.udpChecking=false;h.udpChecked=true;}
+    renderNetworkBody();
+  });
+  renderNetworkBody();
+}
+const UDP_NOTES={53:['medium','answers DNS: fine for your router, risky on other devices'],123:['info','time server (NTP)'],137:['medium','Windows name service (NetBIOS) answers']};
+function exportNetworkReport(){const name='kita-network-report-'+new Date().toISOString().slice(0,10)+'.txt';saveTextFile(name,networkReport(),'text/plain','Report saved');}
 /* Website audit for your own domain: TLS (native), security headers, DNS records. */
 async function dohRecords(name,type){
   try{const r=await netFetch('https://1.1.1.1/dns-query?name='+encodeURIComponent(name)+'&type='+type,{headers:{Accept:'application/dns-json'},timeout:10000});const j=await r.json();return (j.Answer||[]).map(a=>String(a.data||''));}catch(e){return [];}
@@ -103,8 +118,11 @@ function networkReport(){
     lines.push('- '+h.ip+(h.name?' ('+h.name+')':'')+(h.services.length?' · '+h.services.join('; '):''));
     const ports=h.ports.length?h.ports:h.open.map(p=>({port:p,banner:''}));
     for(const p of ports){const [lvl,note]=portNote(p.port);lines.push('    port '+p.port+' ['+lvl+'] '+note+(p.banner?' · says: '+p.banner:''));}
+    for(const u of h.udp||[]) lines.push('    udp '+u.port+' ['+(UDP_NOTES[u.port]||['info'])[0]+'] '+u.info);
   }
   if(net.audit){lines.push('','Website audit: '+net.audit.domain);for(const c of net.audit.checks)lines.push('- ['+c.level+'] '+c.label+': '+c.detail);}
+  if(net.webtest){lines.push('','Website test: '+net.webtest.domain+(net.webtest.verified?' (ownership verified, active checks on)':' (passive checks only)'));for(const c of net.webtest.checks)lines.push('- ['+c.level+'] '+c.label+': '+c.detail);}
+  if(net.capture){lines.push('',net.capture.text);}
   return lines.join('\n');
 }
 function NazIpSort(a,b){const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<4;i++)if(x[i]!==y[i])return x[i]-y[i];return 0;}
@@ -139,6 +157,12 @@ function renderNetworkBody(){
     sweep.onclick=()=>{if(net.sweep){window.NazNetScan.cancel(net.sweep);return;}startSweep();};
     const disc=el('button','btn secondary','Discover services');disc.type='button';disc.disabled=!i.scannable;disc.onclick=startDiscover;
     row.append(sweep,disc);body.appendChild(row);
+    const prof=el('div','net-profile');prof.innerHTML='<span>Port check</span>';
+    const sel=el('select');sel.setAttribute('aria-label','Ports to check');
+    sel.innerHTML=[['quick','Quick · 35 common ports'],['top','Top ports · ~1100 (1-1024 + well-known)'],['custom','Custom list']].map(([v,l])=>'<option value="'+v+'"'+(net.profile===v?' selected':'')+'>'+l+'</option>').join('');
+    sel.onchange=()=>{net.profile=sel.value;renderNetworkBody();};prof.appendChild(sel);
+    if(net.profile==='custom'){const ci=el('input');ci.placeholder='22,80,443,8000-8100';ci.value=net.custom;ci.setAttribute('aria-label','Custom ports');ci.oninput=()=>{net.custom=ci.value;};prof.appendChild(ci);}
+    body.appendChild(prof);
     if(net.progress) body.appendChild(el('div','net-progress',esc(net.progress)));
     const list=el('div','net-hosts');
     for(const h of [...net.hosts.values()].sort((a,b)=>NazIpSort(a.ip,b.ip))){
@@ -148,7 +172,12 @@ function renderNetworkBody(){
       r.innerHTML='<div class="net-host-head"><span class="net-dot '+worst+'"></span><span><strong>'+esc(h.ip)+(isGw?' · router':'')+'</strong><small>'+esc([h.name,...h.services].filter(Boolean).join(' · ')||'Unknown device')+'</small></span></div>';
       if(h.open.length){const chips=el('div','net-ports');for(const p of h.open){const [lvl]=portNote(p);chips.appendChild(el('span','net-port '+lvl,String(p)));}r.appendChild(chips);}
       if(h.ports.length){const ul=el('ul','net-port-notes');for(const p of h.ports){const [lvl,note]=portNote(p.port);const li=el('li',lvl);li.innerHTML='<strong>'+p.port+'</strong> '+esc(note)+(p.banner?'<small>'+esc(p.banner)+'</small>':'');ul.appendChild(li);}r.appendChild(ul);}
-      const b=el('button','mini-btn',net.ports.has(h.ip)?'Checking…':h.checked?'Check again':'Check ports');b.type='button';b.disabled=net.ports.has(h.ip);b.onclick=()=>startPorts(h.ip);r.appendChild(b);
+      if(h.udp?.length){const ul=el('ul','net-port-notes');for(const u of h.udp){const [lvl,note]=UDP_NOTES[u.port]||['info',''];const li=el('li',lvl);li.innerHTML='<strong>UDP '+u.port+'</strong> '+esc(u.info)+(note?'<small>'+esc(note)+'</small>':'');ul.appendChild(li);}r.appendChild(ul);}
+      if(h.scanNote) r.appendChild(el('small','net-scan-note',esc(h.scanNote)));
+      const acts=el('div','net-host-actions');
+      const b=el('button','mini-btn',net.ports.has(h.ip)?'Checking…':h.checked?'Check again':'Check ports');b.type='button';b.disabled=net.ports.has(h.ip);b.onclick=()=>startPorts(h.ip);
+      const u=el('button','mini-btn',h.udpChecking?'Asking…':'UDP check');u.type='button';u.disabled=!!h.udpChecking;u.onclick=()=>startUdp(h.ip);
+      acts.append(b,u);r.appendChild(acts);
       list.appendChild(r);
     }
     body.appendChild(list);
@@ -159,5 +188,48 @@ function renderNetworkBody(){
   go.onclick=async()=>{go.disabled=true;go.textContent='Checking…';try{net.audit=await auditSite(inp.value);}catch(e){toast(e.message);}renderNetworkBody();};
   ar.append(inp,go);body.appendChild(ar);
   if(net.audit){const ul=el('ul','net-audit');for(const c of net.audit.checks){const li=el('li',c.level);li.innerHTML='<strong>'+esc(c.label)+'</strong><small>'+esc(c.detail)+'</small>';ul.appendChild(li);}body.appendChild(ul);}
-  if(net.hosts.size||net.audit){const ask=el('button','btn','Ask Kita about these results');ask.type='button';ask.onclick=askKitaAboutNetwork;body.appendChild(ask);}
+  renderWebTestSection(body);
+  renderCaptureSection(body);
+  if(net.hosts.size||net.audit||net.webtest||net.capture){
+    const ask=el('button','btn','Ask Kita about these results');ask.type='button';ask.onclick=askKitaAboutNetwork;body.appendChild(ask);
+    const ex=el('button','btn secondary','Save report');ex.type='button';ex.onclick=exportNetworkReport;body.appendChild(ex);
+  }
+}
+function renderWebTestSection(body){
+  body.appendChild(el('p','studio-section-title','Website test'));
+  body.appendChild(el('div','hint','Passive checks (cookies, CORS, mixed content, version leaks) work on any site. Looking for exposed files and crawling run only on domains you prove are yours.'));
+  const row=el('div','dns-custom');const inp=el('input');inp.id='webtestDomain';inp.placeholder='yourdomain.com';inp.setAttribute('aria-label','Domain to test');inp.value=net.webtestDomain||'';inp.oninput=()=>{net.webtestDomain=inp.value;};
+  const run=el('button','mini-btn','Test');run.type='button';run.disabled=!!net.webStep;
+  run.onclick=async()=>{let d;try{d=normDomain(inp.value);}catch(e){toast(e.message);return;}net.webtestDomain=d;
+    if(!await confirmDialog('Test https://'+d+'/? '+(webTestState().verified[d]?'Ownership is verified, so Kita will also look for exposed files and crawl up to 10 pages.':'Only passive checks run until you verify the domain is yours.'),{title:'Website test',confirmText:'Test'}))return;
+    net.webStep='Starting…';renderNetworkBody();
+    try{net.webtest=await runWebTest(d,step=>{net.webStep=step;renderNetworkBody();});}catch(e){toast(e.message);}
+    net.webStep='';renderNetworkBody();};
+  row.append(inp,run);body.appendChild(row);
+  if(net.webStep) body.appendChild(el('div','net-progress',esc(net.webStep)));
+  let d='';try{d=normDomain(net.webtestDomain);}catch(e){}
+  if(d){
+    const st=webTestState(),ok=st.verified[d];
+    const box=el('div','net-verify'+(ok?' ok':''));
+    if(ok) box.innerHTML='<strong>✓ '+esc(d)+' is verified</strong><small>Verified '+esc(new Date(ok.at).toLocaleDateString())+' by '+(ok.method==='dns'?'DNS TXT record':'file')+'. Active checks are on.</small>';
+    else{
+      const token=webTestToken(d);
+      box.innerHTML='<strong>Verify that '+esc(d)+' is yours</strong><small>Either add a DNS TXT record on '+esc(d)+' (or on _kita-verify.'+esc(d)+'):</small><code>kita-verify='+esc(token)+'</code><small>or put a file at https://'+esc(d)+'/.well-known/kita-verify.txt containing:</small><code>'+esc(token)+'</code>';
+      const v=el('button','mini-btn','Verify');v.type='button';
+      v.onclick=async()=>{v.disabled=true;v.textContent='Checking…';const how=await verifyDomain(d);if(how){setWebTestState({verified:{...webTestState().verified,[d]:{method:how,at:Date.now()}}});toast(d+' verified');}else toast('Not found yet. DNS changes can take a few minutes.');renderNetworkBody();};
+      box.appendChild(v);
+    }
+    body.appendChild(box);
+  }
+  if(net.webtest){const ul=el('ul','net-audit');for(const c of net.webtest.checks){const li=el('li',c.level);li.innerHTML='<strong>'+esc(c.label)+'</strong><small>'+esc(c.detail)+'</small>';ul.appendChild(li);}body.appendChild(ul);}
+}
+function renderCaptureSection(body){
+  body.appendChild(el('p','studio-section-title','Traffic capture'));
+  const hint=el('div','hint');hint.innerHTML='Android lets an app record only this phone\'s own traffic. Record it with PCAPdroid (free), save the .pcap, then open it here. Kita reads which sites and trackers the phone talked to and what went unencrypted. ';
+  const a=el('a','integration-link','Get PCAPdroid ↗');a.href=PCAPDROID_URL;a.target='_blank';a.rel='noopener';hint.appendChild(a);body.appendChild(hint);
+  const pick=el('input');pick.type='file';pick.accept='.pcap,.pcapng,.cap,application/vnd.tcpdump.pcap,application/octet-stream';pick.hidden=true;pick.id='captureFile';
+  pick.onchange=async()=>{const f=pick.files?.[0];pick.value='';if(!f)return;try{if(f.size>50*1024*1024)throw new Error('Capture is larger than 50 MB');net.capture=await captureFileToAttachment(f);}catch(e){toast(e.message);}renderNetworkBody();};
+  const b=el('button','btn secondary','Open a capture (.pcap)');b.type='button';b.onclick=()=>pick.click();
+  body.append(pick,b);
+  if(net.capture){const pre=el('pre','net-capture');pre.textContent=net.capture.text;body.appendChild(pre);}
 }

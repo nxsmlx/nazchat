@@ -127,19 +127,88 @@ public final class NazNetScan {
     @JavascriptInterface
     public int ports(final String host, String spec) {
         final String[] me = self();
-        final int[] ports = NazScanCore.ports(spec);
+        final int[] ports = NazScanCore.profile(spec);
         if (me == null || ports == null || !NazScanCore.isPrivateLan(host)
                 || !NazScanCore.contains(me[0] + "/" + Math.max(Integer.parseInt(me[1]), 24), host)) return -1;
         final int id = job();
         new Thread(new Runnable() { public void run() {
-            ExecutorService pool = Executors.newFixedThreadPool(16);
+            final boolean big = ports.length > 100;
+            ExecutorService pool = Executors.newFixedThreadPool(big ? 48 : 16);
+            final int[] done = {0};
             for (final int port : ports) pool.execute(new Runnable() { public void run() {
-                if (cancelled.contains(id) || !connect(host, port, 600)) return;
+                if (big) synchronized (done) { done[0]++; if (done[0] % 100 == 0) try { emit(id, new JSONObject().put("type", "progress").put("done", done[0]).put("total", ports.length)); } catch (Exception ignored) {} }
+                if (cancelled.contains(id) || !connect(host, port, big ? 400 : 600)) return;
                 try { emit(id, new JSONObject().put("type", "port").put("ip", host).put("port", port).put("banner", banner(host, port))); } catch (Exception ignored) {}
             }});
             pool.shutdown();
             try { pool.awaitTermination(2, TimeUnit.MINUTES); } catch (InterruptedException ignored) {}
             try { emit(id, new JSONObject().put("type", "done").put("cancelled", cancelled.remove(id))); } catch (Exception ignored) {}
+        }}).start();
+        return id;
+    }
+
+    /** Asks a device on the phone's subnet about common UDP services: DNS, NTP and NetBIOS. */
+    @JavascriptInterface
+    public int udp(final String host) {
+        final String[] me = self();
+        if (me == null || !NazScanCore.isPrivateLan(host) || !NazScanCore.contains(me[0] + "/" + Math.max(Integer.parseInt(me[1]), 24), host)) return -1;
+        final int id = job();
+        new Thread(new Runnable() { public void run() {
+            Object[][] probes = {{53, NazScanCore.dnsQuery()}, {123, NazScanCore.ntpQuery()}, {137, NazScanCore.netbiosQuery()}};
+            for (Object[] p : probes) {
+                if (cancelled.contains(id)) break;
+                int port = (Integer) p[0]; byte[] q = (byte[]) p[1];
+                try (java.net.DatagramSocket s = new java.net.DatagramSocket()) {
+                    s.setSoTimeout(1200);
+                    s.send(new DatagramPacket(q, q.length, InetAddress.getByName(host), port));
+                    byte[] buf = new byte[1500]; DatagramPacket r = new DatagramPacket(buf, buf.length); s.receive(r);
+                    String info = port == 53 ? NazScanCore.dnsInfo(buf, r.getLength()) : port == 123 ? NazScanCore.ntpInfo(buf, r.getLength()) : NazScanCore.netbiosName(buf, r.getLength());
+                    if (port == 137 && !info.isEmpty()) info = "NetBIOS name " + info;
+                    if (!info.isEmpty()) emit(id, new JSONObject().put("type", "udp").put("ip", host).put("port", port).put("info", info));
+                } catch (Exception ignored) {}
+            }
+            try { emit(id, new JSONObject().put("type", "done").put("cancelled", cancelled.remove(id))); } catch (Exception ignored) {}
+        }}).start();
+        return id;
+    }
+
+    /**
+     * One HTTPS request to a public site for the website test, without following
+     * redirects: status, all headers (Set-Cookie included) and the start of the body.
+     * Only https:// to public hosts; nothing is sent but the request itself.
+     */
+    @JavascriptInterface
+    public int http(final String url, final String method, final String origin) {
+        final int id = job();
+        new Thread(new Runnable() { public void run() {
+            JSONObject o = new JSONObject();
+            try {
+                URL u = new URL(url);
+                if (!"https".equalsIgnoreCase(u.getProtocol()) || u.getUserInfo() != null) throw new Exception("Only https:// addresses");
+                McpHttp.requirePublicHost(u.getHost());
+                HttpURLConnection c = NazDns.open(u);
+                c.setConnectTimeout(10000); c.setReadTimeout(10000); c.setInstanceFollowRedirects(false);
+                c.setRequestMethod("HEAD".equals(method) ? "HEAD" : "GET");
+                c.setRequestProperty("User-Agent", "KitaChat-WebTest/1.0");
+                if (origin != null && !origin.isEmpty()) c.setRequestProperty("Origin", origin);
+                int code = c.getResponseCode();
+                o.put("status", code);
+                JSONObject h = new JSONObject();
+                for (java.util.Map.Entry<String, List<String>> e : c.getHeaderFields().entrySet()) {
+                    if (e.getKey() == null) continue;
+                    JSONArray vals = new JSONArray(); for (String v : e.getValue()) vals.put(v.length() > 500 ? v.substring(0, 500) : v);
+                    h.put(e.getKey().toLowerCase(java.util.Locale.US), vals);
+                }
+                o.put("headers", h);
+                if (!"HEAD".equals(method)) {
+                    InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
+                    java.io.ByteArrayOutputStream b = new java.io.ByteArrayOutputStream();
+                    if (in != null) { byte[] buf = new byte[8192]; int n; while (b.size() < 262144 && (n = in.read(buf)) > 0) b.write(buf, 0, n); in.close(); }
+                    o.put("body", b.toString("UTF-8"));
+                }
+                c.disconnect();
+            } catch (Exception e) { try { o.put("status", 0).put("error", String.valueOf(e.getMessage())); } catch (Exception ignored) {} }
+            try { o.put("type", "http"); emit(id, o); emit(id, new JSONObject().put("type", "done")); } catch (Exception ignored) {}
         }}).start();
         return id;
     }
@@ -294,9 +363,25 @@ public final class NazNetScan {
                 if (in != null) { byte[] b = new byte[8192]; int n = in.read(b); in.close(); if (n > 0) body = new String(b, 0, n, "UTF-8"); }
                 java.util.regex.Matcher t = java.util.regex.Pattern.compile("(?is)<title[^>]*>(.*?)</title>").matcher(body);
                 String title = t.find() ? t.group(1).replaceAll("\\s+", " ").trim() : "";
+                String cert = "";
+                if (c instanceof HttpsURLConnection) {
+                    try { Certificate[] chain = ((HttpsURLConnection) c).getServerCertificates(); if (chain.length > 0 && chain[0] instanceof X509Certificate) { X509Certificate x = (X509Certificate) chain[0]; cert = " · certificate " + x.getSubjectX500Principal().getName().replaceAll("^.*?CN=([^,]+).*$", "$1") + (x.getSubjectX500Principal().equals(x.getIssuerX500Principal()) ? " (self-signed)" : ""); } } catch (Exception ignored) {}
+                }
                 c.disconnect();
-                return ("HTTP " + code + (server != null ? " · " + server : "") + (title.isEmpty() ? "" : " · " + title) + (tls ? " · certificate not checked" : "")).trim();
+                return ("HTTP " + code + (server != null ? " · " + server : "") + (title.isEmpty() ? "" : " · " + title) + cert).trim();
             } catch (Exception e) { return tls ? "TLS" : "HTTP"; }
+        }
+        if (port == 6379) {
+            // Redis answers PING with +PONG only when no password is set.
+            Socket r = new Socket();
+            try {
+                r.connect(new InetSocketAddress(host, port), 800); r.setSoTimeout(900);
+                r.getOutputStream().write("PING\r\n".getBytes("UTF-8"));
+                byte[] b = new byte[64]; int n = r.getInputStream().read(b);
+                String reply = n > 0 ? NazScanCore.banner(b, n) : "";
+                return reply.startsWith("+PONG") ? "Redis · no password required" : reply.startsWith("-NOAUTH") ? "Redis · password required" : reply;
+            } catch (Exception e) { return ""; }
+            finally { try { r.close(); } catch (Exception ignored) {} }
         }
         Socket s = new Socket();
         try {
@@ -305,6 +390,7 @@ public final class NazNetScan {
             int n = -1;
             try { n = in.read(b); } catch (Exception ignored) {}
             if (n <= 0 && (port == 21 || port == 25 || port == 110 || port == 143)) return "";
+            if (port == 3306 && n > 0) { String v = NazScanCore.mysqlVersion(b, n); if (!v.isEmpty()) return "MySQL/MariaDB " + v; }
             return n > 0 ? NazScanCore.banner(b, n) : "";
         } catch (Exception e) { return ""; }
         finally { try { s.close(); } catch (Exception ignored) {} }

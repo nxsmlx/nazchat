@@ -1,6 +1,25 @@
-# Kita Chat 4.14.0
+# Kita Chat 4.15.0
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+Deeper checks for your own network and websites (Tools → Network).
+
+- Port check profiles:
+  - Quick: 35 common ports.
+  - Top ports: about 1100, ports 1-1024 plus well-known services above.
+  - Custom: up to 1200 ports, like 22,80,8000-8100.
+  - Big scans show progress.
+- Service versions: MySQL/MariaDB version, whether Redis answers without a password, the TLS certificate name (and whether it is self-signed), the web server and page title, and the first line other services send.
+- UDP check for each device: DNS (and whether it answers lookups for any name), NTP (version and stratum) and the Windows NetBIOS name, without root.
+- Save report: saves everything you found as a text file.
+- Website test:
+  - Passive checks work on any site: cookies without Secure/HttpOnly/SameSite, CORS that trusts any origin (worst with credentials), mixed content, forms that post over http://, and version leaks (X-Powered-By, Server, generator tag).
+  - Active checks run only on domains you prove are yours, with a DNS TXT record (kita-verify=…) or a file at /.well-known/kita-verify.txt: exposed .git, .env, backups and config copies, phpinfo and server-status, directory listings, admin and login pages, robots.txt, and a crawl of up to 10 pages on the same site.
+- Traffic capture: Android lets an app record only the phone's own traffic. Record it with PCAPdroid (free), then open the .pcap or .pcapng here, or attach it to a message. Kita lists the hosts by data, DNS lookups, the sites behind encrypted connections (TLS SNI), unencrypted HTTP requests and QUIC, and sends only that summary to the model.
+- As before, scans stay on the phone's own private subnet and ask first. There is no password guessing and there are no exploits.
+- VersionCode 63, same com.nazchat.app package and original signing identity. Tested with mocked native parts and captures built byte by byte; not tested on a real device or network.
+
+# Kita Chat 4.14.0
 
 Network tools: check the network you are on and your own websites, from your phone (Tools → Network).
 

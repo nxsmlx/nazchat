@@ -3906,3 +3906,16 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .net-port-notes li.high, .net-audit li.high { border-left-color: var(--danger, #f85149); }
 .net-port-notes li.medium, .net-audit li.medium { border-left-color: var(--warning, #d29922); }
 .net-audit li.ok { border-left-color: var(--success, #3fb950); }
+
+/* 4.15.0: scanner profile, web test, capture */
+.net-profile { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; font-size: 13px; color: var(--text2); }
+.net-profile select { flex: 1 1 200px; }
+.net-profile input { flex: 1 1 100%; }
+.net-host-actions { display: flex; gap: 8px; }
+.net-scan-note { color: var(--text2); font-size: 12px; }
+.net-verify { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg2); }
+.net-verify.ok { border-color: color-mix(in srgb, var(--success, #3fb950) 45%, var(--border)); }
+.net-verify small { color: var(--text2); font-size: 12px; }
+.net-verify code { padding: 6px 8px; border-radius: 8px; background: var(--bg3); font-size: 12px; overflow-wrap: anywhere; user-select: all; }
+.net-verify .mini-btn { align-self: flex-start; }
+.net-capture { max-height: 260px; margin: 8px 0; padding: 10px; overflow: auto; border-radius: 12px; background: var(--bg2); color: var(--text2); font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; }

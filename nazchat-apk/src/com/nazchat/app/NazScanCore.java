@@ -13,14 +13,28 @@ import java.util.Set;
  * The tools audit the user's OWN local network: only private IPv4 addresses
  * (10/8, 172.16/12, 192.168/16, 169.254/16) inside a subnet the phone is on can be
  * scanned. Carrier-grade NAT (100.64/10, mobile data) and public addresses are refused,
- * a sweep covers at most one /24, and a port check at most 100 ports.
+ * a sweep covers at most one /24, and a port check at most 1200 ports.
  */
 final class NazScanCore {
     private NazScanCore() {}
 
-    static final int MAX_PORTS = 100;
+    static final int MAX_PORTS = 1200;
     static final int[] COMMON_PORTS = {21, 22, 23, 25, 53, 80, 110, 139, 143, 443, 445, 554, 631, 1883, 1900, 3306, 3389, 5000, 5353, 5432, 5555, 5900, 6379, 7547, 8000, 8008, 8080, 8443, 8888, 9000, 9100, 27017, 32400, 49152, 62078};
     static final int[] SWEEP_PORTS = {80, 443, 22, 445, 139, 53, 8080, 554, 62078, 5353, 7000, 9100};
+    // Well-known services above 1024, added to ports 1-1024 for the "top" profile.
+    static final int[] HIGH_PORTS = {1080, 1194, 1433, 1521, 1723, 1883, 1900, 2049, 2082, 2083, 2086, 2087, 2181, 2375, 2376, 3000, 3128, 3260, 3306, 3389, 3690, 4000, 4369, 4443, 4444, 4567, 5000, 5001, 5060, 5061, 5222, 5353, 5432, 5555, 5601, 5672, 5800, 5900, 5901, 5984, 6000, 6379, 6443, 6667, 7000, 7001, 7070, 7443, 7547, 7777, 8000, 8008, 8009, 8010, 8060, 8080, 8081, 8083, 8086, 8088, 8089, 8090, 8123, 8181, 8200, 8291, 8443, 8530, 8834, 8880, 8883, 8888, 9000, 9001, 9042, 9090, 9091, 9100, 9200, 9300, 9418, 9443, 9999, 10000, 10250, 11211, 15672, 16992, 20000, 25565, 27017, 28017, 32400, 37777, 49152, 50000, 50070, 51413, 62078};
+
+    /** Ports for a profile: "quick" (common), "top" (1-1024 plus well-known high ports), or a custom list. */
+    static int[] profile(String spec) {
+        if (spec == null || spec.trim().isEmpty() || "quick".equals(spec)) return COMMON_PORTS.clone();
+        if ("top".equals(spec)) {
+            Set<Integer> set = new LinkedHashSet<>();
+            for (int p = 1; p <= 1024; p++) set.add(p);
+            for (int p : HIGH_PORTS) set.add(p);
+            int[] out = new int[set.size()]; int i = 0; for (int p : set) out[i++] = p; return out;
+        }
+        return ports(spec);
+    }
 
     static long ip(String s) {
         String[] p = s == null ? new String[0] : s.trim().split("\\.", -1);
@@ -105,6 +119,58 @@ final class NazScanCore {
             if (c >= 32 && c < 127) b.append((char) c);
         }
         return b.toString().trim();
+    }
+
+    /** MySQL/MariaDB greeting: the server version, or "". */
+    static String mysqlVersion(byte[] b, int n) {
+        if (n < 6 || (b[4] & 255) != 10) return "";
+        StringBuilder v = new StringBuilder();
+        for (int i = 5; i < n && b[i] != 0 && v.length() < 60; i++) { int c = b[i] & 255; if (c >= 32 && c < 127) v.append((char) c); }
+        return v.toString();
+    }
+
+    /** Client request for NTP (mode 3, version 4). */
+    static byte[] ntpQuery() { byte[] q = new byte[48]; q[0] = 0x23; return q; }
+    /** "NTP v4 · stratum 2" for a server reply, or "". */
+    static String ntpInfo(byte[] b, int n) {
+        if (n < 48 || (b[0] & 7) != 4) return "";
+        return "NTP v" + ((b[0] >> 3) & 7) + " · stratum " + (b[1] & 255);
+    }
+
+    /** NetBIOS node status request (who are you). */
+    static byte[] netbiosQuery() {
+        byte[] q = new byte[50];
+        q[0] = 0x4b; q[1] = 0x49; q[5] = 1; q[12] = 0x20;
+        q[13] = 'C'; q[14] = 'K'; for (int i = 15; i < 45; i++) q[i] = 'A';
+        q[47] = 0x21; q[49] = 1;
+        return q;
+    }
+    /** First unique workstation name from a node status reply, or "". */
+    static String netbiosName(byte[] b, int n) {
+        if (n < 57) return "";
+        int count = b[56] & 255, off = 57;
+        for (int i = 0; i < count && off + 18 <= n; i++, off += 18) {
+            String name = new String(b, off, 15, StandardCharsets.US_ASCII).trim();
+            int suffix = b[off + 15] & 255, flags = b[off + 16] & 255;
+            if (suffix == 0 && (flags & 0x80) == 0 && !name.isEmpty()) return name;
+        }
+        return "";
+    }
+
+    /** DNS query for example.com (A, recursion desired) to see whether a device answers DNS. */
+    static byte[] dnsQuery() {
+        byte[] name = name("example.com");
+        byte[] q = new byte[12 + name.length + 4];
+        q[0] = 0x4b; q[1] = 0x43; q[2] = 1; q[5] = 1;
+        System.arraycopy(name, 0, q, 12, name.length);
+        q[12 + name.length + 1] = 1; q[12 + name.length + 3] = 1;
+        return q;
+    }
+    /** "DNS server · recursion available" for a reply to dnsQuery, or "". */
+    static String dnsInfo(byte[] b, int n) {
+        if (n < 12 || b[0] != 0x4b || b[1] != 0x43 || (b[2] & 0x80) == 0) return "";
+        boolean ra = (b[3] & 0x80) != 0; int answers = ((b[6] & 255) << 8) | (b[7] & 255);
+        return "DNS server" + (ra ? " · answers lookups for any name (recursion on)" : "") + (answers > 0 ? " · " + answers + " answer" + (answers == 1 ? "" : "s") : "");
     }
 
     /** SSDP reply headers we show: SERVER, ST and LOCATION (lower-cased keys). */
