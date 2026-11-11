@@ -21,7 +21,19 @@ const assert=require('assert');
   assert.equal(prose.wraps,0);assert.match(prose.text,/Use ``` to start a fence/);
   const normalSrc='Intro\n\n```css\nbody { margin: 0 }\n```\n\n```js\nlet x = 2\n```\n\nInline ```not a fence``` here.';
   assert.equal(await page.evaluate(s=>normalizeFences(s),normalSrc),normalSrc,'well-formed Markdown is left untouched');
-  const normal=await render(normalSrc);assert.equal(normal.tabs,2,'two real blocks become two file tabs');
+  const normal=await render(normalSrc);assert.equal(normal.tabs,0,'unnamed snippets stay inline');assert.equal(normal.wraps,2);
+  // An explanation with several snippets keeps each one under its own text (no tabs),
+  // labelled by language instead of "snippet.txt".
+  const guide=await page.evaluate(()=>{conv={id:'g',title:'t',messages:[{id:'u',role:'user',content:'q'},{id:'a',role:'assistant',content:'1. Check it:\n\n```conf\nlocal-service=1\ndomain-needed\n```\n\nBIND:\n\n```conf\nallow-recursion { localnets; };\n```\n\nUnbound:\n\n```conf\naccess-control: 192.168.0.0/16 allow\n```\n\nFind your IP:\n\n```\nipconfig /all\n```\n\n```bash\nip -4 addr\n```'}]};renderAll();
+    const md=document.querySelector('.msg.assistant .md');
+    return {tabs:md.querySelectorAll('.code-tab').length,wraps:[...md.querySelectorAll('.code-wrap')].map(w=>w.querySelector('.code-name').textContent+'|'+w.previousElementSibling?.textContent.trim()),lines:[...md.querySelectorAll('.code-lines')].map(x=>x.textContent)};});
+  assert.equal(guide.tabs,0);
+  assert.deepEqual(guide.wraps.slice(0,4),['Config|Check it:','Config|BIND:','Config|Unbound:','Text|Find your IP:'],'each snippet stays under its own text');
+  assert.match(guide.wraps[4],/^Shell\|/);
+  assert.deepEqual(guide.lines.slice(0,2),['2 lines','1 line']);
+  // Named files are still one tabbed viewer, with unique tab names.
+  const files=await page.evaluate(()=>{conv={id:'f',title:'t',messages:[{id:'u',role:'user',content:'q'},{id:'a',role:'assistant',content:'```js app.js\nlet a\n```\n\n```css style.css\nb{}\n```\n\n```css\nc{}\n```\n\n```css\nd{}\n```'}]};renderAll();return [...document.querySelectorAll('.msg.assistant .code-tab')].map(t=>t.textContent);});
+  assert.deepEqual(files,['app.js','style.css','snippet.css','snippet-2.css']);
   assert.equal(await page.evaluate(()=>runnableHtml(conv.messages[1].content)),'','prose has no runnable page');
   assert.match(await page.evaluate(()=>normalizeFences('Note.```html\n<html><body>x</body></html>\n```')),/^Note\.\n```html\n/);
   assert.deepEqual(errors,[]);

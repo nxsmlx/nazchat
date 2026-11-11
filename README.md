@@ -1,6 +1,14 @@
-# Kita Chat 4.15.0
+# Kita Chat 4.15.1
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+- Code snippets in an explanation now stay where they are in the text. Before, every code block in an answer was pulled into one tabbed box at the first block, so a "BIND:" or "Unbound:" heading could be left with nothing under it.
+- Tabs are used only for multi-file answers: at least two blocks with file names, or a whole HTML page with its CSS / JavaScript / JSON.
+- A block without a file name is labelled by its language (Shell, Config, Python, Text…) instead of "snippet.txt". Downloads keep a sensible file name.
+- Unnamed tabs of the same language get numbered names (snippet.css, snippet-2.css) instead of repeating, and tab labels no longer squeeze into each other.
+- VersionCode 64, same com.nazchat.app package and original signing identity.
+
+# Kita Chat 4.15.0
 
 Deeper checks for your own network and websites (Tools → Network).
 
