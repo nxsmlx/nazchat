@@ -104,6 +104,39 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
    assert.match(await page.locator('.code-sites').innerText(),/kopi-kita\.vercel\.app/);
  });
 
+ const twoVersions={id:'c2',title:'Kopi Kita',mode:'code',updatedAt:Date.now(),messages:[{id:'u1',role:'user',content:'buat page'},{id:'a1',role:'assistant',content:'```html\n<!doctype html><html><body>VERSION ONE</body></html>\n```'},{id:'u2',role:'user',content:'tukar'},{id:'a2',role:'assistant',content:'```html\n<!doctype html><html><body>VERSION TWO</body></html>\n```'}]};
+ await scenario('Versions: every publish is kept; Rollback republishes an earlier version to the same site',seed({conversations:[twoVersions],uiMode:'code'}),async page=>{
+   const posts=[];
+   await page.route('https://api.vercel.com/**',async r=>{const u=new URL(r.request().url());
+     if(u.pathname==='/v2/user') return json(r,200,{user:{username:'nazz'}});
+     if(u.pathname==='/v13/deployments'&&r.request().method()==='POST'){posts.push(JSON.parse(r.request().postData()));return json(r,200,{id:'d'+posts.length,url:'x.vercel.app',readyState:'READY',alias:['kopi-kita.vercel.app']});}
+     return json(r,200,{readyState:'READY',alias:['kopi-kita.vercel.app']});});
+   await connect(page,'vercel');
+   await page.evaluate(()=>studioOpenConversation(db.conversations[0]));
+   const publishCard=async idx=>{await page.locator('.artifact-btn.publish').nth(idx).click();await page.locator('.publish-target[data-target="vercel"]').click();await page.click('#publishGo');await confirm(page);await page.waitForSelector('.publish-done');};
+   await publishCard(0);
+   assert.equal(await page.locator('.publish-version').count(),1);
+   assert.match(await page.locator('.publish-version').first().innerText(),/Version 1 · live[\s\S]*1 file · this page/);
+   await page.evaluate(()=>closeSheet('toolsSheet'));
+   await publishCard(1);
+   const rows=await page.locator('.publish-version').allInnerTexts();
+   assert.equal(rows.length,2);assert.match(rows[0],/Version 2 · live[\s\S]*this page/);assert.match(rows[1],/Version 1[\s\S]*an earlier answer/);
+   assert.equal(await page.locator('.publish-version.live button').count(),0,'the live version has no rollback');
+   // Roll back to version 1.
+   await page.getByRole('button',{name:'Roll back to version 1'}).click();
+   await page.waitForSelector('#customDialogScrim.open');
+   assert.match(await page.locator('#customDialogMessage').innerText(),/Publish version 1 again to https:\/\/kopi-kita\.vercel\.app/);
+   await confirm(page);await page.waitForFunction(()=>/Rolled back to version 1/.test(document.querySelector('.publish-done')?.textContent||''));
+   assert.equal(posts.length,3);assert.match(posts[2].files[0].data,/VERSION ONE/);assert.equal(posts[2].name,'kopi-kita');
+   const after=await page.locator('.publish-version').allInnerTexts();
+   assert.match(after[0],/Version 3 · live[\s\S]*rollback to version 1/);
+   const hist=await page.evaluate(()=>conv.siteHistory.map(v=>[v.n,v.target,v.name,!!v.rollbackOf,v.files[0].content.includes('ONE')]));
+   assert.deepEqual(hist,[[1,'vercel','kopi-kita',false,true],[2,'vercel','kopi-kita',false,false],[3,'vercel','kopi-kita',true,true]]);
+   // Only the last 10 versions of a site are kept.
+   const kept=await page.evaluate(()=>{for(let i=0;i<12;i++)recordSiteVersion(conv,{target:'vercel',name:'kopi-kita',url:'u',files:[{path:'index.html',content:'v'+i}]});return siteVersions(conv,'vercel','kopi-kita').map(v=>v.n);});
+   assert.equal(kept.length,10);assert.equal(kept[0],15);assert.equal(kept.at(-1),6);
+ });
+
  await scenario('Publish to Cloudflare Pages: project, BLAKE3 upload, manifest deployment',seed(),async page=>{
    const calls=[];
    await page.route('https://api.cloudflare.com/**',async r=>{const u=new URL(r.request().url()),m=r.request().method(),h=r.request().headers();calls.push({m,p:u.pathname,auth:h.authorization,ct:h['content-type'],body:r.request().postData()});

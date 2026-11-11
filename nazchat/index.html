@@ -1798,7 +1798,7 @@ function makeArtifactCard(wrap, info){
   if(info.isPage && typeof openPublishSheet==="function"){
     const pub=el("button","artifact-btn publish","Publish");
     pub.setAttribute("aria-label","Publish "+title);
-    pub.onclick=()=>openPublishSheet({...info, title});
+    pub.onclick=()=>openPublishSheet({...info, title, messageId:card.closest('[data-message-id]')?.dataset.messageId||null});
     acts.appendChild(pub);
   }
   const codeBtn=el("button","artifact-btn",info.isPage?"Code":"View code");

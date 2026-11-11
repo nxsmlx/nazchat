@@ -385,6 +385,7 @@ function openPublishSheet(info){
     const slug=siteSlug(name.value);
     preview.textContent=chosen?('https://'+chosen.host(slug)+(c?.sites?.[chosen.id]?'  · updates your existing site':'')):'Connect a service in Settings → Integrations to publish.';
     go.disabled=!chosen||!slug;
+    renderVersions();
   };
   for(const t of PUBLISH_TARGETS){
     const ok=integrationConnected(t.service),b=el('button','publish-target'+(ok?'':' off'));b.type='button';b.dataset.target=t.id;b.setAttribute('role','radio');
@@ -392,29 +393,66 @@ function openPublishSheet(info){
     b.onclick=()=>{if(!ok){closeSheet('toolsSheet');renderIntegrationsSettings();openSheet('setSheet');return;}chosen=t;refresh();};
     list.appendChild(b);
   }
-  body.appendChild(list);body.appendChild(preview);
+  const versions=el('div','publish-versions');
+  body.appendChild(list);body.appendChild(preview);body.appendChild(versions);
   const progress=el('ol','publish-progress');progress.setAttribute('aria-live','polite');
   const go=el('button','btn','Publish');go.id='publishGo';go.type='button';
   name.oninput=refresh;
-  go.onclick=async()=>{
+  // Every publish is kept as a version (its files, the answer it came from, when and where).
+  // Rollback publishes an earlier version again to the same site, the same way on every service.
+  const renderVersions=()=>{
+    versions.innerHTML='';
+    const list=chosen?siteVersions(c,chosen.id,siteSlug(name.value)):[];
+    if(!list.length) return;
+    versions.appendChild(el('p','studio-section-title','Versions'));
+    list.forEach((v,i)=>{
+      const row=el('div','publish-version'+(i===0?' live':''));
+      const when=new Date(v.at).toLocaleString([], {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      const from=v.rollbackOf?'rollback to version '+(siteVersionNumber(c,v.rollbackOf)||'?'):(v.messageId&&v.messageId===info.messageId?'this page':'an earlier answer');
+      row.innerHTML='<span><strong>Version '+v.n+(i===0?' · live':'')+'</strong><small>'+esc(when+' · '+v.files.length+' file'+(v.files.length===1?'':'s')+' · '+from)+'</small></span>';
+      if(i>0){const rb=el('button','mini-btn','Rollback');rb.type='button';rb.setAttribute('aria-label','Roll back to version '+v.n);rb.onclick=()=>publishNow(v.files,{rollbackOf:v.id,label:'version '+v.n});row.appendChild(rb);}
+      versions.appendChild(row);
+    });
+  };
+  const publishNow=async(sendFiles,opts={})=>{
     const slug=siteSlug(name.value),t=chosen;if(!t||!slug)return;name.value=slug;
     const where='https://'+t.host(slug);
-    if(!await confirmDialog('Publish '+files.length+' file'+(files.length===1?'':'s')+' to '+where+'? '+(t.id==='github'?'The repository is private.':'Anyone with the link can open it.'),{title:'Publish to '+t.label,confirmText:'Publish'}))return;
-    go.disabled=true;go.textContent='Publishing…';progress.innerHTML='';body.querySelectorAll('.publish-done').forEach(n=>n.remove());
+    const ok=opts.rollbackOf
+      ? await confirmDialog('Publish '+opts.label+' again to '+where+'? It replaces what is live now. You can roll forward the same way.',{title:'Roll back '+t.label,confirmText:'Roll back'})
+      : await confirmDialog('Publish '+sendFiles.length+' file'+(sendFiles.length===1?'':'s')+' to '+where+'? '+(t.id==='github'?'The repository is private.':'Anyone with the link can open it.'),{title:'Publish to '+t.label,confirmText:'Publish'});
+    if(!ok)return;
+    go.disabled=true;go.textContent=opts.rollbackOf?'Rolling back…':'Publishing…';progress.innerHTML='';body.querySelectorAll('.publish-done').forEach(n=>n.remove());
+    versions.querySelectorAll('button').forEach(b=>b.disabled=true);
     const log=m=>{const li=el('li');li.textContent=m;progress.appendChild(li);};
     try{
-      const r=await publishSite(t.id,slug,files,log,{confirmPublic:full=>confirmDialog(full+' is a private repository. GitHub Pages on a free plan only works with public repositories. Make it public so the site can go live? Anyone will be able to see its files.',{title:'Make repository public?',confirmText:'Make public',danger:true})});
-      if(c){c.sites=c.sites||{};c.sites[t.id]={target:t.id,name:slug,url:r.url,at:Date.now()};c.updatedAt=Date.now();save();}
+      const r=await publishSite(t.id,slug,sendFiles,log,{confirmPublic:full=>confirmDialog(full+' is a private repository. GitHub Pages on a free plan only works with public repositories. Make it public so the site can go live? Anyone will be able to see its files.',{title:'Make repository public?',confirmText:'Make public',danger:true})});
+      if(c){c.sites=c.sites||{};c.sites[t.id]={target:t.id,name:slug,url:r.url,at:Date.now()};recordSiteVersion(c,{target:t.id,name:slug,url:r.url,files:sendFiles,messageId:opts.rollbackOf?null:info.messageId,rollbackOf:opts.rollbackOf||null});c.updatedAt=Date.now();save();}
       log('✓ '+(r.detail||'Published'));
       const done=el('div','publish-done');
-      done.innerHTML='<strong>Published</strong><a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.url.replace(/^https:\/\//,''))+'</a>';
+      done.innerHTML='<strong>'+(opts.rollbackOf?'Rolled back to '+esc(opts.label):'Published')+'</strong><a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.url.replace(/^https:\/\//,''))+'</a>';
       const copy=el('button','mini-btn','Copy link');copy.type='button';copy.onclick=()=>copyText(r.url,copy,'Copied');done.appendChild(copy);
       body.appendChild(done);go.textContent='Publish again';go.disabled=false;
-      toast('Published to '+t.label);haptic?.('success');
+      toast((opts.rollbackOf?'Rolled back on ':'Published to ')+t.label);haptic?.('success');
     }catch(e){log('✕ '+String(e.message||e));go.disabled=false;go.textContent='Try again';}
+    renderVersions();
   };
+  go.onclick=()=>publishNow(files);
   body.appendChild(go);body.appendChild(progress);
   refresh();openSheet('toolsSheet');
+}
+/* Version history per conversation: newest first for one target and site name. */
+const SITE_VERSIONS_KEPT=10;
+function siteVersions(c,target,name){return (c?.siteHistory||[]).filter(v=>v.target===target&&v.name===name).sort((a,b)=>b.n-a.n);}
+function siteVersionNumber(c,id){return (c?.siteHistory||[]).find(v=>v.id===id)?.n||0;}
+function recordSiteVersion(c,v){
+  c.siteHistory=Array.isArray(c.siteHistory)?c.siteHistory:[];
+  const same=siteVersions(c,v.target,v.name);
+  const entry={id:uid(),n:(same[0]?.n||0)+1,at:Date.now(),...v,files:v.files.map(f=>({path:f.path,content:f.content}))};
+  c.siteHistory.push(entry);
+  // Keep the last versions of each site (their files live in app data).
+  const drop=new Set(siteVersions(c,v.target,v.name).slice(SITE_VERSIONS_KEPT).map(x=>x.id));
+  if(drop.size) c.siteHistory=c.siteHistory.filter(x=>!drop.has(x.id));
+  return entry;
 }
 
 /* ---------- Chat | Code modes ---------- */

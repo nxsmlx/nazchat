@@ -3849,3 +3849,9 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .supabase-result.ok { background: color-mix(in srgb, var(--success, #3fb950) 14%, var(--bg2)); color: var(--text); }
 .supabase-result.warn { background: color-mix(in srgb, var(--danger, #f85149) 14%, var(--bg2)); color: var(--text); }
 .copy-btn.supabase-run { color: var(--success, #3fb950); }
+/* 4.11.1: publish versions */
+.publish-versions { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 12px; }
+.publish-version { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg2); }
+.publish-version > span { display: flex; flex: 1 1 auto; flex-direction: column; gap: 2px; min-width: 0; }
+.publish-version small { color: var(--text2); font-size: 12px; }
+.publish-version.live { border-color: color-mix(in srgb, var(--success, #3fb950) 45%, var(--border)); }

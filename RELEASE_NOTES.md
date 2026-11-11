@@ -1,6 +1,7 @@
 # Kita Chat 4.11.1
 
 - GitHub Pages now works when a repository with the same name already exists as private (for example after publishing it first as "GitHub repository"). GitHub Pages on a free plan needs a public repository, so Kita asks whether to make it public before committing anything. If you say no, nothing changes and Kita suggests another site name.
+- Publish → Versions: every publish is kept as a version (when, how many files, and whether it came from this page, an earlier answer or a rollback). Rollback publishes an earlier version again to the same site, the same way on Vercel, Cloudflare and GitHub, after a confirmation. The last 10 versions of each site are kept on the device.
 - GitHub Pages: Kita now waits for GitHub to finish building the site (up to about 2½ minutes) before it says the site is live, so the link no longer opens a 404 right after publishing. A failed build shows GitHub's error; a slow one says it is still building. A .nojekyll file is added so GitHub serves the files as they are (faster, and files starting with _ are kept).
 - A Pages "plan" error from GitHub now explains what to do instead of showing only the raw message.
 - The Publish sheet no longer shows the result of an earlier publish under a new attempt.
