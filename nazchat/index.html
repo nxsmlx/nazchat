@@ -1297,8 +1297,6 @@ function migrateDb(raw){
   if(!Array.isArray(d.mcpServers)) d.mcpServers=[];
   d.mcpConfirm = d.mcpConfirm!==false;
   d.memory.items = d.memory.items.filter(x=>x && typeof x.text==="string" && x.text.trim()).map(x=>({...x,id:String(x.id||uid()),text:x.text,createdAt:Number(x.createdAt)||0}));
-  // 4.10.0: conversations that built pages belong to Code; the rest to Chat (decided once).
-  d.conversations.forEach(c=>{ if(c && !c.mode) c.mode=(Array.isArray(c.messages)&&c.messages.some(m=>m&&m.role==="assistant"&&(m.phases||/```html|<!doctype html/i.test(String(m.content||"")))))?"code":"chat"; });
   // An answer still marked as streaming was cut off by the app closing: keep it and offer Continue.
   d.conversations.forEach(c=>(Array.isArray(c?.messages)?c.messages:[]).forEach(m=>{
     if(!m || !m.streaming) return;
@@ -1904,7 +1902,7 @@ function renderSidebar(){
   const q=(search?.value||"").trim().toLowerCase();
   const mode=typeof kitaMode==="function"?kitaMode():"chat";
   if(typeof modeSwitch==="function") list.appendChild(modeSwitch("side-mode"));
-  const sorted=[...db.conversations].filter(c=>(c.mode==="code"?"code":"chat")===mode).filter(c=>!q||(c.title||"").toLowerCase().includes(q)).sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.updatedAt-a.updatedAt));
+  const sorted=[...db.conversations].filter(c=>(typeof convMode==="function"?convMode(c):"chat")===mode).filter(c=>!q||(c.title||"").toLowerCase().includes(q)).sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.updatedAt-a.updatedAt));
   if(!sorted.length){list.appendChild(el("div","",`<div style="color:var(--text2);font-size:13px;padding:16px 10px">${q?"No matching conversations":mode==="code"?"No Code projects yet":"No conversations yet"}</div>`));return;}
   let previousGroup="";
   sorted.forEach(c=>{
@@ -4336,8 +4334,8 @@ async function sendResponse(text, opts, run){
   // Every part is a real provider call; the plan and each part stream in order, and the
   // transcript is persisted so a stopped build can be resumed instead of restarted.
   if(!opts.review && !steerMode && typeof routeBuildToCode==="function") routeBuildToCode(conv_, text);
-  const codeMode = conv_.mode==="code";
-  if(codeMode) history.splice(1,0,{role:"system",content:CODE_MODE_NOTE});
+  const codeMode = typeof convMode==="function" && convMode(conv_)==="code";
+  if(codeMode) history.splice(1,0,{role:"system",content:typeof codeContextNote==="function"?codeContextNote():CODE_MODE_NOTE});
   const wantsPhased = !opts.review && !opts.editing && !steerMode && !editingPage && !opts.continueMessage && PHASE_BUILD.enabled && (codeMode ? isCodeBuildRequest(text) : isLongBuildRequest(text));
   if(wantsPhased){
     const kind = detectBuildKind(text);

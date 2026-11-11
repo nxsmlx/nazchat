@@ -12,7 +12,7 @@ function studioCanNavigate(){if(generating){toast('Stop the current response bef
 function studioFocusContent(){const node=studioView==='chat'?(conv?.messages.length?$('#chatScroll'):$('#empty')):$('#workspaceView');node?.focus({preventScroll:true});}
 function studioNavigate(view){if(!studioCanNavigate())return;studioView=['chat','projects','library'].includes(view)?view:'chat';closeSidebar();renderAll();studioFocusContent();}
 function studioNewChat(projectId=null){if(!studioCanNavigate())return;conv=null;db.activeProjectId=projectId;studioView='chat';pendingAttachments=[];renderAttachments();save();closeSidebar();renderAll();studioFocusContent();}
-function studioOpenConversation(c){if(!studioCanNavigate())return;conv=c;db.uiMode=c.mode==='code'?'code':'chat';db.activeProjectId=c.projectId||null;studioView='chat';save();closeSidebar();renderAll();studioFocusContent();haptic();}
+function studioOpenConversation(c){if(!studioCanNavigate())return;conv=c;db.uiMode=typeof convMode==='function'?convMode(c):'chat';db.activeProjectId=c.projectId||null;studioView='chat';save();closeSidebar();renderAll();studioFocusContent();haptic();}
 function renderStudioView(){
   if(!$('#workspaceView'))return;
   const chat=studioView==='chat',has=!!conv?.messages?.length;
@@ -51,7 +51,7 @@ function renderStudioHome(){
   const box=$('#studioResume');box.innerHTML='';
   const home=document.querySelector('.studio-home'),sugg=home?.querySelector('.sugg');
   const mode=typeof kitaMode==='function'?kitaMode():'chat';
-  const recents=[...db.conversations].filter(c=>c.messages?.length&&(c.mode==='code'?'code':'chat')===mode&&(!db.activeProjectId||c.projectId===db.activeProjectId)).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  const recents=[...db.conversations].filter(c=>c.messages?.length&&(typeof convMode==='function'?convMode(c):'chat')===mode&&(!db.activeProjectId||c.projectId===db.activeProjectId)).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
   // Returning users come back to continue: recent chats go first and the welcome copy shrinks.
   const returning=recents.length>0;
   home?.classList.toggle('returning',returning);

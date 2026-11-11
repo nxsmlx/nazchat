@@ -358,8 +358,17 @@ function openPublishSheet(info){
 /* ---------- Chat | Code modes ---------- */
 /* Chat is for questions and research; Code is for building and publishing. Each
    conversation belongs to one mode and the lists show the current mode only. */
-function kitaMode(){return conv?(conv.mode==='code'?'code':'chat'):(db.uiMode==='code'?'code':'chat');}
-function convMode(c){return c?.mode==='code'?'code':'chat';}
+function kitaMode(){return conv?convMode(conv):(db.uiMode==='code'?'code':'chat');}
+/* New conversations carry their mode. Older ones are read as Code when they built a web
+   page, without changing the stored data (an upgrade must not rewrite conversations). */
+const inferredModes=new WeakMap();
+function convMode(c){
+  if(!c) return 'chat';
+  if(c.mode==='code'||c.mode==='chat') return c.mode;
+  if(inferredModes.has(c)) return inferredModes.get(c);
+  const m=(Array.isArray(c.messages)&&c.messages.some(x=>x&&x.role==='assistant'&&(x.phases||/```html|<!doctype html/i.test(String(x.content||'')))))?'code':'chat';
+  inferredModes.set(c,m);return m;
+}
 function setKitaMode(mode){
   mode=mode==='code'?'code':'chat';
   if(typeof generating!=='undefined'&&generating){toast('Stop the current response first');return;}

@@ -26,7 +26,8 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
 
  await scenario('Chat | Code: separate lists, mode switch, build requests move to Code',seed({conversations:[{id:'a',title:'Soalan',mode:'chat',updatedAt:2,messages:[{id:'1',role:'user',content:'hi'}]},{id:'b',title:'Site lama',updatedAt:1,messages:[{id:'1',role:'user',content:'x'},{id:'2',role:'assistant',content:'```html\n<!doctype html><html></html>\n```'}]}]}),async page=>{
    // Old conversations: the one that built a page is classified as Code.
-   assert.deepEqual(await page.evaluate(()=>db.conversations.map(c=>c.mode)),['chat','code']);
+   assert.deepEqual(await page.evaluate(()=>db.conversations.map(c=>convMode(c))),['chat','code']);
+   assert.equal(await page.evaluate(()=>'mode' in db.conversations[1]),false,'stored data is not rewritten');
    await page.evaluate(()=>{renderSidebar();});
    assert.deepEqual(await page.locator('#convList .conv-item .t').allTextContents(),['Soalan']);
    await page.locator('.home-mode .mode-tab[data-mode="code"]').click();
