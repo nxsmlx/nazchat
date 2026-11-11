@@ -48,13 +48,13 @@ const ASK='buat landing page lengkap untuk kedai kopi dengan hero, menu, galeri 
    await page.waitForFunction(()=>document.querySelectorAll('.run-part.running').length>=2,null,{timeout:10000});
    const live=await page.evaluate(()=>({rows:[...document.querySelectorAll('.run-part')].map(r=>r.textContent),label:document.querySelector('.run-label').textContent,open:document.querySelector('.run-status').classList.contains('open'),terminal:!!document.querySelector('.code-live')}));
    assert.equal(live.terminal,false);assert.equal(live.open,true);
-   assert.match(live.rows[0],/^.Agent 1 · Head and styles/);assert.match(live.label,/agents? working/);
+   assert.match(live.rows.find(r=>/Coder 1/.test(r)),/^.Coder 1 · Head and styles/);assert.match(live.label,/agents? working/);
    await page.waitForFunction(()=>!generating,null,{timeout:60000});
    assert.equal(st.plan,1);assert.equal(st.parts.length,5);
    assert.equal(st.maxLive,3,'three agents at once');
    const seg=st.parts.map(p=>p.body.messages.at(-1).content);
    seg.forEach(c=>{assert.match(c,/\[Shared contract/);assert.match(c,/--brand: #6b4f3a/);});
-   assert.match(st.parts[0].body.messages[0].content,/one of several agents/);
+   assert.match(st.parts[0].body.messages[0].content,/one of several coders/);
    const msg=await page.evaluate(()=>conv.messages.at(-1));
    assert.equal(msg.phases.state,'done');assert.match(msg.phases.contract,/Section ids: #hero/);
    const html=await page.evaluate(()=>extractHtmlBlock(conv.messages.at(-1).content));

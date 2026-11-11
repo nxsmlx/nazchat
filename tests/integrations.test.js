@@ -104,6 +104,46 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
    assert.match(await page.locator('.code-sites').innerText(),/kopi-kita\.vercel\.app/);
  });
 
+ const twoVersions={id:'c2',title:'Kopi Kita',mode:'code',updatedAt:Date.now(),messages:[{id:'u1',role:'user',content:'buat page'},{id:'a1',role:'assistant',content:'```html\n<!doctype html><html><body>VERSION ONE</body></html>\n```'},{id:'u2',role:'user',content:'tukar'},{id:'a2',role:'assistant',content:'```html\n<!doctype html><html><body>VERSION TWO</body></html>\n```'}]};
+ await scenario('Versions: every publish is kept; Rollback republishes an earlier version to the same site',seed({conversations:[twoVersions],uiMode:'code'}),async page=>{
+   const posts=[];
+   await page.route('https://api.vercel.com/**',async r=>{const u=new URL(r.request().url());
+     if(u.pathname==='/v2/user') return json(r,200,{user:{username:'nazz'}});
+     if(u.pathname==='/v13/deployments'&&r.request().method()==='POST'){posts.push(JSON.parse(r.request().postData()));return json(r,200,{id:'d'+posts.length,url:'x.vercel.app',readyState:'READY',alias:['kopi-kita.vercel.app']});}
+     return json(r,200,{readyState:'READY',alias:['kopi-kita.vercel.app']});});
+   await connect(page,'vercel');
+   await page.evaluate(()=>studioOpenConversation(db.conversations[0]));
+   const publishCard=async idx=>{await page.locator('.artifact-btn.publish').nth(idx).click();await page.locator('.publish-target[data-target="vercel"]').click();await page.click('#publishGo');await confirm(page);await page.waitForSelector('.publish-done');};
+   await publishCard(0);
+   assert.equal(await page.locator('.publish-version').count(),1);
+   assert.match(await page.locator('.publish-version').first().innerText(),/Version 1 · live[\s\S]*1 file · this page/);
+   await page.evaluate(()=>closeSheet('toolsSheet'));
+   await publishCard(1);
+   const rows=await page.locator('.publish-version').allInnerTexts();
+   assert.equal(rows.length,2);assert.match(rows[0],/Version 2 · live[\s\S]*this page/);assert.match(rows[1],/Version 1[\s\S]*an earlier answer/);
+   assert.equal(await page.locator('.publish-version.live button').count(),0,'the live version has no rollback');
+   // Roll back to version 1.
+   await page.getByRole('button',{name:'Roll back to version 1'}).click();
+   await page.waitForSelector('#customDialogScrim.open');
+   assert.match(await page.locator('#customDialogMessage').innerText(),/Publish version 1 again to https:\/\/kopi-kita\.vercel\.app/);
+   await confirm(page);await page.waitForFunction(()=>/Rolled back to version 1/.test(document.querySelector('.publish-done')?.textContent||''));
+   assert.equal(posts.length,3);assert.match(posts[2].files[0].data,/VERSION ONE/);assert.equal(posts[2].name,'kopi-kita');
+   const after=await page.locator('.publish-version').allInnerTexts();
+   assert.match(after[0],/Version 3 · live[\s\S]*rollback to version 1/);
+   const hist=await page.evaluate(()=>conv.siteHistory.map(v=>[v.n,v.target,v.name,!!v.rollbackOf,v.files[0].content.includes('ONE')]));
+   assert.deepEqual(hist,[[1,'vercel','kopi-kita',false,true],[2,'vercel','kopi-kita',false,false],[3,'vercel','kopi-kita',true,true]]);
+   // Only the last 10 versions of a site are kept.
+   const kept=await page.evaluate(()=>{for(let i=0;i<12;i++)recordSiteVersion(conv,{target:'vercel',name:'kopi-kita',url:'u',files:[{path:'index.html',content:'v'+i}]});return siteVersions(conv,'vercel','kopi-kita').map(v=>v.n);});
+   assert.equal(kept.length,10);assert.equal(kept[0],15);assert.equal(kept.at(-1),6);
+   // The sheet stays short: live + 2 earlier versions, the rest behind "Show all".
+   await page.evaluate(()=>closeSheet('toolsSheet'));await page.locator('.artifact-btn.publish').nth(1).click();await page.locator('.publish-target[data-target="vercel"]').click();
+   assert.equal(await page.locator('.publish-version').count(),3);
+   await page.getByRole('button',{name:'Show all 10 versions'}).click();
+   assert.equal(await page.locator('.publish-version').count(),10);
+   await page.getByRole('button',{name:'Show fewer'}).click();
+   assert.equal(await page.locator('.publish-version').count(),3);
+ });
+
  await scenario('Publish to Cloudflare Pages: project, BLAKE3 upload, manifest deployment',seed(),async page=>{
    const calls=[];
    await page.route('https://api.cloudflare.com/**',async r=>{const u=new URL(r.request().url()),m=r.request().method(),h=r.request().headers();calls.push({m,p:u.pathname,auth:h.authorization,ct:h['content-type'],body:r.request().postData()});
@@ -166,12 +206,14 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
      if(p==='/repos/Nazz/kopi/git/refs/heads/main'&&m==='PATCH') return json(r,200,{object:{sha:'c1'}});
      if(p==='/repos/Nazz/kopi/pages'&&m==='GET') return json(r,404,{message:'Not Found'});
      if(p==='/repos/Nazz/kopi/pages'&&m==='POST') return json(r,201,{html_url:'https://nazz.github.io/kopi/'});
+     if(p==='/repos/Nazz/kopi/pages/builds/latest') return json(r,200,{status:(calls.filter(c=>c.p.endsWith('/builds/latest')).length>1)?'built':'building'});
      return json(r,404,{message:'unexpected '+m+' '+p});});
    await connect(page,'github');
-   const r=await page.evaluate(PAGE=>publishSite('github-pages','kopi',[{path:'index.html',content:PAGE}]),PAGE);
-   assert.equal(r.url,'https://nazz.github.io/kopi/');
+   const r=await page.evaluate(PAGE=>publishSite('github-pages','kopi',[{path:'index.html',content:PAGE}],()=>{},{buildPollMs:10}),PAGE);
+   assert.equal(r.url,'https://nazz.github.io/kopi/');assert.equal(r.detail,'Live','waits until the Pages build is done');
+   assert.equal(calls.filter(c=>c.p.endsWith('/builds/latest')).length,2);
    const create=JSON.parse(calls.find(c=>c.p==='/user/repos').body);assert.deepEqual([create.name,create.private,create.auto_init],['kopi',false,true]);
-   const tree=JSON.parse(calls.find(c=>c.p.endsWith('/git/trees')).body);assert.deepEqual(tree,{base_tree:'t0',tree:[{path:'index.html',mode:'100644',type:'blob',content:PAGE}]});
+   const tree=JSON.parse(calls.find(c=>c.p.endsWith('/git/trees')).body);assert.deepEqual(tree,{base_tree:'t0',tree:[{path:'index.html',mode:'100644',type:'blob',content:PAGE},{path:'.nojekyll',mode:'100644',type:'blob',content:''}]});
    assert.deepEqual(JSON.parse(calls.find(c=>c.m==='PATCH').body),{sha:'c1'});
    assert.equal(calls.find(c=>c.p==='/user/repos').h['x-github-api-version'],'2022-11-28');
    // Repository only: private, no Pages.
@@ -190,6 +232,71 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
    assert.equal(r3.url,'https://github.com/Nazz/empty');
    const puts=calls.filter(c=>c.m==='PUT');assert.deepEqual(puts.map(c=>c.p),['/repos/Nazz/empty/contents/index.html','/repos/Nazz/empty/contents/css/site.css']);
    assert.equal(JSON.parse(puts[0].body).content,Buffer.from(PAGE).toString('base64'));
+ });
+
+ await scenario('GitHub Pages on an existing private repo: ask to make it public; decline commits nothing',seed(),async page=>{
+   const calls=[];
+   await page.route('https://api.github.com/**',async r=>{const u=new URL(r.request().url()),m=r.request().method(),p=u.pathname;calls.push({m,p,body:r.request().postData()});
+     if(p==='/user') return json(r,200,{login:'nxsmlx'});
+     if(p==='/repos/nxsmlx/kopi'&&m==='GET') return json(r,200,{name:'kopi',private:true,default_branch:'main',html_url:'https://github.com/nxsmlx/kopi'});
+     if(p==='/repos/nxsmlx/kopi'&&m==='PATCH') return json(r,200,{name:'kopi',private:false,default_branch:'main',html_url:'https://github.com/nxsmlx/kopi'});
+     if(p.endsWith('/git/ref/heads/main')) return json(r,200,{object:{sha:'c0'}});
+     if(p.endsWith('/git/commits/c0')) return json(r,200,{tree:{sha:'t0'}});
+     if(p.endsWith('/git/trees')) return json(r,201,{sha:'t1'});
+     if(p.endsWith('/git/commits')) return json(r,201,{sha:'c1'});
+     if(p.endsWith('/git/refs/heads/main')) return json(r,200,{});
+     if(p.endsWith('/pages')&&m==='GET') return json(r,404,{message:'Not Found'});
+     if(p.endsWith('/pages')&&m==='POST') return json(r,201,{html_url:'https://nxsmlx.github.io/kopi/'});
+     if(p.endsWith('/pages/builds/latest')) return json(r,200,{status:'built'});
+     return json(r,404,{message:'unexpected '+m+' '+p});});
+   await connect(page,'github');
+   // Declined: a clear message, and nothing is changed or committed.
+   const err=await page.evaluate(PAGE=>publishSite('github-pages','kopi',[{path:'index.html',content:PAGE}],()=>{},{confirmPublic:async()=>false}).then(()=>'ok',e=>e.message),PAGE);
+   assert.match(err,/nxsmlx\/kopi is private, and GitHub Pages on a free plan needs a public repository/);
+   assert.equal(calls.filter(c=>c.m!=='GET').length,0);
+   // Accepted: made public, then committed, then Pages.
+   calls.length=0;let asked='';
+   const r=await page.evaluate(PAGE=>{window.__asked='';return publishSite('github-pages','kopi',[{path:'index.html',content:PAGE}],()=>{},{buildPollMs:10,confirmPublic:async full=>{window.__asked=full;return true;}});},PAGE);
+   assert.equal(await page.evaluate(()=>window.__asked),'nxsmlx/kopi');
+   assert.equal(r.url,'https://nxsmlx.github.io/kopi/');
+   assert.equal(r.detail,'Live');
+   const writes=calls.filter(c=>c.m!=='GET').map(c=>c.m+' '+c.p);
+   assert.deepEqual(writes,['PATCH /repos/nxsmlx/kopi','POST /repos/nxsmlx/kopi/git/trees','POST /repos/nxsmlx/kopi/git/commits','PATCH /repos/nxsmlx/kopi/git/refs/heads/main','POST /repos/nxsmlx/kopi/pages']);
+   assert.deepEqual(JSON.parse(calls.find(c=>c.m==='PATCH'&&c.p==='/repos/nxsmlx/kopi').body),{private:false});
+   // A plan error from Pages reads as advice.
+   await page.unroute('https://api.github.com/**');
+   await page.route('https://api.github.com/**',async r=>{const u=new URL(r.request().url()),m=r.request().method(),p=u.pathname;
+     if(p==='/repos/nxsmlx/kopi'&&m==='GET') return json(r,200,{name:'kopi',private:false,default_branch:'main'});
+     if(p.endsWith('/git/ref/heads/main')) return json(r,200,{object:{sha:'c0'}});
+     if(p.endsWith('/git/commits/c0')) return json(r,200,{tree:{sha:'t0'}});
+     if(p.endsWith('/git/trees')) return json(r,201,{sha:'t1'});
+     if(p.endsWith('/git/commits')) return json(r,201,{sha:'c1'});
+     if(p.endsWith('/git/refs/heads/main')) return json(r,200,{});
+     if(p.endsWith('/pages')&&m==='GET') return json(r,404,{message:'Not Found'});
+     if(p.endsWith('/pages')&&m==='POST') return json(r,422,{message:'Your current plan does not support GitHub Pages for this repository.'});
+     return json(r,404,{message:'unexpected'});});
+   const err2=await page.evaluate(PAGE=>publishSite('github-pages','kopi',[{path:'index.html',content:PAGE}]).then(()=>'ok',e=>e.message),PAGE);
+   assert.match(err2,/GitHub Pages is not available for nxsmlx\/kopi on your plan\. Make the repository public/);
+   // A failed Pages build is reported; a slow one says it is still building.
+   await page.unroute('https://api.github.com/**');
+   let buildStatus='errored';
+   await page.route('https://api.github.com/**',async r=>{const u=new URL(r.request().url()),m=r.request().method(),p=u.pathname;
+     if(p==='/repos/nxsmlx/kopi'&&m==='GET') return json(r,200,{name:'kopi',private:false,default_branch:'main'});
+     if(p.endsWith('/git/ref/heads/main')) return json(r,200,{object:{sha:'c0'}});
+     if(p.endsWith('/git/commits/c0')) return json(r,200,{tree:{sha:'t0'}});
+     if(p.endsWith('/git/trees')) return json(r,201,{sha:'t1'});
+     if(p.endsWith('/git/commits')) return json(r,201,{sha:'c1'});
+     if(p.endsWith('/git/refs/heads/main')) return json(r,200,{});
+     if(p.endsWith('/pages')&&m==='GET') return json(r,200,{html_url:'https://nxsmlx.github.io/kopi/'});
+     if(p.endsWith('/pages/builds/latest')) return json(r,200,{status:buildStatus,error:{message:'Page build failed.'}});
+     return json(r,404,{message:'unexpected'});});
+   const err3=await page.evaluate(PAGE=>publishSite('github-pages','kopi',[{path:'index.html',content:PAGE}],()=>{},{buildPollMs:10}).then(()=>'ok',e=>e.message),PAGE);
+   assert.match(err3,/could not build the site: Page build failed/);
+   buildStatus='building';
+   const slow=await page.evaluate(PAGE=>publishSite('github-pages','kopi',[{path:'index.html',content:PAGE}],()=>{},{buildPollMs:10,buildWaitMs:60}),PAGE);
+   assert.match(slow.detail,/Still building on GitHub/);
+   // Default names are short and cut at a word.
+   assert.equal(await page.evaluate(()=>siteSlug('Kopi Pelita — Pemanggang kelompok kecil, ruang kopi kampung')),'kopi-pelita-pemanggang-kelompok-kecil');
  });
 
  await scenario('Android: tokens go to Keystore and only through the native secret path',seed(),async page=>{

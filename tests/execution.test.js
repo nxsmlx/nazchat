@@ -64,6 +64,8 @@ async function mockIncremental(page, parts){
   }
 
   await test('long-build-runs-plan-then-one-call-per-part', async page=>{
+    // Plan + coders only: the Designer and Reviewer have their own tests (agent-team).
+    await page.evaluate(()=>{db.agentTeam={designer:false,review:false};});
     const calls=await mockIncremental(page,[
       '<head><title>Built</title><style>body{font-family:sans-serif}</style></head>',
       '<section class="hero"><h1>Hero heading</h1></section>',
@@ -146,6 +148,7 @@ async function mockIncremental(page, parts){
   });
 
   await test('stop-cancels-in-flight-request-and-keeps-partial-build', async page=>{
+    await page.evaluate(()=>{db.agentTeam={designer:false,review:false};});
     let first=true;
     await page.route(API,async route=>{
       const body=JSON.parse(route.request().postData()||'{}');

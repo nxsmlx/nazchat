@@ -42,7 +42,7 @@ final class McpHttp {
     }
     private static Response requestWithId(String url,String method,Map<String,String> headers,String body,Control control,int rpcId) throws Exception {
         URL u=checked(url);
-        HttpURLConnection c=(HttpURLConnection)u.openConnection();
+        HttpURLConnection c=NazDns.open(u);
         InputStream in=null;
         try {
             c.setInstanceFollowRedirects(false);c.setConnectTimeout(15000);c.setReadTimeout(45000);c.setRequestMethod(method);

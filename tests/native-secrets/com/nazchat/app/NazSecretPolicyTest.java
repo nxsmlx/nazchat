@@ -73,6 +73,22 @@ public final class NazSecretPolicyTest {
         refused("supabase token to a project URL", io(() -> NazSecretPolicy.authorizeIntegration("integration:supabase", "https://abc.supabase.co/rest/v1/")));
         refused("token for another service's API", io(() -> NazSecretPolicy.authorizeIntegration("integration:github", "https://api.vercel.com/v13/deployments")));
 
+        // Web search keys: fixed API host and header per service; "#n" picks one of several keys.
+        check(NazSecretPolicy.isJsRef("search:brave"), "search base ref reachable from JS");
+        check(!NazSecretPolicy.isJsRef("search:brave#1"), "JS stores keys by base ref only");
+        check(NazSecretPolicy.isSearchRef("search:tavily#3") && NazSecretPolicy.searchIndex("search:tavily#3") == 3, "indexed ref");
+        check(!NazSecretPolicy.isSearchRef("search:tavily#99") && !NazSecretPolicy.isSearchRef("search:tavily#x"), "bad index refused");
+        check(!NazSecretPolicy.isSearchRef("search:google"), "unknown search service refused");
+        check(NazSecretPolicy.authHeaderName("search:brave#0").equals("X-Subscription-Token") && NazSecretPolicy.authHeaderValue("search:brave#0", "k").equals("k"), "brave header");
+        check(NazSecretPolicy.authHeaderValue("search:tavily#0", "k").equals("Bearer k"), "tavily bearer");
+        check(NazSecretPolicy.authHeaderName("search:exa").equals("x-api-key") && NazSecretPolicy.authHeaderName("search:serper").equals("X-API-KEY"), "exa and serper headers");
+        check(NazSecretPolicy.authHeaderName("provider:p").equals("Authorization") && NazSecretPolicy.authHeaderValue("provider:p", "k").equals("Bearer k"), "providers stay Bearer");
+        io(() -> NazSecretPolicy.authorizeSearch("search:brave#1", "https://api.search.brave.com/res/v1/web/search?q=x"));
+        io(() -> NazSecretPolicy.authorizeSearch("search:serper#0", "https://google.serper.dev/search"));
+        refused("brave key to another host", io(() -> NazSecretPolicy.authorizeSearch("search:brave#0", "https://evil.example/search")));
+        refused("tavily key over http", io(() -> NazSecretPolicy.authorizeSearch("search:tavily#0", "http://api.tavily.com/search")));
+        refused("exa key to tavily", io(() -> NazSecretPolicy.authorizeSearch("search:exa#0", "https://api.tavily.com/search")));
+
         System.out.println("RESULT NazSecretPolicy passed; " + assertions + " assertions; production source; host JVM");
     }
 }

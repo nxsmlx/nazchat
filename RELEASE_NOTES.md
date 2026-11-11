@@ -1,3 +1,45 @@
+# Kita Chat 4.13.0
+
+Web & DNS: reach blocked servers and get better search results. This release also includes 4.12.0 and 4.11.1.
+
+- Settings → Web & DNS → DNS: choose Cloudflare (1.1.1.1), Google (8.8.8.8), a custom DNS-over-HTTPS address, or System.
+  - Some networks answer DNS with a block page. With DNS-over-HTTPS, every request the app makes natively (models, web search, MCP, integrations, publishing, updates) looks the host up over encrypted HTTPS and goes to the real server.
+  - Certificates are still checked against the real site name, so security is unchanged.
+  - If a lookup fails, the request falls back to the phone's DNS.
+  - "Test lookup" shows what a host resolves to.
+  - Pages shown in Preview still use the phone's DNS.
+- Settings → Web & DNS → Web search, tried in this order:
+  - Model search (optional): OpenAI search (Responses API web search) and Anthropic search (Messages API web search) through one of your providers and its saved key, with the model you choose. The answer and its cited sources become the search results.
+  - Search APIs with your keys: Brave Search API, Tavily, Search1API, Exa and Serper. Paste several keys per service, one per line. They are used in turn, and a key that is refused, out of credit or rate limited hands over to the next. Keys are stored in Android Keystore and native code sends each one only to that service's API host, in that service's own header.
+  - The built-in DuckDuckGo search, with no key needed.
+- VersionCode 61, same com.nazchat.app package and original signing identity. Tested with mocked search APIs and host-JVM tests of the DNS-over-HTTPS rules, not on a real device or network.
+
+# Kita Chat 4.12.0
+
+Long builds in Code are done by a team of agents, each with its own role. This release also includes 4.11.1.
+
+- Orchestrator plans the build and fixes a shared contract. When Supabase is connected, it also says what data the app must store.
+- Designer writes a shared design system (CSS variables, base styles, components) before the coders start. Every coder gets it, and the page carries it once.
+- Database (only with Supabase connected and an app that stores data) writes the tables and Row Level Security policies. It always asks before running the SQL and never runs SQL that deletes anything. The coders then get the new tables, the project URL and the public key. If you decline, the app is built without new tables.
+- Coders write the parts at the same time (1 to 4 at once).
+- Tester runs the assembled page in the hidden test view.
+- Reviewer reads all the parts together with the Tester's errors and reports real problems part by part (JavaScript errors, missing ids or classes, broken layout, buttons that do nothing, missing content).
+- Fixer rewrites only the parts with problems, not the whole page. The Tester then runs the page again, and the card shows ✓ tested or the remaining errors.
+- The answer lists the team: what each agent did, the coders with their line counts, and which parts were fixed.
+- Tools → Agent team: choose a model for each role (for example a strong model for Orchestrator and Reviewer and a fast one for Coders), and turn the Designer, Reviewer and Fixer, and Database on or off. A model that is no longer available falls back to the chat model.
+- Fixed: a "DATABASE:" line in a plan could be read as an extra part.
+- VersionCode 60, same com.nazchat.app package and original signing identity. Tested with mocked providers and a mocked Supabase API, not on a real device.
+
+# Kita Chat 4.11.1
+
+- GitHub Pages now works when a repository with the same name already exists as private (for example after publishing it first as "GitHub repository"). GitHub Pages on a free plan needs a public repository, so Kita asks whether to make it public before committing anything. If you say no, nothing changes and Kita suggests another site name.
+- Publish → Versions: every publish is kept as a version (when, how many files, and whether it came from this page, an earlier answer or a rollback). Rollback publishes an earlier version again to the same site, the same way on Vercel, Cloudflare and GitHub, after a confirmation. The list shows the live version and the two before it, with "Show all" for the rest; the last 10 versions of each site are kept on the device.
+- GitHub Pages: Kita now waits for GitHub to finish building the site (up to about 2½ minutes) before it says the site is live, so the link no longer opens a 404 right after publishing. A failed build shows GitHub's error; a slow one says it is still building. A .nojekyll file is added so GitHub serves the files as they are (faster, and files starting with _ are kept).
+- A Pages "plan" error from GitHub now explains what to do instead of showing only the raw message.
+- The Publish sheet no longer shows the result of an earlier publish under a new attempt.
+- Default site names are shorter (about 40 characters, cut between words).
+- VersionCode 59, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.11.0
 
 Supabase joins the integrations, so the apps you build in Code can have a real database, sign-in and storage. This release also includes everything in 4.10.0 (Chat | Code and publishing).

@@ -13,10 +13,11 @@ const files = [
   ...['updater', 'themes', 'ui-minimal', 'phased-building', 'skills-browser', 'streaming-long-answers',
     'tools-and-budget', 'fetch-url-approval', 'preview-and-retrieval', 'studio', 'execution',
     'renderer-isolation', 'stop-native', 'comfort', 'provider-picker', 'steer-memory-mcp',
-    'skill-editor-browser', 'skill-pack-v2', 'mcp-client', 'provider-delete', 'durable-state', 'ui-460', 'file-save', 'reliability-462', 'ui-470', 'ui-480', 'markdown-fences', 'attach-paste', 'artifact-card', 'offline-resume', 'orchestrator', 'integrations', 'supabase']
+    'skill-editor-browser', 'skill-pack-v2', 'mcp-client', 'provider-delete', 'durable-state', 'ui-460', 'file-save', 'reliability-462', 'ui-470', 'ui-480', 'markdown-fences', 'attach-paste', 'artifact-card', 'offline-resume', 'orchestrator', 'integrations', 'supabase', 'agent-team', 'websearch']
     .map(name => ['node', `tests/${name}.test.js`]),
   ['node', '--test', 'tests/native-secrets.test.cjs'],
   ['node', '--test', 'tests/native-store.test.cjs'],
+  ['node', '--test', 'tests/native-dns.test.cjs'],
 ];
 
 const run = cmd => spawnSync(cmd[0], cmd.slice(1), { cwd: root, stdio: 'inherit' }).status === 0;

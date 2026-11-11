@@ -152,7 +152,12 @@ function disconnectIntegration(service){forgetIntegrationToken(service);setInteg
 
 /* ---------- Files to publish ---------- */
 function utf8Base64(text){const bytes=new TextEncoder().encode(String(text));let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(s);}
-function siteSlug(text){return String(text||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,50).replace(/-+$/,'')||'kita-site';}
+function siteSlug(text){
+  let s=String(text||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  // Default names stay short: cut at a word boundary around 40 characters.
+  if(s.length>40){const cut=s.slice(0,41).lastIndexOf('-');s=s.slice(0,cut>=12?cut:40);}
+  return s.replace(/-+$/,'')||'kita-site';
+}
 const SITE_TYPES={html:'text/html; charset=utf-8',htm:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'text/javascript; charset=utf-8',mjs:'text/javascript; charset=utf-8',json:'application/json',svg:'image/svg+xml',txt:'text/plain; charset=utf-8',md:'text/markdown; charset=utf-8',xml:'application/xml',webmanifest:'application/manifest+json'};
 function siteType(path){return SITE_TYPES[(String(path).split('.').pop()||'').toLowerCase()]||'text/plain; charset=utf-8';}
 /* Files from an answer: the page becomes index.html; named files keep their names. */
@@ -244,11 +249,22 @@ async function githubRepo(login,name,pages,log){
   log('Creating repository '+login+'/'+name+'…');
   return await integrationFetch('github','/user/repos',{method:'POST',body:{name,private:!pages,auto_init:true,description:'Published from Kita Chat'}});
 }
-async function publishGitHub(name,files,log,pages){
+async function publishGitHub(name,files,log,pages,opts={}){
   let login=integrationState('github').login;
   if(!login){login=(await integrationFetch('github','/user')).login;setIntegrationState('github',{...integrationState('github'),login});}
-  const repo=await githubRepo(login,name,pages,log);
+  let repo=await githubRepo(login,name,pages,log);
   const branch=repo.default_branch||'main',base='/repos/'+login+'/'+name;
+  // Pages serves the files as they are: .nojekyll skips the Jekyll build (faster, keeps _files).
+  if(pages&&!files.some(f=>f.path==='.nojekyll')) files=files.concat({path:'.nojekyll',content:''});
+  // GitHub Pages on a free plan needs a public repository. An existing private one (for
+  // example published earlier as "GitHub repository") is made public only if the user agrees,
+  // and nothing is committed before that is settled.
+  if(pages&&repo.private){
+    const ok=opts.confirmPublic?await opts.confirmPublic(login+'/'+name):false;
+    if(!ok) throw new Error(login+'/'+name+' is private, and GitHub Pages on a free plan needs a public repository. Choose another site name, or allow making it public.');
+    log('Making '+login+'/'+name+' public…');
+    repo=await integrationFetch('github',base,{method:'PATCH',body:{private:false}});
+  }
   let ref=null,empty=false;
   for(let i=0;i<6&&!ref;i++){try{ref=await integrationFetch('github',base+'/git/ref/heads/'+branch);}catch(e){if(e.status!==404&&e.status!==409)throw e;empty=e.status===409;if(empty)break;await new Promise(r=>setTimeout(r,1500));}}
   if(!ref&&empty){
@@ -268,15 +284,31 @@ async function publishGitHub(name,files,log,pages){
   log('Turning on GitHub Pages…');
   let site=null;
   try{site=await integrationFetch('github',base+'/pages');}
-  catch(e){ if(e.status!==404) throw e; site=await integrationFetch('github',base+'/pages',{method:'POST',body:{source:{branch,path:'/'}}}); }
-  return {url:site?.html_url||('https://'+login.toLowerCase()+'.github.io/'+name+'/'),detail:'GitHub Pages goes live in about a minute',repo:repo.html_url};
+  catch(e){
+    if(e.status!==404) throw e;
+    try{ site=await integrationFetch('github',base+'/pages',{method:'POST',body:{source:{branch,path:'/'}}}); }
+    catch(err){ if(err.status===422&&/plan/i.test(err.message)) throw new Error('GitHub Pages is not available for '+login+'/'+name+' on your plan. Make the repository public in its GitHub settings, or publish under another site name.'); throw err; }
+  }
+  const url=site?.html_url||('https://'+login.toLowerCase()+'.github.io/'+name+'/');
+  // The site answers 404 until GitHub has built it, so wait for the build before saying it is live.
+  log('Waiting for GitHub Pages to build…');
+  const until=Date.now()+(opts.buildWaitMs??150000);
+  let status='';
+  while(Date.now()<until){
+    await new Promise(r=>setTimeout(r,opts.buildPollMs??5000));
+    try{const b=await integrationFetch('github',base+'/pages/builds/latest');status=b?.status||'';
+      if(status==='built') return {url,detail:'Live',repo:repo.html_url};
+      if(status==='errored') throw new Error('GitHub Pages could not build the site: '+(b.error?.message||'see the repository\'s Actions tab'));
+    }catch(e){ if(/could not build/.test(e.message)) throw e; if(e.status&&e.status!==404) throw e; }
+  }
+  return {url,detail:'Still building on GitHub. If the link shows 404, refresh in a minute or two.',repo:repo.html_url};
 }
-async function publishSite(targetId,name,files,log=()=>{}){
+async function publishSite(targetId,name,files,log=()=>{},opts={}){
   const slug=siteSlug(name);
   if(targetId==='vercel') return publishVercel(slug,files,log);
   if(targetId==='cloudflare-pages') return publishCloudflarePages(slug,files,log);
   if(targetId==='cloudflare-workers') return publishCloudflareWorker(slug,files,log);
-  if(targetId==='github-pages') return publishGitHub(slug,files,log,true);
+  if(targetId==='github-pages') return publishGitHub(slug,files,log,true,opts);
   if(targetId==='github') return publishGitHub(slug,files,log,false);
   throw new Error('Unknown publish target');
 }
@@ -353,6 +385,7 @@ function openPublishSheet(info){
     const slug=siteSlug(name.value);
     preview.textContent=chosen?('https://'+chosen.host(slug)+(c?.sites?.[chosen.id]?'  · updates your existing site':'')):'Connect a service in Settings → Integrations to publish.';
     go.disabled=!chosen||!slug;
+    renderVersions();
   };
   for(const t of PUBLISH_TARGETS){
     const ok=integrationConnected(t.service),b=el('button','publish-target'+(ok?'':' off'));b.type='button';b.dataset.target=t.id;b.setAttribute('role','radio');
@@ -360,29 +393,75 @@ function openPublishSheet(info){
     b.onclick=()=>{if(!ok){closeSheet('toolsSheet');renderIntegrationsSettings();openSheet('setSheet');return;}chosen=t;refresh();};
     list.appendChild(b);
   }
-  body.appendChild(list);body.appendChild(preview);
+  const versions=el('div','publish-versions');
+  body.appendChild(list);body.appendChild(preview);body.appendChild(versions);
   const progress=el('ol','publish-progress');progress.setAttribute('aria-live','polite');
   const go=el('button','btn','Publish');go.id='publishGo';go.type='button';
   name.oninput=refresh;
-  go.onclick=async()=>{
+  // Every publish is kept as a version (its files, the answer it came from, when and where).
+  // Rollback publishes an earlier version again to the same site, the same way on every service.
+  // Short by default: the live version and the two before it; the rest on request.
+  let showAllVersions=false;
+  const VERSIONS_SHOWN=3;
+  const renderVersions=()=>{
+    versions.innerHTML='';
+    const list=chosen?siteVersions(c,chosen.id,siteSlug(name.value)):[];
+    if(!list.length) return;
+    versions.appendChild(el('p','studio-section-title','Versions'));
+    (showAllVersions?list:list.slice(0,VERSIONS_SHOWN)).forEach((v,i)=>{
+      const row=el('div','publish-version'+(i===0?' live':''));
+      const when=new Date(v.at).toLocaleString([], {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      const from=v.rollbackOf?'rollback to version '+(siteVersionNumber(c,v.rollbackOf)||'?'):(v.messageId&&v.messageId===info.messageId?'this page':'an earlier answer');
+      row.innerHTML='<span><strong>Version '+v.n+(i===0?' · live':'')+'</strong><small>'+esc(when+' · '+v.files.length+' file'+(v.files.length===1?'':'s')+' · '+from)+'</small></span>';
+      if(i>0){const rb=el('button','mini-btn','Rollback');rb.type='button';rb.setAttribute('aria-label','Roll back to version '+v.n);rb.onclick=()=>publishNow(v.files,{rollbackOf:v.id,label:'version '+v.n});row.appendChild(rb);}
+      versions.appendChild(row);
+    });
+    if(list.length>VERSIONS_SHOWN){
+      const more=el('button','publish-more',showAllVersions?'Show fewer':'Show all '+list.length+' versions');more.type='button';
+      more.setAttribute('aria-expanded',String(showAllVersions));
+      more.onclick=()=>{showAllVersions=!showAllVersions;renderVersions();};
+      versions.appendChild(more);
+    }
+  };
+  const publishNow=async(sendFiles,opts={})=>{
     const slug=siteSlug(name.value),t=chosen;if(!t||!slug)return;name.value=slug;
     const where='https://'+t.host(slug);
-    if(!await confirmDialog('Publish '+files.length+' file'+(files.length===1?'':'s')+' to '+where+'? '+(t.id==='github'?'The repository is private.':'Anyone with the link can open it.'),{title:'Publish to '+t.label,confirmText:'Publish'}))return;
-    go.disabled=true;go.textContent='Publishing…';progress.innerHTML='';
+    const ok=opts.rollbackOf
+      ? await confirmDialog('Publish '+opts.label+' again to '+where+'? It replaces what is live now. You can roll forward the same way.',{title:'Roll back '+t.label,confirmText:'Roll back'})
+      : await confirmDialog('Publish '+sendFiles.length+' file'+(sendFiles.length===1?'':'s')+' to '+where+'? '+(t.id==='github'?'The repository is private.':'Anyone with the link can open it.'),{title:'Publish to '+t.label,confirmText:'Publish'});
+    if(!ok)return;
+    go.disabled=true;go.textContent=opts.rollbackOf?'Rolling back…':'Publishing…';progress.innerHTML='';body.querySelectorAll('.publish-done').forEach(n=>n.remove());
+    versions.querySelectorAll('button').forEach(b=>b.disabled=true);
     const log=m=>{const li=el('li');li.textContent=m;progress.appendChild(li);};
     try{
-      const r=await publishSite(t.id,slug,files,log);
-      if(c){c.sites=c.sites||{};c.sites[t.id]={target:t.id,name:slug,url:r.url,at:Date.now()};c.updatedAt=Date.now();save();}
+      const r=await publishSite(t.id,slug,sendFiles,log,{confirmPublic:full=>confirmDialog(full+' is a private repository. GitHub Pages on a free plan only works with public repositories. Make it public so the site can go live? Anyone will be able to see its files.',{title:'Make repository public?',confirmText:'Make public',danger:true})});
+      if(c){c.sites=c.sites||{};c.sites[t.id]={target:t.id,name:slug,url:r.url,at:Date.now()};recordSiteVersion(c,{target:t.id,name:slug,url:r.url,files:sendFiles,messageId:opts.rollbackOf?null:info.messageId,rollbackOf:opts.rollbackOf||null});c.updatedAt=Date.now();save();}
       log('✓ '+(r.detail||'Published'));
       const done=el('div','publish-done');
-      done.innerHTML='<strong>Published</strong><a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.url.replace(/^https:\/\//,''))+'</a>';
+      done.innerHTML='<strong>'+(opts.rollbackOf?'Rolled back to '+esc(opts.label):'Published')+'</strong><a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.url.replace(/^https:\/\//,''))+'</a>';
       const copy=el('button','mini-btn','Copy link');copy.type='button';copy.onclick=()=>copyText(r.url,copy,'Copied');done.appendChild(copy);
       body.appendChild(done);go.textContent='Publish again';go.disabled=false;
-      toast('Published to '+t.label);haptic?.('success');
+      toast((opts.rollbackOf?'Rolled back on ':'Published to ')+t.label);haptic?.('success');
     }catch(e){log('✕ '+String(e.message||e));go.disabled=false;go.textContent='Try again';}
+    renderVersions();
   };
+  go.onclick=()=>publishNow(files);
   body.appendChild(go);body.appendChild(progress);
   refresh();openSheet('toolsSheet');
+}
+/* Version history per conversation: newest first for one target and site name. */
+const SITE_VERSIONS_KEPT=10;
+function siteVersions(c,target,name){return (c?.siteHistory||[]).filter(v=>v.target===target&&v.name===name).sort((a,b)=>b.n-a.n);}
+function siteVersionNumber(c,id){return (c?.siteHistory||[]).find(v=>v.id===id)?.n||0;}
+function recordSiteVersion(c,v){
+  c.siteHistory=Array.isArray(c.siteHistory)?c.siteHistory:[];
+  const same=siteVersions(c,v.target,v.name);
+  const entry={id:uid(),n:(same[0]?.n||0)+1,at:Date.now(),...v,files:v.files.map(f=>({path:f.path,content:f.content}))};
+  c.siteHistory.push(entry);
+  // Keep the last versions of each site (their files live in app data).
+  const drop=new Set(siteVersions(c,v.target,v.name).slice(SITE_VERSIONS_KEPT).map(x=>x.id));
+  if(drop.size) c.siteHistory=c.siteHistory.filter(x=>!drop.has(x.id));
+  return entry;
 }
 
 /* ---------- Chat | Code modes ---------- */
