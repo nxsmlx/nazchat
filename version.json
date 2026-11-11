@@ -1,9 +1,9 @@
 {
-  "version": "4.8.1",
-  "versionCode": 54,
+  "version": "4.8.2",
+  "versionCode": 55,
   "name": "Kita Chat",
-  "changelog": "Code blocks render cleanly even when the fence is glued to text, and About now credits the author (Nazz).",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.8.1/NazChat.apk",
-  "sha256": "9c5fd642159f6c4565f70bd6280a0ac15d2860f642de5fe751b536ddf3ff67d1",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.8.1"
+  "changelog": "Markdown files attach again, long pastes become attachments, pages show as artifact cards, and long answers survive the internet dropping or the app closing.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.8.2/NazChat.apk",
+  "sha256": "c49bc457233500a5c42aaa46493391d540b567cf8cc648dbfa8d8cf6daadc28a",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.8.2"
 }

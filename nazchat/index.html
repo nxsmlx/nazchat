@@ -911,7 +911,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
         <div class="attachment-inline" id="attachmentInline"></div>
         <div id="inputRow">
           <button id="attachBtn" aria-label="Attach documents" title="Attach document or code"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
-          <input id="fileInput" type="file" multiple accept=".pdf,.txt,.md,.markdown,.csv,.json,.js,.ts,.tsx,.jsx,.py,.java,.kt,.html,.css,.xml,.docx">
+          <input id="fileInput" type="file" multiple accept=".pdf,.docx,.txt,.md,.markdown,.mdx,.csv,.tsv,.json,.yaml,.yml,.toml,.xml,.html,.htm,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.java,.kt,.go,.rs,.rb,.php,.swift,.dart,.c,.cpp,.h,.cs,.sql,.sh,.log,text/*,text/markdown,application/json">
           <textarea id="promptInput" rows="1" placeholder="What’s on your mind?" aria-label="Message Kita"></textarea>
           <button id="steerBtn" type="button" aria-label="Steer response with this message" hidden>Steer</button>
           <button id="sendBtn" aria-label="Send message">
@@ -1296,6 +1296,12 @@ function migrateDb(raw){
   if(!Array.isArray(d.mcpServers)) d.mcpServers=[];
   d.mcpConfirm = d.mcpConfirm!==false;
   d.memory.items = d.memory.items.filter(x=>x && typeof x.text==="string" && x.text.trim()).map(x=>({...x,id:String(x.id||uid()),text:x.text,createdAt:Number(x.createdAt)||0}));
+  // An answer still marked as streaming was cut off by the app closing: keep it and offer Continue.
+  d.conversations.forEach(c=>(Array.isArray(c?.messages)?c.messages:[]).forEach(m=>{
+    if(!m || !m.streaming) return;
+    delete m.streaming;
+    if(String(m.content||"").trim()) m.closedEarly=true;
+  }));
   return d;
 }
 /* Durable state. WebView commits localStorage to disk lazily (and rate limits large,
@@ -1507,8 +1513,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.8.1";
-const APP_VERSION_CODE = 54;
+const APP_VERSION = "4.8.2";
+const APP_VERSION_CODE = 55;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1751,7 +1757,72 @@ function decorateCodeBlock(pre, code, opts){
   wrap.appendChild(head); wrap.appendChild(body);
   // Short snippets are easier to read than to unfold: show up to 12 lines straight away.
   if(opts.defaultOpen || count <= 12){ wrap.classList.remove("collapsed"); toggle.textContent="Collapse"; toggle.setAttribute("aria-label","Collapse code"); }
+  // Whole pages and long files become an artifact card; the code stays one tap away.
+  const isPage = /^(html|htm|xhtml)$/.test(lang) && /<(?:!doctype\s+html|html\b|body\b)/i.test(rawCode);
+  if(!opts.noCard && !wrap.closest(".code-tab-pane") && (isPage || count > ARTIFACT_MIN_LINES))
+    return makeArtifactCard(wrap, {lang, name, rawCode, count, isPage, toggle});
   return wrap;
+}
+const ARTIFACT_MIN_LINES = 30;
+function decodeEntities(s){ const t=document.createElement("textarea"); t.innerHTML=String(s||""); return t.value; }
+function artifactTitle(info){
+  if(info.isPage){
+    const m=info.rawCode.match(/<title[^>]*>([^<]{1,120})<\/title>/i)||info.rawCode.match(/<h1[^>]*>([^<]{1,120})<\/h1>/i);
+    const t=m?decodeEntities(m[1]).replace(/\s+/g," ").trim():"";
+    if(t) return t.slice(0,80);
+  }
+  return info.name;
+}
+function makeArtifactCard(wrap, info){
+  const card=el("div","artifact-card"+(info.isPage?" is-page":""));
+  card.dataset.kind=info.isPage?"page":"code";
+  const title=artifactTitle(info);
+  const multi=info.files&&info.files.length>1;
+  const kind=(info.isPage?"Web page":(info.lang&&info.lang!=="text"?info.lang.toUpperCase():"Text")+" file")+(multi?` + ${info.files.length-1} more file${info.files.length>2?"s":""}`:"");
+  const icon=info.isPage
+    ? '<path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M3 9h18M7 6h.01M10 6h.01"/>'
+    : '<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/>';
+  const head=el("div","artifact-head");
+  head.innerHTML=`<span class="artifact-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></span><span class="artifact-title"><strong title="${esc(title)}">${esc(title)}</strong><small>${esc(kind)} · ${info.count.toLocaleString()} lines<span class="artifact-status"></span></small></span>`;
+  const acts=el("div","artifact-actions");
+  if(info.isPage){
+    const open=el("button","artifact-btn primary","Open");
+    open.setAttribute("aria-label","Open "+title);
+    open.onclick=()=>openPreview(info.rawCode,{live:false});
+    acts.appendChild(open);
+  }
+  const codeBtn=el("button","artifact-btn",info.isPage?"Code":"View code");
+  codeBtn.setAttribute("aria-expanded","false");
+  codeBtn.onclick=()=>{
+    const on=card.classList.toggle("show-code");
+    codeBtn.textContent=on?"Hide code":(info.isPage?"Code":"View code");
+    codeBtn.setAttribute("aria-expanded",String(on));
+    if(on && info.toggle && wrap.classList.contains("collapsed")) info.toggle.click();
+  };
+  acts.appendChild(codeBtn);
+  const more=el("button","artifact-btn artifact-more",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg>');
+  more.setAttribute("aria-label","More for "+title); more.setAttribute("aria-haspopup","menu"); more.setAttribute("aria-expanded","false");
+  more.onclick=e=>{
+    e.stopPropagation();
+    const items=multi
+      ? [[info.isPage?"Copy page code":"Copy "+info.name,()=>copyText(info.rawCode)],...info.files.map(f=>["Download "+f.name,()=>downloadText(f.name,f.raw)])]
+      : [["Copy code",()=>copyText(info.rawCode)],["Download "+info.name,()=>downloadText(info.name,info.rawCode)]];
+    if(typeof window.NazShare==="object" || navigator.share) items.push(["Share",()=>shareText(info.rawCode)]);
+    openMessageMenu(more, items);
+  };
+  acts.appendChild(more);
+  wrap.replaceWith(card);
+  card.append(head, acts, wrap);
+  return card;
+}
+/* Mark page cards with the result of the automatic page test. */
+function markArtifactChecks(container, checks){
+  if(!checks?.length) return;
+  const last=checks.at(-1).errors.length;
+  container.querySelectorAll(".artifact-card.is-page .artifact-status").forEach(s=>{
+    s.textContent=last?` · ${last} error${last===1?"":"s"}`:" · ✓ tested";
+    s.className="artifact-status "+(last?"warn":"ok");
+  });
 }
 function buildCodeTabs(container, blocks){
   const first = blocks[0].parentElement;
@@ -1783,6 +1854,12 @@ function buildCodeTabs(container, blocks){
   list.forEach(entry=>{ entry.pane.hidden=false; decorateCodeBlock(entry.pane.firstChild, entry.code, {name:entry.name}); });
   list.forEach((entry,i)=>{ entry.pane.hidden = i!==0; });
   blocks.forEach(code=>{ const pre=code.parentElement; if(pre && pre.parentElement===container) pre.remove(); });
+  // A set of files that includes a whole page or runs long is shown as one artifact card.
+  const files=list.map(e=>({name:e.name,raw:e.raw,lang:(String(e.code.className||"").trim().split(/\s+/)[0]||"text").toLowerCase()}));
+  const lines=files.reduce((n,f)=>n+f.raw.replace(/\n+$/,"").split("\n").length,0);
+  const page=files.find(f=>/^(html|htm|xhtml)$/.test(f.lang) && /<(?:!doctype\s+html|html\b|body\b)/i.test(f.raw));
+  if(page || lines > ARTIFACT_MIN_LINES)
+    makeArtifactCard(panelWrap, {lang:page?page.lang:files[0].lang, name:page?page.name:files[0].name, rawCode:page?page.raw:files[0].raw, count:lines, isPage:!!page, files});
 }
 /* ===================== Sidebar / Conversations ===================== */
 function renderSidebarLegacy(){
@@ -1887,7 +1964,7 @@ function msgEl(msg){
       const files = el("div","user-files");
       msg.attachments.forEach(a=>{
         const f = el("div","user-file");
-        f.innerHTML = `<span>Document · ${esc(a.name)}</span>`;
+        f.innerHTML = a.pasted ? `<span>Pasted text · ${esc(attachmentSize(a.text))}</span>` : `<span>Document · ${esc(a.name)}</span>`;
         files.appendChild(f);
       });
       bubble.appendChild(files);
@@ -1987,6 +2064,7 @@ function renderAssistant(bubble, msg, live){
   bubble.appendChild(signature);
   if(msg.steerContinuation){const note=el("div","hint");note.textContent=msg.phases?"Build paused for steer. Only completed parts are in the artifact below. The steer continues in a new response, not the original phases.":"Response interrupted for steer. Partial output is kept below.";bubble.appendChild(note);}
   if(msg.stopped && !msg.steerContinuation){bubble.appendChild(el("div","hint","Response stopped. Partial output is kept."));}
+  if(msg.closedEarly && !live){bubble.appendChild(el("div","hint","The app closed before this answer finished. What arrived is kept; tap Continue to finish it."));}
   // Unified status bar: thinking, tool activity and incremental execution in one compact place.
   const showStatus = live || (msg.phases && msg.phases.state && msg.phases.state!=="done") || !!(msg.reasoning && String(msg.reasoning).trim());
   if(showStatus){
@@ -2076,6 +2154,7 @@ function renderAssistant(bubble, msg, live){
   }
   bubble.appendChild(md);
   enhance(md, {light:live});
+  if(!live) markArtifactChecks(md, msg.codeChecks);
   // active skills (visible provenance, no extra prompt text in the answer)
   if(Array.isArray(msg.usedSkills) && msg.usedSkills.length){
     const badges=el("div","skill-badges");
@@ -2139,9 +2218,9 @@ function renderAssistant(bubble, msg, live){
     rg.setAttribute("aria-label","Regenerate"); rg.title="Regenerate";
     rg.onclick = ()=>regenerate(msg);
     bar.appendChild(cp); bar.appendChild(rg);
-    if(msg.failed && msg.interrupted && !msg.truncated){ const cont=el("button","act-btn act-primary","Continue"); cont.onclick=()=>{ if(generating) return; send("Continue exactly where your previous reply stopped. Do not repeat text that was already written.",{skipTitle:true}); }; bar.insertBefore(cont, cp); }
+    if((msg.failed && msg.interrupted || msg.closedEarly) && !msg.truncated){ const cont=el("button","act-btn act-primary","Continue"); cont.title="Continue this answer from where it stopped"; cont.onclick=()=>continueAnswer(msg); bar.insertBefore(cont, cp); }
     if(msg.failed){ const retry=el("button","act-btn","Try again"); retry.title="Start this answer again"; retry.onclick=()=>regenerate(msg); bar.insertBefore(retry, cp); }
-    if(msg.truncated){const cont=el("button","act-btn","Continue");cont.onclick=()=>{if(generating)return;send("Continue exactly where you stopped. Do not repeat text that was already written.",{skipTitle:true});};bar.appendChild(cont);}
+    if(msg.truncated){const cont=el("button","act-btn","Continue");cont.onclick=()=>continueAnswer(msg);bar.appendChild(cont);}
     if(msg.phases && !msg.steerContinuation && msg.phases.state==="paused" && (msg.phases.parts||[]).some(p=>p.status!=="done")){
       const resume=el("button","act-btn","Resume build");
       resume.onclick=()=>window.kitaResumeBuild(msg.id);
@@ -2178,7 +2257,7 @@ function openMessageMenu(anchor, items){
   const menu=el("div","msg-menu"); menu.setAttribute("role","menu"); menu._owner=anchor;
   items.forEach(([label,run])=>{ const it=el("button","msg-menu-item"); it.type="button"; it.setAttribute("role","menuitem"); it.textContent=label;
     it.onclick=()=>{ closeMessageMenu(); anchor.focus({preventScroll:true}); run(); }; menu.appendChild(it); });
-  anchor.closest(".action-bar").appendChild(menu);
+  anchor.closest(".action-bar, .artifact-actions").appendChild(menu);
   anchor.setAttribute("aria-expanded","true");
   menu.querySelector("button")?.focus({preventScroll:true});
   menu.addEventListener("keydown",e=>{
@@ -3351,7 +3430,15 @@ function nativeSSE(sid, signal){
   const drain = ()=>{ if(waiter){ const w = waiter; waiter = null; w(); } };
   const onAbort = ()=>{ if(aborted) return; aborted = true; done = true; queue.length=0; err="aborted"; try{ NazStream.close(sid); }catch(e){} drain(); };
   if(signal){ if(signal.aborted) onAbort(); else signal.addEventListener("abort", onAbort); }
-  window.nazStreamOnLine = (id, line)=>{ if(id!==sid||done||aborted) return; queue.push(line); drain(); };
+  // A dropped connection can leave the socket silent for minutes before Android
+  // reports it. Going offline, or a long silence after text started, ends this
+  // attempt at once as a connection error, so the reconnect logic takes over.
+  let lastLineAt = 0;
+  const fail = reason=>{ if(done||aborted) return; done = true; err = reason; try{ NazStream.close(sid); }catch(e){} drain(); };
+  const onOffline = ()=>fail("Network connection lost (offline)");
+  window.addEventListener("offline", onOffline);
+  const stall = setInterval(()=>{ if(done||aborted){ clearInterval(stall); window.removeEventListener("offline", onOffline); return; } if(lastLineAt && Date.now()-lastLineAt > STREAM_STALL_MS) fail("Network connection timed out (no data for "+Math.round(STREAM_STALL_MS/1000)+"s)"); }, 5000);
+  window.nazStreamOnLine = (id, line)=>{ if(id!==sid||done||aborted) return; lastLineAt = Date.now(); queue.push(line); drain(); };
   window.nazStreamOnStatus = (id, code)=>{ if(id!==sid) return; /* handled by waitStreamStatus */ };
   window.nazStreamOnDone = (id, error)=>{ if(id!==sid) return; done = true; err = error||null; drain(); };
   return (async function* (){
@@ -3366,9 +3453,10 @@ function nativeSSE(sid, signal){
         }
         await new Promise(r=>{ waiter = r; });
       }
-    } finally { if(signal) signal.removeEventListener("abort", onAbort); }
+    } finally { if(signal) signal.removeEventListener("abort", onAbort); window.removeEventListener("offline", onOffline); clearInterval(stall); }
   })();
 }
+let STREAM_STALL_MS = 120000;
 
 /* Wait for the Java side to report the HTTP status of a stream.
    Some routers (e.g. 9router) take 60-130s before the first byte on heavy models,
@@ -3809,7 +3897,27 @@ function isInterruption(message){
   const t=String(message||"");
   if(/\bHTTP (502|503|504|520|522|524|529)\b/.test(t)) return true;
   if(/\bHTTP [45]\d\d\b/.test(t)) return false;
-  return /network|connection|timed? ?out|stream ended early|socket|reset|unexpected end|failed to fetch|econn|eof|broken pipe|unreachable/i.test(t);
+  return /network|connection|timed? ?out|stream ended early|socket|reset|unexpected end|failed to fetch|econn|eof|broken pipe|unreachable|resolve host|unknownhost|no address associated|offline|software caused|aborted by peer/i.test(t);
+}
+/* Reconnect plan for a cut-off answer: up to 4 tries with growing pauses. While the
+   phone is offline the app waits for the connection to return (up to 5 minutes)
+   without spending a try, so a short outage does not end a long answer. */
+let RECONNECT_DELAYS=[2000,4000,8000,15000];
+const OFFLINE_WAIT_MS=5*60*1000;
+function waitForOnline(ms){
+  return new Promise(resolve=>{
+    if(navigator.onLine!==false) return resolve(true);
+    const sig=currentAbortSignal();
+    const done=ok=>{clearTimeout(t);window.removeEventListener("online",on);resolve(ok);};
+    const on=()=>done(true);
+    const t=setTimeout(()=>done(navigator.onLine!==false),ms);
+    window.addEventListener("online",on);
+    sig?.addEventListener("abort",()=>done(false),{once:true});
+  });
+}
+function keptSummary(text){
+  const t=String(text||""), lines=t.split("\n").length;
+  return lines>3?`${lines.toLocaleString()} lines`:`${t.length.toLocaleString()} characters`;
 }
 function continuationPrompt(partial){
   const tail=String(partial||"").slice(-400);
@@ -3864,10 +3972,18 @@ function beginRun(){
   activeRun=run;return run;
 }
 function finishRun(run){
+  if(run.message) delete run.message.streaming;
   try{run.cleanup?.();}finally{
     try{if(activeRun===run){activeRun=null;abortCtl=null;setSendMode(false);save();renderAll();}}
     finally{run.settle();}
   }
+}
+/* Continue a cut-off answer inside the same message (not as a new reply). */
+function continueAnswer(msg){
+  if(generating || activeRun || steerHandoff || !conv) return;
+  const c=conv, i=c.messages.indexOf(msg); if(i<0) return;
+  const question=c.messages.slice(0,i).reverse().find(m=>m.role==="user");
+  return send(question?.content||"",{continueMessage:msg,conversation:c,skipTitle:true,attachments:question?.attachments||[]});
 }
 window.kitaResumeBuild = msgId=>{
   const c=conv,msg=c?.messages.find(m=>m.id===msgId);
@@ -3894,14 +4010,19 @@ async function sendResponse(text, opts, run){
 
   const attachments = opts.attachments || [];
   const steerMode = !!opts.steer;
-  const userMsg = { id:uid(), role:"user", content:text, attachments:attachments.map(a=>({name:a.name,type:a.type,text:a.text})), timestamp:Date.now() };
-  if(!opts.editing && !steerMode && !opts.resumeMessage) conv_.messages.push(userMsg);
+  const userMsg = { id:uid(), role:"user", content:text, attachments:attachments.map(a=>({name:a.name,type:a.type,text:a.text,...(a.pasted?{pasted:true}:{})})), timestamp:Date.now() };
+  if(!opts.editing && !steerMode && !opts.resumeMessage && !opts.continueMessage) conv_.messages.push(userMsg);
   if(!opts.skipTitle && conv_.title==="New chat"){ conv_.title = text.slice(0,42) + (text.length>42?"…":""); }
   conv_.updatedAt = Date.now(); save();
 
   const usedSkills=opts.review?activeSkills().filter(s=>["design-critique","code-review","testing"].includes(s.id)).slice(0,3):selectSkills(text,model);
-  const aiMsg = opts.resumeMessage || { id:uid(), role:"assistant", reasoning:"", content:"", sources:[], usedSkills:usedSkills.map(s=>s.id), timestamp:Date.now(), thinking:db.thinking, modelName:prettyModel(model.modelId) };
-  if(!opts.resumeMessage)conv_.messages.push(aiMsg);run.message=aiMsg;
+  const aiMsg = opts.resumeMessage || opts.continueMessage || { id:uid(), role:"assistant", reasoning:"", content:"", sources:[], usedSkills:usedSkills.map(s=>s.id), timestamp:Date.now(), thinking:db.thinking, modelName:prettyModel(model.modelId) };
+  if(!opts.resumeMessage && !opts.continueMessage)conv_.messages.push(aiMsg);run.message=aiMsg;
+  if(opts.continueMessage){
+    // Continue appends to the same answer, so a long page stays one artifact.
+    aiMsg.content=stripErrorNote(aiMsg.content).replace(/\n*⚠️ \*\*Response reached the model's output limit\*\*[\s\S]*$/,"");
+    delete aiMsg.failed; delete aiMsg.interrupted; delete aiMsg.truncated; delete aiMsg.closedEarly; delete aiMsg.stopped;
+  }
   renderAll();
   setSendMode(true);
   newAbortController();
@@ -3919,7 +4040,7 @@ async function sendResponse(text, opts, run){
       ? "The phased build is paused. Only completed parts are retained in the current artifact above; the running part was not completed. If the output is labelled as an excerpt, do not assume the full artifact was supplied. This is a new continuation, not a resume of the original phases. Apply my latest instruction to the retained artifact and original task. Return a complete updated artifact, or explain what is still missing. Do not claim that unfinished phases are intact."
       : "The previous response was interrupted. Apply my latest instruction and complete the answer using the partial output above. Do not repeat completed prose. For code or an artifact, return a complete usable replacement rather than an unjoinable fragment.";
     history.push({role:"user", content:apiContent(text,attachments)+"\n\n"+continuation});
-  } else {
+  } else if(!opts.continueMessage){
     history.push({role:"user", content:apiContent(text,attachments)});
   }
   history.unshift({role:"system",content:skillSystemMessage(usedSkills,text)});
@@ -3937,7 +4058,7 @@ async function sendResponse(text, opts, run){
   // (that would double the cost and slow every message). Pre-search is only a fallback.
   const toolsOnDefault = toolsSupported(model) && !opts.noTools && !steerMode;
   let searchUI = null;
-  if(db.search && !toolsOnDefault && !steerMode && !opts.resumeMessage){
+  if(db.search && !toolsOnDefault && !steerMode && !opts.resumeMessage && !opts.continueMessage){
     const bubble = $("#chatInner").lastChild.querySelector(".bubble");
     searchUI = el("div","search-status", `<span class="spin"></span><span>Searching the web for “${esc(text.slice(0,60))}”…</span>`);
     bubble.prepend(searchUI);
@@ -3990,6 +4111,9 @@ async function sendResponse(text, opts, run){
     firstByteSeen = true;
     lastDataAt = Date.now();
     const now = Date.now();
+    // Save the partial answer every few seconds, so closing the app or losing power
+    // mid-answer keeps what arrived (and Continue can pick it up).
+    if(aiMsg.streaming && now - lastStreamSave > 4000){ lastStreamSave = now; try{ save(); }catch(e){} }
     if(force || now - lastPaint > 140){
       lastPaint = now;
       paint();
@@ -4034,7 +4158,7 @@ async function sendResponse(text, opts, run){
   // ---- Incremental workflow: PLAN → EXECUTE (one part) → EVALUATE → next part → VALIDATE ----
   // Every part is a real provider call; the plan and each part stream in order, and the
   // transcript is persisted so a stopped build can be resumed instead of restarted.
-  const wantsPhased = !opts.review && !opts.editing && !steerMode && !editingPage && PHASE_BUILD.enabled && isLongBuildRequest(text);
+  const wantsPhased = !opts.review && !opts.editing && !steerMode && !editingPage && !opts.continueMessage && PHASE_BUILD.enabled && isLongBuildRequest(text);
   if(wantsPhased){
     const kind = detectBuildKind(text);
     const params0 = modelParameters(model);
@@ -4147,6 +4271,11 @@ async function sendResponse(text, opts, run){
 
   // Reconnect state: text already received is carried into the next attempt.
   let carried = "", autoContinues = 0, sawEnd = false, contPairAt = -1;
+  if(opts.continueMessage && aiMsg.content.trim()){
+    carried = aiMsg.content; contPairAt = history.length;
+    history.push({role:"assistant", content:carried}, {role:"user", content:continuationPrompt(carried)});
+  }
+  aiMsg.streaming = true; let lastStreamSave = Date.now();
   while(true){
   if(currentAbortSignal()?.aborted)break;
   const params=modelParameters(model);
@@ -4266,11 +4395,17 @@ async function sendResponse(text, opts, run){
     if(e.name !== "AbortError"){
       const msg = String(e.message||e);
       // Connection lost: reconnect and continue from the text already received (twice).
-      if(autoContinues < 2 && isInterruption(msg) && !currentAbortSignal()?.aborted){
+      if(autoContinues < RECONNECT_DELAYS.length && isInterruption(msg) && !currentAbortSignal()?.aborted){
+        save(); // keep what arrived even if the app is closed while waiting
+        if(navigator.onLine===false){
+          setStreamNote(`You're offline. Waiting for the connection… ${keptSummary(aiMsg.content)} received so far are kept.`);
+          await waitForOnline(OFFLINE_WAIT_MS);
+          if(currentAbortSignal()?.aborted) break;
+        }
         autoContinues++;
         aiMsg.reconnects = autoContinues;
-        setStreamNote(`Connection lost. Reconnecting and continuing (${autoContinues}/2)…`);
-        await abortableDelay(autoContinues*2000);
+        setStreamNote(`Connection lost. Reconnecting and continuing (${autoContinues}/${RECONNECT_DELAYS.length})…`);
+        await abortableDelay(RECONNECT_DELAYS[autoContinues-1]);
         if(currentAbortSignal()?.aborted) break;
         const partial = aiMsg.content;
         if(partial.trim()){
@@ -4484,8 +4619,11 @@ $("#editScrim").onclick = e=>{ if(e.target.id==="editScrim") $("#editScrim").cla
 function renderAttachments(){
   const box = $("#attachmentInline"); box.innerHTML = "";
   pendingAttachments.forEach((a,i)=>{
-    const chip = el("div","attachment-chip");
-    chip.innerHTML = `<span class="attachment-type">DOC</span><span class="name">${esc(a.name)}</span>`;
+    const chip = el("div","attachment-chip"+(a.pasted?" pasted":""));
+    chip.innerHTML = a.pasted
+      ? `<span class="attachment-type">PASTE</span><span class="name"><span class="paste-line">${esc(String(a.text).trim().split("\n")[0].slice(0,60)||"Pasted text")}</span><small>${esc(attachmentSize(a.text))}</small></span>`
+      : `<span class="attachment-type">${esc(attachmentLabel(a.name))}</span><span class="name">${esc(a.name)}</span>`;
+    chip.title=a.pasted?"Pasted text, sent as an attachment":a.name;
     const x = el("button",null,`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`); x.onclick=()=>{ pendingAttachments.splice(i,1); renderAttachments(); };
     chip.appendChild(x); box.appendChild(chip);
   });
@@ -4522,14 +4660,43 @@ async function extractFileText(file){
   }
   try{ return await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(String(r.result||"")); r.onerror=reject; r.readAsText(file); }); }catch(e){ return "[Could not read this document]"; }
 }
+/* Android's picker now offers every file (it has no MIME type for .md), so the page
+   decides what it can read: PDF, DOCX and anything that is really text. */
+const TEXT_FILE_EXT=/\.(txt|text|md|markdown|mdx|rst|adoc|csv|tsv|json|jsonl|ndjson|geojson|js|mjs|cjs|ts|tsx|jsx|py|ipynb|java|kt|kts|gradle|html?|css|scss|sass|less|xml|svg|yaml|yml|toml|ini|cfg|conf|properties|env|log|sql|sh|bash|zsh|ps1|bat|c|h|cpp|hpp|cc|cs|go|rs|rb|php|swift|dart|vue|svelte|astro|r|lua|pl|tex|bib|srt|vtt|diff|patch|graphql|gql|proto|dockerfile|makefile|gitignore)$/i;
+function attachableKind(file){
+  const name=String(file.name||""), type=String(file.type||"");
+  if(/\.(pdf|docx)$/i.test(name))return "doc";
+  if(/\.(png|jpe?g|gif|webp|bmp|heic|heif|avif)$/i.test(name)||/^image\/(?!svg)/.test(type))return "image";
+  if(TEXT_FILE_EXT.test(name)||/^text\//.test(type)||/json|xml|javascript|markdown|x-sh|sql|yaml|toml/.test(type))return "text";
+  if(!/\.[^./\\]{1,12}$/.test(name))return "text"; // no extension (README, LICENSE): check the bytes
+  return "";
+}
+function looksBinary(text){
+  const head=String(text||"").slice(0,8000);
+  if(head.includes("\u0000"))return true;
+  const bad=(head.match(/\uFFFD/g)||[]).length;
+  return head.length>200 && bad/head.length>0.02;
+}
+function attachmentLabel(name){
+  const m=String(name||"").match(/\.([a-z0-9]{1,5})$/i);
+  return m?m[1].toUpperCase():"DOC";
+}
+function attachmentSize(text){
+  const t=String(text||""), lines=t.split("\n").length;
+  return lines>1?`${lines.toLocaleString()} lines`:`${t.length.toLocaleString()} chars`;
+}
 async function handleFiles(files){
   for(const file of Array.from(files||[]).slice(0,8)){
     try{
-      if(file.type.startsWith("image/")||/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name)){toast("Image attachments are not supported");continue;}
+      const kind=attachableKind(file);
+      if(kind==="image"){toast("Image attachments are not supported");continue;}
+      if(!kind){toast("Can't read "+file.name+". Attach PDF, DOCX, Markdown, text or code files.");continue;}
       if(file.size>20*1024*1024){toast('File too large: '+file.name+' (maximum 20 MB)');continue;}
       toast('Reading '+file.name+'…');
-      const attachment={name:file.name,type:file.type||"text/plain",text:await extractFileText(file)};
+      const attachment={name:file.name,type:(file.type&&file.type!=="application/octet-stream")?file.type:(/\.(md|markdown|mdx)$/i.test(file.name)?"text/markdown":"text/plain"),text:await extractFileText(file)};
       if(/^\[(?:PDF text extraction failed|DOCX text extraction failed|Could not read)/.test(attachment.text)){toast(attachment.text);continue;}
+      if(kind==="text"&&looksBinary(attachment.text)){toast(file.name+" is not a text file");continue;}
+      if(!attachment.text.trim()){toast(file.name+" is empty");continue;}
       pendingAttachments.push(attachment);indexProjectDocument(attachment);
     }catch(e){ toast("Could not attach "+file.name); }
   }
@@ -4538,6 +4705,49 @@ async function handleFiles(files){
 
 /* ===================== Composer ===================== */
 const input = $("#promptInput");
+/* Long pastes become an attachment chip (like a document) instead of flooding the
+   message box. Some Android keyboards insert only part of a long clipboard item and
+   send no paste event, so a large single insertion is caught too, and the full text
+   is taken from the native clipboard when it is longer than what was inserted. */
+const PASTE_ATTACH_CHARS=2000, PASTE_ATTACH_LINES=40;
+let composerBefore=null, pasteSeq=0;
+function isLongPaste(t){ t=String(t||""); return t.length>=PASTE_ATTACH_CHARS || t.split("\n").length>=PASTE_ATTACH_LINES; }
+function fullClipboardText(inserted){
+  try{
+    const native=window.NazClipboard&&typeof NazClipboard.text==="function"?String(NazClipboard.text()||""):"";
+    const probe=inserted.trim().slice(0,200);
+    if(native.length>inserted.length && probe && native.includes(probe))return native;
+  }catch(e){}
+  return inserted;
+}
+function attachPastedText(text){
+  text=String(text||"").replace(/\r\n/g,"\n");
+  if(!text.trim())return;
+  pasteSeq++;
+  pendingAttachments.push({name:pasteSeq>1?`Pasted text ${pasteSeq}.txt`:"Pasted text.txt",type:"text/plain",text,pasted:true});
+  renderAttachments();
+  toast(`Long paste added as an attachment (${attachmentSize(text)})`);
+}
+input.addEventListener("paste", e=>{
+  const t=e.clipboardData?.getData("text/plain")||"";
+  if(!isLongPaste(t))return;
+  e.preventDefault();
+  attachPastedText(fullClipboardText(t));
+  composerBefore=null;
+});
+input.addEventListener("beforeinput", ()=>{ composerBefore=input.value; });
+input.addEventListener("input", ()=>{
+  const prev=composerBefore, cur=input.value; composerBefore=null;
+  if(prev!==null && cur.length-prev.length>=PASTE_ATTACH_CHARS/2){
+    let a=0; while(a<prev.length&&prev[a]===cur[a])a++;
+    let b=0; while(b<prev.length-a&&prev[prev.length-1-b]===cur[cur.length-1-b])b++;
+    const inserted=cur.slice(a,cur.length-b);
+    if(isLongPaste(inserted)){
+      input.value=prev; try{input.setSelectionRange(a,a);}catch(e){}
+      attachPastedText(fullClipboardText(inserted));
+    }
+  }
+});
 input.addEventListener("input", ()=>{ input.style.height="auto"; input.style.height = Math.min(input.scrollHeight, window.innerHeight*0.4)+"px"; syncComposerSteer(); });
 input.addEventListener("keydown", e=>{ if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); doSend(); } });
 /* Providers cannot inject into an open stream. Keep one replaceable handoff,
@@ -4547,7 +4757,7 @@ function steerPending(){
   if(!t || (!activeRun?.message && !steerHandoff))return false;
   const run=steerHandoff?.run||activeRun;
   if(conv!==run.conversation){toast("Return to the running conversation to steer it");return false;}
-  const attachments=pendingAttachments.map(a=>({name:a.name,type:a.type,text:a.text}));
+  const attachments=pendingAttachments.map(a=>({name:a.name,type:a.type,text:a.text,...(a.pasted?{pasted:true}:{})}));
   if(steerHandoff){
     // Newest steer replaces the pending instruction, never a queue of requests.
     steerHandoff.message.content=t;steerHandoff.message.attachments=attachments;

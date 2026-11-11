@@ -57,10 +57,10 @@ const seed=(model='m')=>({schemaVersion:3,onboardingDone:true,thinking:false,sea
  await scenario('when reconnecting fails, the text is kept with Continue and Try again',seed(),async page=>{
    const reqs=[];
    await page.route(API,r=>{reqs.push(1);r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:sse([delta(reqs.length===1?'Kept text':'')])});});
-   await page.evaluate(()=>{window.__realDelay=abortableDelay;});
+   await page.evaluate(()=>{window.__realDelay=abortableDelay;RECONNECT_DELAYS=[10,10,10,10];});
    await ask(page,'tell me');
    const last=await page.evaluate(()=>({content:conv.messages.at(-1).content,failed:conv.messages.at(-1).failed,interrupted:conv.messages.at(-1).interrupted}));
-   assert.equal(reqs.length,3,'two automatic reconnects');
+   assert.equal(reqs.length,5,'four automatic reconnects');
    assert.match(last.content,/^Kept text/);assert.equal(last.failed,true);assert.equal(last.interrupted,true);
    const bar=page.locator('.msg.assistant').last().locator('.action-bar');
    assert(await bar.getByRole('button',{name:'Continue',exact:true}).isVisible());
@@ -68,10 +68,17 @@ const seed=(model='m')=>({schemaVersion:3,onboardingDone:true,thinking:false,sea
    // The error note is shown to the reader but never sent back to the model.
    await page.unroute(API);const next=[];
    await page.route(API,r=>{next.push(JSON.parse(r.request().postData()));r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:sse([delta('rest'),stop])+'data: [DONE]\n\n'});});
+   const before=await page.evaluate(()=>conv.messages.length);
    await bar.getByRole('button',{name:'Continue',exact:true}).click();
    await page.waitForFunction(()=>!generating);
    const prev=next[0].messages.find(m=>m.role==='assistant');
    assert.equal(prev.content,'Kept text');assert(!/Error/.test(prev.content));
+   // 4.8.2: Continue finishes the same answer instead of adding a new reply.
+   assert.match(next[0].messages.at(-1).content,/cut off by a connection problem/);
+   assert.equal(next[0].messages.filter(m=>m.role==='user'&&m.content==='tell me').length,1,'question is not sent twice');
+   const after=await page.evaluate(()=>({n:conv.messages.length,last:conv.messages.at(-1)}));
+   assert.equal(after.n,before);assert.equal(after.last.content,'Kept textrest');
+   assert.equal(after.last.failed,undefined);assert.equal(after.last.interrupted,undefined);assert.equal(after.last.streaming,undefined);
  });
 
  await scenario('a failed update check is retried on the next opportunity',seed(),async page=>{
