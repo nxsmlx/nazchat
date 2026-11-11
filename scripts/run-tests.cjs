@@ -27,6 +27,7 @@ const files = [
   ['node', '--test', 'tests/native-store.test.cjs'],
   ['node', '--test', 'tests/native-dns.test.cjs'],
   ['node', '--test', 'tests/native-scan.test.cjs'],
+  ['node', '--test', 'tests/native-sni.test.cjs'],
 ];
 
 const args = process.argv.slice(2);

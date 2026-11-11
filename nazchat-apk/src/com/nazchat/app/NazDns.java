@@ -9,18 +9,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SNIHostName;
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 
 /**
  * DNS-over-HTTPS for every native request (models, MCP, search, integrations, updates).
@@ -107,34 +100,10 @@ public final class NazDns {
         try { target = new URL(NazDnsCore.rewrite(u.toString(), ips.get(0))); }
         catch (Exception e) { return (HttpURLConnection) u.openConnection(); }
         HttpsURLConnection c = (HttpsURLConnection) target.openConnection();
-        c.setSSLSocketFactory(new SniFactory(host));
-        c.setHostnameVerifier(new HostnameVerifier() {
-            public boolean verify(String ignored, SSLSession session) {
-                return HttpsURLConnection.getDefaultHostnameVerifier().verify(host, session);
-            }
-        });
+        c.setSSLSocketFactory(new NazSni.Factory(host));
+        c.setHostnameVerifier(NazSni.verifier(host, HttpsURLConnection.getDefaultHostnameVerifier()));
         c.setRequestProperty("Host", NazDnsCore.hostHeader(u));
         return c;
     }
 
-    /** TLS to an address, presenting and verifying the original host name. */
-    static final class SniFactory extends SSLSocketFactory {
-        private final SSLSocketFactory base = HttpsURLConnection.getDefaultSSLSocketFactory();
-        private final String host;
-        SniFactory(String host) { this.host = host; }
-        private Socket sni(Socket s) {
-            if (s instanceof SSLSocket) {
-                try { SSLParameters p = ((SSLSocket) s).getSSLParameters(); p.setServerNames(Collections.singletonList(new SNIHostName(host))); ((SSLSocket) s).setSSLParameters(p); }
-                catch (Exception ignored) {}
-            }
-            return s;
-        }
-        @Override public String[] getDefaultCipherSuites() { return base.getDefaultCipherSuites(); }
-        @Override public String[] getSupportedCipherSuites() { return base.getSupportedCipherSuites(); }
-        @Override public Socket createSocket(Socket s, String h, int port, boolean autoClose) throws IOException { return sni(base.createSocket(s, host, port, autoClose)); }
-        @Override public Socket createSocket(String h, int port) throws IOException { return sni(base.createSocket(h, port)); }
-        @Override public Socket createSocket(String h, int port, InetAddress local, int localPort) throws IOException { return sni(base.createSocket(h, port, local, localPort)); }
-        @Override public Socket createSocket(InetAddress a, int port) throws IOException { return sni(base.createSocket(a, port)); }
-        @Override public Socket createSocket(InetAddress a, int port, InetAddress local, int localPort) throws IOException { return sni(base.createSocket(a, port, local, localPort)); }
-    }
 }

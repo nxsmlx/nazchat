@@ -43,6 +43,12 @@ assert.equal(await key.inputValue(),'sk-test-123');
 await url.fill('https://other.example.my/v1');await test.click();
 await page.waitForFunction(()=>/HTTP 401/.test(document.querySelector('#provForm .status-line')?.textContent||''));
 assert.match(await status.innerText(),/HTTP 401: Invalid API key \(check the API key\)/);
+// 5. A TLS failure while DNS-over-HTTPS is on points to the Web & DNS setting.
+await page.evaluate(()=>{window.NazDns={getMode:()=>'cloudflare'};const f=NazBridge.fetchSecret;NazBridge.fetchSecret=(...a)=>{const id=f(...a);return id;};});
+await page.evaluate(()=>{const orig=NazBridge.fetchSecret;NazBridge.fetchSecret=(url,m,h,b,ref)=>{const id=9000+Math.floor(Math.random()*1000);setTimeout(()=>nazFetchDone(id,0,'Network error: Read error: ssl=0x1: Failure in SSL library, usually a protocol error TLSV1_ALERT_INTERNAL_ERROR'),5);return id;};});
+await url.fill('https://ai.example.my/v1');await test.click();
+await page.waitForFunction(()=>/TLSV1_ALERT/.test(document.querySelector('#provForm .status-line')?.textContent||''));
+assert.match(await status.innerText(),/DNS-over-HTTPS is on: if other sites fail too, set Settings → Web & DNS to System/);
 // The key never lands in saved app data.
 assert.doesNotMatch(await page.evaluate(()=>localStorage.getItem('nazchat_v1')),/sk-test-123/);
 console.log('PASS provider test connection: real failure reason, re-test after fixing the URL rebinds the key, key not stored in app data');
