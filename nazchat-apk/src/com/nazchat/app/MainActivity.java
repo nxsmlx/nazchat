@@ -78,6 +78,7 @@ public class MainActivity extends Activity {
         // Durable state copy: survives a process kill that loses uncommitted localStorage.
         web.addJavascriptInterface(new NazStore(this), "NazStore");
         web.addJavascriptInterface(new NazShare(this), "NazShare");
+        web.addJavascriptInterface(new NazClipboard(this), "NazClipboard");
         files = new NazFiles(this);
         web.addJavascriptInterface(files, "NazFiles");
         web.addJavascriptInterface(new NazCodeCheck(this), "NazCodeCheck");
@@ -125,8 +126,16 @@ public class MainActivity extends Activity {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
                 try {
-                    Intent intent = params.createIntent();
-                    startActivityForResult(intent, FILE_PICKER);
+                    // params.createIntent() keeps only the first accept type (for
+                    // ".pdf,.txt,.md,..." that is PDF), and Android has no MIME type
+                    // for .md, so Markdown files were greyed out. Offer every file and
+                    // let the page check what it can read.
+                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("*/*");
+                    if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE)
+                        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    startActivityForResult(Intent.createChooser(intent, "Choose a file"), FILE_PICKER);
                     return true;
                 } catch (Exception e) {
                     fileCallback = null;

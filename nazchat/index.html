@@ -911,7 +911,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
         <div class="attachment-inline" id="attachmentInline"></div>
         <div id="inputRow">
           <button id="attachBtn" aria-label="Attach documents" title="Attach document or code"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
-          <input id="fileInput" type="file" multiple accept=".pdf,.txt,.md,.markdown,.csv,.json,.js,.ts,.tsx,.jsx,.py,.java,.kt,.html,.css,.xml,.docx">
+          <input id="fileInput" type="file" multiple accept=".pdf,.docx,.txt,.md,.markdown,.mdx,.csv,.tsv,.json,.yaml,.yml,.toml,.xml,.html,.htm,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.java,.kt,.go,.rs,.rb,.php,.swift,.dart,.c,.cpp,.h,.cs,.sql,.sh,.log,text/*,text/markdown,application/json">
           <textarea id="promptInput" rows="1" placeholder="What’s on your mind?" aria-label="Message Kita"></textarea>
           <button id="steerBtn" type="button" aria-label="Steer response with this message" hidden>Steer</button>
           <button id="sendBtn" aria-label="Send message">
@@ -1507,8 +1507,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.8.1";
-const APP_VERSION_CODE = 54;
+const APP_VERSION = "4.8.2";
+const APP_VERSION_CODE = 55;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -1887,7 +1887,7 @@ function msgEl(msg){
       const files = el("div","user-files");
       msg.attachments.forEach(a=>{
         const f = el("div","user-file");
-        f.innerHTML = `<span>Document · ${esc(a.name)}</span>`;
+        f.innerHTML = a.pasted ? `<span>Pasted text · ${esc(attachmentSize(a.text))}</span>` : `<span>Document · ${esc(a.name)}</span>`;
         files.appendChild(f);
       });
       bubble.appendChild(files);
@@ -3894,7 +3894,7 @@ async function sendResponse(text, opts, run){
 
   const attachments = opts.attachments || [];
   const steerMode = !!opts.steer;
-  const userMsg = { id:uid(), role:"user", content:text, attachments:attachments.map(a=>({name:a.name,type:a.type,text:a.text})), timestamp:Date.now() };
+  const userMsg = { id:uid(), role:"user", content:text, attachments:attachments.map(a=>({name:a.name,type:a.type,text:a.text,...(a.pasted?{pasted:true}:{})})), timestamp:Date.now() };
   if(!opts.editing && !steerMode && !opts.resumeMessage) conv_.messages.push(userMsg);
   if(!opts.skipTitle && conv_.title==="New chat"){ conv_.title = text.slice(0,42) + (text.length>42?"…":""); }
   conv_.updatedAt = Date.now(); save();
@@ -4484,8 +4484,11 @@ $("#editScrim").onclick = e=>{ if(e.target.id==="editScrim") $("#editScrim").cla
 function renderAttachments(){
   const box = $("#attachmentInline"); box.innerHTML = "";
   pendingAttachments.forEach((a,i)=>{
-    const chip = el("div","attachment-chip");
-    chip.innerHTML = `<span class="attachment-type">DOC</span><span class="name">${esc(a.name)}</span>`;
+    const chip = el("div","attachment-chip"+(a.pasted?" pasted":""));
+    chip.innerHTML = a.pasted
+      ? `<span class="attachment-type">PASTE</span><span class="name"><span class="paste-line">${esc(String(a.text).trim().split("\n")[0].slice(0,60)||"Pasted text")}</span><small>${esc(attachmentSize(a.text))}</small></span>`
+      : `<span class="attachment-type">${esc(attachmentLabel(a.name))}</span><span class="name">${esc(a.name)}</span>`;
+    chip.title=a.pasted?"Pasted text, sent as an attachment":a.name;
     const x = el("button",null,`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`); x.onclick=()=>{ pendingAttachments.splice(i,1); renderAttachments(); };
     chip.appendChild(x); box.appendChild(chip);
   });
@@ -4522,14 +4525,43 @@ async function extractFileText(file){
   }
   try{ return await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(String(r.result||"")); r.onerror=reject; r.readAsText(file); }); }catch(e){ return "[Could not read this document]"; }
 }
+/* Android's picker now offers every file (it has no MIME type for .md), so the page
+   decides what it can read: PDF, DOCX and anything that is really text. */
+const TEXT_FILE_EXT=/\.(txt|text|md|markdown|mdx|rst|adoc|csv|tsv|json|jsonl|ndjson|geojson|js|mjs|cjs|ts|tsx|jsx|py|ipynb|java|kt|kts|gradle|html?|css|scss|sass|less|xml|svg|yaml|yml|toml|ini|cfg|conf|properties|env|log|sql|sh|bash|zsh|ps1|bat|c|h|cpp|hpp|cc|cs|go|rs|rb|php|swift|dart|vue|svelte|astro|r|lua|pl|tex|bib|srt|vtt|diff|patch|graphql|gql|proto|dockerfile|makefile|gitignore)$/i;
+function attachableKind(file){
+  const name=String(file.name||""), type=String(file.type||"");
+  if(/\.(pdf|docx)$/i.test(name))return "doc";
+  if(/\.(png|jpe?g|gif|webp|bmp|heic|heif|avif)$/i.test(name)||/^image\/(?!svg)/.test(type))return "image";
+  if(TEXT_FILE_EXT.test(name)||/^text\//.test(type)||/json|xml|javascript|markdown|x-sh|sql|yaml|toml/.test(type))return "text";
+  if(!/\.[^./\\]{1,12}$/.test(name))return "text"; // no extension (README, LICENSE): check the bytes
+  return "";
+}
+function looksBinary(text){
+  const head=String(text||"").slice(0,8000);
+  if(head.includes("\u0000"))return true;
+  const bad=(head.match(/\uFFFD/g)||[]).length;
+  return head.length>200 && bad/head.length>0.02;
+}
+function attachmentLabel(name){
+  const m=String(name||"").match(/\.([a-z0-9]{1,5})$/i);
+  return m?m[1].toUpperCase():"DOC";
+}
+function attachmentSize(text){
+  const t=String(text||""), lines=t.split("\n").length;
+  return lines>1?`${lines.toLocaleString()} lines`:`${t.length.toLocaleString()} chars`;
+}
 async function handleFiles(files){
   for(const file of Array.from(files||[]).slice(0,8)){
     try{
-      if(file.type.startsWith("image/")||/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name)){toast("Image attachments are not supported");continue;}
+      const kind=attachableKind(file);
+      if(kind==="image"){toast("Image attachments are not supported");continue;}
+      if(!kind){toast("Can't read "+file.name+". Attach PDF, DOCX, Markdown, text or code files.");continue;}
       if(file.size>20*1024*1024){toast('File too large: '+file.name+' (maximum 20 MB)');continue;}
       toast('Reading '+file.name+'…');
-      const attachment={name:file.name,type:file.type||"text/plain",text:await extractFileText(file)};
+      const attachment={name:file.name,type:(file.type&&file.type!=="application/octet-stream")?file.type:(/\.(md|markdown|mdx)$/i.test(file.name)?"text/markdown":"text/plain"),text:await extractFileText(file)};
       if(/^\[(?:PDF text extraction failed|DOCX text extraction failed|Could not read)/.test(attachment.text)){toast(attachment.text);continue;}
+      if(kind==="text"&&looksBinary(attachment.text)){toast(file.name+" is not a text file");continue;}
+      if(!attachment.text.trim()){toast(file.name+" is empty");continue;}
       pendingAttachments.push(attachment);indexProjectDocument(attachment);
     }catch(e){ toast("Could not attach "+file.name); }
   }
@@ -4538,6 +4570,49 @@ async function handleFiles(files){
 
 /* ===================== Composer ===================== */
 const input = $("#promptInput");
+/* Long pastes become an attachment chip (like a document) instead of flooding the
+   message box. Some Android keyboards insert only part of a long clipboard item and
+   send no paste event, so a large single insertion is caught too, and the full text
+   is taken from the native clipboard when it is longer than what was inserted. */
+const PASTE_ATTACH_CHARS=2000, PASTE_ATTACH_LINES=40;
+let composerBefore=null, pasteSeq=0;
+function isLongPaste(t){ t=String(t||""); return t.length>=PASTE_ATTACH_CHARS || t.split("\n").length>=PASTE_ATTACH_LINES; }
+function fullClipboardText(inserted){
+  try{
+    const native=window.NazClipboard&&typeof NazClipboard.text==="function"?String(NazClipboard.text()||""):"";
+    const probe=inserted.trim().slice(0,200);
+    if(native.length>inserted.length && probe && native.includes(probe))return native;
+  }catch(e){}
+  return inserted;
+}
+function attachPastedText(text){
+  text=String(text||"").replace(/\r\n/g,"\n");
+  if(!text.trim())return;
+  pasteSeq++;
+  pendingAttachments.push({name:pasteSeq>1?`Pasted text ${pasteSeq}.txt`:"Pasted text.txt",type:"text/plain",text,pasted:true});
+  renderAttachments();
+  toast(`Long paste added as an attachment (${attachmentSize(text)})`);
+}
+input.addEventListener("paste", e=>{
+  const t=e.clipboardData?.getData("text/plain")||"";
+  if(!isLongPaste(t))return;
+  e.preventDefault();
+  attachPastedText(fullClipboardText(t));
+  composerBefore=null;
+});
+input.addEventListener("beforeinput", ()=>{ composerBefore=input.value; });
+input.addEventListener("input", ()=>{
+  const prev=composerBefore, cur=input.value; composerBefore=null;
+  if(prev!==null && cur.length-prev.length>=PASTE_ATTACH_CHARS/2){
+    let a=0; while(a<prev.length&&prev[a]===cur[a])a++;
+    let b=0; while(b<prev.length-a&&prev[prev.length-1-b]===cur[cur.length-1-b])b++;
+    const inserted=cur.slice(a,cur.length-b);
+    if(isLongPaste(inserted)){
+      input.value=prev; try{input.setSelectionRange(a,a);}catch(e){}
+      attachPastedText(fullClipboardText(inserted));
+    }
+  }
+});
 input.addEventListener("input", ()=>{ input.style.height="auto"; input.style.height = Math.min(input.scrollHeight, window.innerHeight*0.4)+"px"; syncComposerSteer(); });
 input.addEventListener("keydown", e=>{ if(e.key==="Enter" && (e.ctrlKey||e.metaKey)){ e.preventDefault(); doSend(); } });
 /* Providers cannot inject into an open stream. Keep one replaceable handoff,
@@ -4547,7 +4622,7 @@ function steerPending(){
   if(!t || (!activeRun?.message && !steerHandoff))return false;
   const run=steerHandoff?.run||activeRun;
   if(conv!==run.conversation){toast("Return to the running conversation to steer it");return false;}
-  const attachments=pendingAttachments.map(a=>({name:a.name,type:a.type,text:a.text}));
+  const attachments=pendingAttachments.map(a=>({name:a.name,type:a.type,text:a.text,...(a.pasted?{pasted:true}:{})}));
   if(steerHandoff){
     // Newest steer replaces the pending instruction, never a queue of requests.
     steerHandoff.message.content=t;steerHandoff.message.attachments=attachments;

@@ -3658,3 +3658,27 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .activity-log .sr-text small { overflow-wrap: anywhere; }
 .studio-context-chip.warn { border-color: var(--danger); color: var(--danger); background: var(--bg2); }
 .studio-context-chip.warn svg { color: var(--danger); }
+
+/* 4.8.2: long pastes shown as an attachment chip with a one-line preview */
+.attachment-chip.pasted .name {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.25;
+  color: var(--text);
+}
+.attachment-chip.pasted .name small {
+  color: var(--text3, var(--text2));
+  font-size: 11px;
+}
+.attachment-chip .attachment-type {
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.attachment-chip.pasted { max-width: min(205px, 100%); }
+.attachment-chip.pasted .name { overflow: hidden; flex: 1 1 auto; }
+.attachment-chip.pasted .paste-line {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
