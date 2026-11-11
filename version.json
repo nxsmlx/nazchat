@@ -2,8 +2,8 @@
   "version": "4.8.2",
   "versionCode": 55,
   "name": "Kita Chat",
-  "changelog": "Markdown files can be attached again, and long pastes become an attachment instead of filling the message box.",
+  "changelog": "Markdown files attach again, long pastes become attachments, pages show as artifact cards, and long answers survive the internet dropping or the app closing.",
   "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.8.2/NazChat.apk",
-  "sha256": "d91c7a266ae3ba2b2cccaacec21a8edf4d54691f59e45fa92a0712da915f773b",
+  "sha256": "c49bc457233500a5c42aaa46493391d540b567cf8cc648dbfa8d8cf6daadc28a",
   "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.8.2"
 }
