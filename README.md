@@ -6,6 +6,11 @@ Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
 - A long paste (2,000+ characters or 40+ lines) becomes an attachment chip with a one-line preview and its line count, instead of filling the message box. The full text is sent to the model as a document, and the sent message shows "Pasted text · N lines". Short pastes still go into the box as before.
 - Some Android keyboards insert only part of a very long clipboard item and send no paste event. Kita now catches that large insertion too and, when the clipboard holds more than the keyboard inserted, attaches the full clipboard text.
 - Whole web pages and long code (over 30 lines) now show as an artifact card instead of a wall of code: the page title (or file name), the kind and line count, and the automatic page test result (✓ tested or N errors). Open shows the page full screen, Code reveals the full code viewer, and ⋯ has Copy and Download. A set of files that includes a page is one card with the file tabs inside. Short snippets stay inline as before.
+- Long answers survive the internet going down:
+  - When the phone goes offline mid-answer, the open stream is ended at once (Android could otherwise wait up to 3 minutes on a silent connection), what arrived is saved, and Kita waits up to 5 minutes for the connection to come back without using up a retry. Then it reconnects and continues from the last character received.
+  - Up to 4 automatic reconnects (2, 4, 8 and 15 seconds apart) instead of 2. A stream that goes silent for 2 minutes after text started is also treated as a dropped connection.
+  - Continue (after a failed reconnect or the output limit) now finishes the same answer instead of adding a new reply, so a long page stays one artifact.
+  - The partial answer is saved every few seconds while it streams. If the app is closed or killed mid-answer, the text is kept with a note and Continue picks it up.
 - VersionCode 55, same com.nazchat.app package and original signing identity. Not tested on a real device.
 
 # Kita Chat 4.8.1
