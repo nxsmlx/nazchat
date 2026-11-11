@@ -1,7 +1,10 @@
 name: Tests
 
+# Runs once per change: on pull requests, and on main after a merge. Pushing a feature
+# branch alone does not start a second, identical run.
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 

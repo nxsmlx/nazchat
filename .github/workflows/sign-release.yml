@@ -37,26 +37,49 @@ jobs:
   test:
     if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     permissions:
       contents: read
+      actions: read
     steps:
+      # The Tests workflow already runs on every push to main. Reuse its result for this
+      # exact commit (waiting for it if it is still running) instead of testing twice.
+      - name: Reuse the Tests run for this commit
+        id: prior
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          green=false
+          for i in $(seq 1 60); do
+            runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/test.yml/runs?head_sha=$GITHUB_SHA&per_page=20" --jq '[.workflow_runs[] | {status, conclusion}]' || echo '[]')
+            if echo "$runs" | jq -e 'any(.[]; .conclusion == "success")' >/dev/null; then green=true; break; fi
+            if echo "$runs" | jq -e 'any(.[]; .status != "completed")' >/dev/null; then echo "Waiting for the Tests run on $GITHUB_SHA…"; sleep 20; continue; fi
+            break
+          done
+          echo "green=$green" >> "$GITHUB_OUTPUT"
+          if [ "$green" = true ]; then echo "Tests already passed for $GITHUB_SHA; not running them again."; else echo "No green Tests run for $GITHUB_SHA; running the suite here."; fi
       - uses: actions/checkout@v4
+        if: steps.prior.outputs.green != 'true'
         with:
           persist-credentials: false
       - uses: actions/setup-node@v4
+        if: steps.prior.outputs.green != 'true'
         with:
           node-version: '20'
           cache: npm
       - uses: actions/setup-java@v4
+        if: steps.prior.outputs.green != 'true'
         with:
           distribution: temurin
           java-version: '17'
       - name: Install test dependencies and Chromium
+        if: steps.prior.outputs.green != 'true'
         run: |
           npm ci
           npx playwright-core install --with-deps chromium
       - name: Test suite
+        if: steps.prior.outputs.green != 'true'
         run: npm test
 
   release:
