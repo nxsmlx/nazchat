@@ -1519,8 +1519,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.16.1";
-const APP_VERSION_CODE = 67;
+const APP_VERSION = "4.17.0";
+const APP_VERSION_CODE = 68;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -3788,13 +3788,16 @@ const KITA_TOOLS = [
   {type:"function", function:{name:"web_search", description:"Search the public web for current facts, docs, prices or news. Returns titles, URLs and snippets.", parameters:{type:"object",properties:{query:{type:"string",description:"Search query"}},required:["query"]}}},
   {type:"function", function:{name:"fetch_url", description:"Download one public web page or API endpoint and return its text, so you can read real documentation or source.", parameters:{type:"object",properties:{url:{type:"string",description:"Absolute http(s) URL"}},required:["url"]}}},
   {type:"function", function:{name:"network_scan", description:"With the user's permission, scan only this phone's private Wi-Fi subnet for devices and open ports. Never use for public networks or addresses.", parameters:{type:"object",properties:{}}}},
-  {type:"function", function:{name:"network_ports", description:"With the user's permission, check common ports on one device already found on this phone's private Wi-Fi. Not for public IP addresses.", parameters:{type:"object",properties:{ip:{type:"string",description:"Private IPv4 address from a network_scan result"},profile:{type:"string",enum:["quick","top"],description:"quick checks 35 common ports; top checks about 1100"}},required:["ip"]}}},
+  {type:"function", function:{name:"network_ports", description:"With the user's permission, check TCP ports on one device on this phone's private Wi-Fi, with service banners and versions. Not for public IP addresses.", parameters:{type:"object",properties:{ip:{type:"string",description:"Private IPv4 address from a network_scan result"},profile:{type:"string",enum:["quick","top","custom"],description:"quick checks 35 common ports; top checks about 1100; custom checks the ports list"},ports:{type:"string",description:"Only with profile custom: up to 1200 ports, like 22,80,8000-8100"}},required:["ip"]}}},
+  {type:"function", function:{name:"network_udp", description:"With the user's permission, check UDP services (DNS, NTP, NetBIOS name) on one device on this phone's private Wi-Fi.", parameters:{type:"object",properties:{ip:{type:"string",description:"Private IPv4 address on this Wi-Fi"}},required:["ip"]}}},
+  {type:"function", function:{name:"network_discover", description:"With the user's permission, list devices on this Wi-Fi that announce services (mDNS/Bonjour and SSDP/UPnP: printers, TVs, cameras, speakers).", parameters:{type:"object",properties:{}}}},
+  {type:"function", function:{name:"website_test", description:"Security test of a website: cookies, CORS, mixed content, insecure forms and version leaks on any site. On a domain the user verified in Tools → Network it also looks for exposed .git, .env, backups and admin pages and crawls up to 10 pages. No exploitation.", parameters:{type:"object",properties:{domain:{type:"string",description:"Domain, for example example.com"}},required:["domain"]}}},
   {type:"function", function:{name:"website_audit", description:"Audit a public website's TLS certificate, HTTPS redirect, security headers and DNS records. Read-only; no exploitation.", parameters:{type:"object",properties:{domain:{type:"string",description:"Public domain, for example example.com"}},required:["domain"]}}}
 ];
 function networkToolLabel(name,args){
-  return name==='network_scan'?'Scan Wi-Fi devices':name==='network_ports'?'Check ports: '+(args.ip||''):name==='website_audit'?'Audit website: '+(args.domain||''):'';
+  return name==='network_scan'?'Scan Wi-Fi devices':name==='network_ports'?'Check ports: '+(args.ip||''):name==='network_udp'?'UDP check: '+(args.ip||''):name==='network_discover'?'Find announced services':name==='website_audit'?'Audit website: '+(args.domain||''):name==='website_test'?'Test website: '+(args.domain||''):'';
 }
-function isNetworkTool(name){return name==='network_scan'||name==='network_ports'||name==='website_audit';}
+function isNetworkTool(name){return ['network_scan','network_ports','network_udp','network_discover','website_audit','website_test'].includes(name);}
 /* ===================== MCP servers (Streamable HTTPS + OAuth) ===================== */
 const mcpWaiters=new Map();
 window.nazMcpDone=(id,payload)=>{const fn=mcpWaiters.get(id);if(fn)fn(payload);};
@@ -3981,7 +3984,13 @@ async function runKitaTool(name,args){
     }catch(e){ return {error:String(e.message||e)}; }
   }
   if(name==='network_scan')return await networkScanTool();
-  if(name==='network_ports')return await networkPortsTool(args.ip,args.profile);
+  if(name==='network_ports')return await networkPortsTool(args.ip,args.profile,args.ports);
+  if(name==='network_udp')return await networkUdpTool(args.ip);
+  if(name==='network_discover')return await networkDiscoverTool();
+  if(name==='website_test'){
+    try{return await websiteTestTool(String(args.domain||''));}
+    catch(e){return {error:String(e.message||e)};}
+  }
   if(name==='website_audit'){
     try{return await auditSite(String(args.domain||''));}
     catch(e){return {error:String(e.message||e)};}
@@ -4676,7 +4685,7 @@ async function sendResponse(text, opts, run){
     for(const c of calls){
       if(currentAbortSignal()?.aborted)break;
       let args = {}; try{ args = c.args?JSON.parse(c.args):{}; }catch(e){ args = {}; }
-      if(c.name==='website_audit'&&!await confirmWebsiteAudit(args.domain)){
+      if((c.name==='website_audit'||c.name==='website_test')&&!await confirmWebsiteAudit(args.domain)){
         results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined auditing this website.'}});continue;
       }
       if(c.name.startsWith('network_')&&!await confirmNetworkUse()){

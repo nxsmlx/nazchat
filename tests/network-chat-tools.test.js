@@ -9,7 +9,12 @@ const nativeMock=`(()=>{let n=0;window.__scan=[];
  window.NazNetScan={info:()=>JSON.stringify({type:'wifi',ip:'192.168.1.23',prefix:24,gateway:'192.168.1.1',dns:['192.168.1.1'],scannable:true}),
   cancel:id=>__scan.push(['cancel',id]),
   sweep:()=>{const id=++n;__scan.push(['sweep']);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'host',ip:'192.168.1.1',name:'router.lan',open:[80,53]})),5);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'host',ip:'192.168.1.40',name:'',open:[554,23]})),10);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'done',total:253})),15);return id;},
-  ports:(ip,spec)=>{const id=++n;__scan.push(['ports',ip,spec]);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'port',ip,port:23,banner:'BusyBox telnetd'})),5);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'port',ip,port:80,banner:'IPCam'})),10);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'done'})),15);return id;},
+  ports:(ip,spec)=>{if(/^[\d,-]+$/.test(spec)&&spec.split(',').length>1200)return -1;const id=++n;__scan.push(['ports',ip,spec]);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'port',ip,port:23,banner:'BusyBox telnetd'})),5);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'port',ip,port:80,banner:'IPCam'})),10);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'done'})),15);return id;},
+  udp:ip=>{const id=++n;__scan.push(['udp',ip]);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'udp',ip,port:53,info:'DNS server · answers lookups for any name'})),5);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'done'})),10);return id;},
+  discover:()=>{const id=++n;__scan.push(['discover']);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'service',ip:'192.168.1.50',via:'mdns',names:['_ipp._tcp.local','HP LaserJet']})),5);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'service',ip:'192.168.1.60',via:'ssdp',server:'Linux UPnP/1.0 SmartTV',st:'upnp:rootdevice'})),8);setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'done'})),12);return id;},
+  http:(url,method,origin)=>{const id=++n;__scan.push(['http',url]);const path=new URL(url).pathname;
+   const r=path==='/.git/HEAD'?{status:200,headers:{},body:'ref: refs/heads/main\\n'}:path==='/'?{status:200,headers:{'set-cookie':['sid=1; Path=/'],'server':['nginx/1.18.0']},body:'<html><a href="/about">a</a></html>'}:{status:404,headers:{},body:''};
+   setTimeout(()=>{nazScanEvent(id,JSON.stringify({type:'http',...r}));nazScanEvent(id,JSON.stringify({type:'done'}));},3);return id;},
   tls:h=>JSON.stringify({valid:true,status:200,cipher:'TLS_AES_128_GCM_SHA256',issuer:'CN=R11',notAfter:Date.now()+90*864e5,headers:{'strict-transport-security':'max-age=31536000'},httpRedirect:'https://'+h+'/'})};})()`;
 const enc=x=>'data: '+JSON.stringify(x)+'\n\n';
 const toolCall=(name,args)=>enc({choices:[{delta:{tool_calls:[{index:0,id:'call_1',type:'function',function:{name,arguments:JSON.stringify(args)}}]}}]})+enc({choices:[{delta:{},finish_reason:'tool_calls'}]})+'data: [DONE]\n\n';
@@ -95,10 +100,50 @@ const answer=text=>enc({choices:[{delta:{content:text},finish_reason:'stop'}]})+
  assert.deepEqual(await page.evaluate(()=>conv.siteAllow),['https://other.example.org']);
  console.log('PASS chat website audit asks before an unnamed site; decline and allow-for-chat work');
 
+ // 6. Custom port list, UDP check and service discovery, all under the same permission.
+ await page.evaluate(()=>{net.agreed=true;});
+ nextTool='network_ports';args={ip:'192.168.1.40',profile:'custom',ports:'22, 80, 8000-8100'};
+ await ask('Check ports 22,80,8000-8100 on 192.168.1.40');await done();
+ out=lastTool();assert.equal(out.profile,'custom');assert.equal(out.ports,'22,80,8000-8100');
+ assert.deepEqual(await page.evaluate(()=>__scan.filter(x=>x[0]==='ports').at(-1)),['ports','192.168.1.40','22,80,8000-8100']);
+ nextTool='network_ports';args={ip:'192.168.1.40',profile:'custom',ports:'all of them'};
+ await ask('Check every port');await done();assert.match(lastTool().error,/list ports like 22,80/);
+ nextTool='network_udp';args={ip:'192.168.1.1'};
+ await ask('UDP check the router');await done();
+ out=lastTool();assert.equal(out.udpServices[0].port,53);assert.equal(out.udpServices[0].risk,'medium');
+ nextTool='network_discover';args={};
+ await ask('What devices announce services?');await done();
+ out=lastTool();assert.equal(out.deviceCount,2);
+ assert.deepEqual(out.devices.map(d=>d.ip),['192.168.1.50','192.168.1.60']);
+ assert.match(out.devices[0].services[0],/HP LaserJet/);assert.match(out.devices[1].services[0],/SmartTV/);
+ assert.match(await page.locator('.tool-trace').last().innerText(),/Find announced services/);
+ // Declining covers the new tools too.
+ await page.evaluate(()=>{net.agreed=false;__scan.length=0;});
+ nextTool='network_udp';args={ip:'192.168.1.1'};
+ await ask('UDP check again');await page.waitForSelector('#customDialogScrim.open');
+ await page.click('#customDialogCancel');await done();
+ assert.match(lastTool().error,/declined/);assert.deepEqual(await page.evaluate(()=>__scan),[]);
+ console.log('PASS chat custom ports, UDP check and service discovery ask first and return results');
+
+ // 7. Website test: passive checks on any site; active checks only on a verified domain.
+ nextTool='website_test';args={domain:'kopi.example.com'};
+ await ask('Test kopi.example.com for security problems');await done();
+ out=lastTool();assert.equal(out.verified,false);assert.match(out.note,/verify kopi\.example\.com/);
+ assert(out.checks.some(c=>/Header server/.test(c.label)));
+ assert(!(await page.evaluate(()=>__scan.some(x=>x[0]==='http'&&/\.git/.test(x[1])))),'active check ran on an unverified domain');
+ await page.evaluate(()=>setWebTestState({verified:{'kopi.example.com':'dns'}}));
+ await ask('Test kopi.example.com again');await done();
+ out=lastTool();assert.equal(out.verified,true);
+ assert(out.checks.some(c=>c.label==='/.git/HEAD'&&c.level==='high'));
+ assert(out.checks.some(c=>c.label==='Crawl'));
+ console.log('PASS chat website test: passive on any site, exposed files only on a verified domain');
+
  // 5. Chat tools do not leak into Code mode or into the Network sheet results.
  const defs=await page.evaluate(()=>({chat:kitaTools('chat').map(t=>t.function.name),code:kitaTools('code').map(t=>t.function.name)}));
+ const isNetworkToolName=n=>/^network_|^website_/.test(n);
  assert(defs.chat.includes('network_scan')&&defs.chat.includes('website_audit'));
- assert(!defs.code.includes('network_scan')&&!defs.code.includes('network_ports')&&!defs.code.includes('website_audit'));
+ assert(defs.chat.includes('network_udp')&&defs.chat.includes('network_discover')&&defs.chat.includes('website_test'));
+ assert(!defs.code.some(n=>isNetworkToolName(n)));
  assert.equal(await page.evaluate(()=>net.hosts.size),0,'tool scans polluted the Network sheet');
  // Finished jobs (chat or Network sheet) leave no handler behind.
  assert.equal(await page.evaluate(()=>{scanJobs.set(99,()=>{});nazScanEvent(99,JSON.stringify({type:'done'}));return scanJobs.size;}),0);

@@ -1,6 +1,13 @@
-# Kita Chat 4.16.1
+# Kita Chat 4.17.0
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+- Chat can now run every Network check: custom port lists (like 22,80,8000-8100, up to 1200 ports), UDP check (DNS, NTP, NetBIOS name), finding devices that announce services (printers, TVs, cameras) and the website security test.
+- Website test from Chat runs the passive checks on any site. Exposed files (.git, .env, backups) and the crawl run only on a domain you verified in Tools → Network.
+- All network checks still ask first, stay on your own private Wi-Fi and never scan public addresses. Stop ends a website test right away.
+- VersionCode 68, same com.nazchat.app package and original signing identity.
+
+# Kita Chat 4.16.1
 
 - Website audit from Chat now asks first when the assistant picks a site you did not name, like opening a page. You can audit it once or allow that site for the whole chat; a site you typed yourself, or Bypass all, runs without asking.
 - Finished Network scans no longer leave background listeners behind.
