@@ -56,6 +56,23 @@ public final class NazSecretPolicyTest {
             check(e.getMessage().contains("Re-enter the key"), "refusal tells the user how to move the key");
         }
 
+        // Integration tokens: fixed official API origin per service, nothing else.
+        check(NazSecretPolicy.isIntegrationRef("integration:github"), "github integration ref");
+        check(NazSecretPolicy.isJsRef("integration:supabase"), "supabase reachable from JS");
+        check(!NazSecretPolicy.isIntegrationRef("integration:evil"), "unknown service refused");
+        check(!NazSecretPolicy.isJsRef("integration:"), "empty service refused");
+        check(!NazSecretPolicy.isProviderRef("integration:github"), "integration is not a provider ref");
+        io(() -> NazSecretPolicy.authorizeIntegration("integration:github", "https://api.github.com/user/repos"));
+        io(() -> NazSecretPolicy.authorizeIntegration("integration:vercel", "https://API.vercel.com/v13/deployments?x=1"));
+        io(() -> NazSecretPolicy.authorizeIntegration("integration:cloudflare", "https://api.cloudflare.com/client/v4/accounts"));
+        io(() -> NazSecretPolicy.authorizeIntegration("integration:supabase", "https://api.supabase.com/v1/projects"));
+        refused("github token to another host", io(() -> NazSecretPolicy.authorizeIntegration("integration:github", "https://evil.example/repos")));
+        refused("github token to look-alike", io(() -> NazSecretPolicy.authorizeIntegration("integration:github", "https://api.github.com.evil.example/")));
+        refused("vercel token over http", io(() -> NazSecretPolicy.authorizeIntegration("integration:vercel", "http://api.vercel.com/v13/deployments")));
+        refused("cloudflare token to workers.dev", io(() -> NazSecretPolicy.authorizeIntegration("integration:cloudflare", "https://site.example.workers.dev/")));
+        refused("supabase token to a project URL", io(() -> NazSecretPolicy.authorizeIntegration("integration:supabase", "https://abc.supabase.co/rest/v1/")));
+        refused("token for another service's API", io(() -> NazSecretPolicy.authorizeIntegration("integration:github", "https://api.vercel.com/v13/deployments")));
+
         System.out.println("RESULT NazSecretPolicy passed; " + assertions + " assertions; production source; host JVM");
     }
 }

@@ -1,3 +1,23 @@
+# Kita Chat 4.10.0
+
+Chat and Code are now separate, and Code can publish what you design straight from your phone.
+
+- Chat | Code switch on Home and at the top of the chat list:
+  - Chat is for questions, writing and research.
+  - Code is for building: agents, the page test and artifact cards, with Publish on every page.
+  - Each conversation belongs to one mode and the lists show the current mode only. Older conversations that built a web page were moved to Code once; the rest stay in Chat.
+  - A build request typed into a fresh chat (for example "buat landing page…") moves that conversation to Code automatically. In Code, shorter requests such as "buat kalkulator" also start a build.
+  - The Code home shows where you can publish and your published sites.
+- Settings → Integrations: connect GitHub, Vercel and Cloudflare with a token (with a link to the right token page and the permissions it needs). Each token is checked when you connect, stored in Android Keystore, and attached by native code only to that service's official API (api.github.com, api.vercel.com, api.cloudflare.com). It never appears in app data or backups.
+- Publish (button on every web-page card): choose a site name and a target, confirm, and get the link.
+  - Vercel: production deployment at name.vercel.app.
+  - Cloudflare Pages: direct upload (files addressed with BLAKE3, as Cloudflare's own tool does) at name.pages.dev.
+  - Cloudflare Workers: a Worker that serves the page at name.your-subdomain.workers.dev.
+  - GitHub Pages: creates a public repository, commits the files in one commit and turns on Pages (live in about a minute).
+  - GitHub repository: a private repository with the files, without Pages.
+  - Publishing again with the same name updates the same site. Every publish asks first, also in Bypass all.
+- VersionCode 57, same com.nazchat.app package and original signing identity. Publishing was tested against mocked service APIs, not live accounts or a real device.
+
 # Kita Chat 4.9.0
 
 Long builds are now done by a team of agents instead of one long stream.
