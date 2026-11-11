@@ -5,6 +5,7 @@ Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
 - Markdown files can be attached again. Android's file picker was given only the first allowed type (PDF), and Android has no file type for .md, so Markdown files were greyed out. The picker now shows every file, and Kita checks what it can read: PDF, DOCX, Markdown and other text or code files (including files without an extension, such as README). Binary files such as ZIP or APK are refused with a message.
 - A long paste (2,000+ characters or 40+ lines) becomes an attachment chip with a one-line preview and its line count, instead of filling the message box. The full text is sent to the model as a document, and the sent message shows "Pasted text · N lines". Short pastes still go into the box as before.
 - Some Android keyboards insert only part of a very long clipboard item and send no paste event. Kita now catches that large insertion too and, when the clipboard holds more than the keyboard inserted, attaches the full clipboard text.
+- Whole web pages and long code (over 30 lines) now show as an artifact card instead of a wall of code: the page title (or file name), the kind and line count, and the automatic page test result (✓ tested or N errors). Open shows the page full screen, Code reveals the full code viewer, and ⋯ has Copy and Download. A set of files that includes a page is one card with the file tabs inside. Short snippets stay inline as before.
 - VersionCode 55, same com.nazchat.app package and original signing identity. Not tested on a real device.
 
 # Kita Chat 4.8.1

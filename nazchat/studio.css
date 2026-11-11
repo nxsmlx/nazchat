@@ -3682,3 +3682,82 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+/* 4.8.2: artifact card for whole web pages and long files */
+.artifact-card {
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg2);
+}
+.artifact-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.artifact-icon {
+  display: grid;
+  flex: 0 0 40px;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg3));
+  color: var(--accent);
+}
+.artifact-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.artifact-title strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.artifact-title small {
+  color: var(--text2);
+  font-size: 12px;
+}
+.artifact-status.ok { color: var(--success, #3fb950); }
+.artifact-status.warn { color: var(--warning, #d29922); }
+.artifact-actions {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  margin-top: 11px;
+}
+.artifact-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--bg3);
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.artifact-btn.primary {
+  flex: 1 1 auto;
+  border-color: transparent;
+  background: var(--primary, var(--accent));
+  color: var(--on-primary, #fff);
+}
+.artifact-btn:not(.primary):not(.artifact-more) { flex: 1 1 auto; }
+.artifact-btn.artifact-more {
+  display: grid;
+  flex: 0 0 40px;
+  place-items: center;
+  width: 40px;
+  padding: 0;
+  margin-left: auto;
+}
+.artifact-card:not(.show-code) > .code-wrap { display: none; }
+.artifact-card > .code-wrap { margin: 12px 0 0; }
+.artifact-actions .msg-menu { right: 0; }

@@ -1751,7 +1751,72 @@ function decorateCodeBlock(pre, code, opts){
   wrap.appendChild(head); wrap.appendChild(body);
   // Short snippets are easier to read than to unfold: show up to 12 lines straight away.
   if(opts.defaultOpen || count <= 12){ wrap.classList.remove("collapsed"); toggle.textContent="Collapse"; toggle.setAttribute("aria-label","Collapse code"); }
+  // Whole pages and long files become an artifact card; the code stays one tap away.
+  const isPage = /^(html|htm|xhtml)$/.test(lang) && /<(?:!doctype\s+html|html\b|body\b)/i.test(rawCode);
+  if(!opts.noCard && !wrap.closest(".code-tab-pane") && (isPage || count > ARTIFACT_MIN_LINES))
+    return makeArtifactCard(wrap, {lang, name, rawCode, count, isPage, toggle});
   return wrap;
+}
+const ARTIFACT_MIN_LINES = 30;
+function decodeEntities(s){ const t=document.createElement("textarea"); t.innerHTML=String(s||""); return t.value; }
+function artifactTitle(info){
+  if(info.isPage){
+    const m=info.rawCode.match(/<title[^>]*>([^<]{1,120})<\/title>/i)||info.rawCode.match(/<h1[^>]*>([^<]{1,120})<\/h1>/i);
+    const t=m?decodeEntities(m[1]).replace(/\s+/g," ").trim():"";
+    if(t) return t.slice(0,80);
+  }
+  return info.name;
+}
+function makeArtifactCard(wrap, info){
+  const card=el("div","artifact-card"+(info.isPage?" is-page":""));
+  card.dataset.kind=info.isPage?"page":"code";
+  const title=artifactTitle(info);
+  const multi=info.files&&info.files.length>1;
+  const kind=(info.isPage?"Web page":(info.lang&&info.lang!=="text"?info.lang.toUpperCase():"Text")+" file")+(multi?` + ${info.files.length-1} more file${info.files.length>2?"s":""}`:"");
+  const icon=info.isPage
+    ? '<path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M3 9h18M7 6h.01M10 6h.01"/>'
+    : '<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/>';
+  const head=el("div","artifact-head");
+  head.innerHTML=`<span class="artifact-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></span><span class="artifact-title"><strong title="${esc(title)}">${esc(title)}</strong><small>${esc(kind)} · ${info.count.toLocaleString()} lines<span class="artifact-status"></span></small></span>`;
+  const acts=el("div","artifact-actions");
+  if(info.isPage){
+    const open=el("button","artifact-btn primary","Open");
+    open.setAttribute("aria-label","Open "+title);
+    open.onclick=()=>openPreview(info.rawCode,{live:false});
+    acts.appendChild(open);
+  }
+  const codeBtn=el("button","artifact-btn",info.isPage?"Code":"View code");
+  codeBtn.setAttribute("aria-expanded","false");
+  codeBtn.onclick=()=>{
+    const on=card.classList.toggle("show-code");
+    codeBtn.textContent=on?"Hide code":(info.isPage?"Code":"View code");
+    codeBtn.setAttribute("aria-expanded",String(on));
+    if(on && info.toggle && wrap.classList.contains("collapsed")) info.toggle.click();
+  };
+  acts.appendChild(codeBtn);
+  const more=el("button","artifact-btn artifact-more",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg>');
+  more.setAttribute("aria-label","More for "+title); more.setAttribute("aria-haspopup","menu"); more.setAttribute("aria-expanded","false");
+  more.onclick=e=>{
+    e.stopPropagation();
+    const items=multi
+      ? [[info.isPage?"Copy page code":"Copy "+info.name,()=>copyText(info.rawCode)],...info.files.map(f=>["Download "+f.name,()=>downloadText(f.name,f.raw)])]
+      : [["Copy code",()=>copyText(info.rawCode)],["Download "+info.name,()=>downloadText(info.name,info.rawCode)]];
+    if(typeof window.NazShare==="object" || navigator.share) items.push(["Share",()=>shareText(info.rawCode)]);
+    openMessageMenu(more, items);
+  };
+  acts.appendChild(more);
+  wrap.replaceWith(card);
+  card.append(head, acts, wrap);
+  return card;
+}
+/* Mark page cards with the result of the automatic page test. */
+function markArtifactChecks(container, checks){
+  if(!checks?.length) return;
+  const last=checks.at(-1).errors.length;
+  container.querySelectorAll(".artifact-card.is-page .artifact-status").forEach(s=>{
+    s.textContent=last?` · ${last} error${last===1?"":"s"}`:" · ✓ tested";
+    s.className="artifact-status "+(last?"warn":"ok");
+  });
 }
 function buildCodeTabs(container, blocks){
   const first = blocks[0].parentElement;
@@ -1783,6 +1848,12 @@ function buildCodeTabs(container, blocks){
   list.forEach(entry=>{ entry.pane.hidden=false; decorateCodeBlock(entry.pane.firstChild, entry.code, {name:entry.name}); });
   list.forEach((entry,i)=>{ entry.pane.hidden = i!==0; });
   blocks.forEach(code=>{ const pre=code.parentElement; if(pre && pre.parentElement===container) pre.remove(); });
+  // A set of files that includes a whole page or runs long is shown as one artifact card.
+  const files=list.map(e=>({name:e.name,raw:e.raw,lang:(String(e.code.className||"").trim().split(/\s+/)[0]||"text").toLowerCase()}));
+  const lines=files.reduce((n,f)=>n+f.raw.replace(/\n+$/,"").split("\n").length,0);
+  const page=files.find(f=>/^(html|htm|xhtml)$/.test(f.lang) && /<(?:!doctype\s+html|html\b|body\b)/i.test(f.raw));
+  if(page || lines > ARTIFACT_MIN_LINES)
+    makeArtifactCard(panelWrap, {lang:page?page.lang:files[0].lang, name:page?page.name:files[0].name, rawCode:page?page.raw:files[0].raw, count:lines, isPage:!!page, files});
 }
 /* ===================== Sidebar / Conversations ===================== */
 function renderSidebarLegacy(){
@@ -2076,6 +2147,7 @@ function renderAssistant(bubble, msg, live){
   }
   bubble.appendChild(md);
   enhance(md, {light:live});
+  if(!live) markArtifactChecks(md, msg.codeChecks);
   // active skills (visible provenance, no extra prompt text in the answer)
   if(Array.isArray(msg.usedSkills) && msg.usedSkills.length){
     const badges=el("div","skill-badges");
@@ -2178,7 +2250,7 @@ function openMessageMenu(anchor, items){
   const menu=el("div","msg-menu"); menu.setAttribute("role","menu"); menu._owner=anchor;
   items.forEach(([label,run])=>{ const it=el("button","msg-menu-item"); it.type="button"; it.setAttribute("role","menuitem"); it.textContent=label;
     it.onclick=()=>{ closeMessageMenu(); anchor.focus({preventScroll:true}); run(); }; menu.appendChild(it); });
-  anchor.closest(".action-bar").appendChild(menu);
+  anchor.closest(".action-bar, .artifact-actions").appendChild(menu);
   anchor.setAttribute("aria-expanded","true");
   menu.querySelector("button")?.focus({preventScroll:true});
   menu.addEventListener("keydown",e=>{
