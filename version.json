@@ -1,9 +1,9 @@
 {
-  "version": "4.17.0",
-  "versionCode": 68,
+  "version": "4.17.1",
+  "versionCode": 69,
   "name": "Kita Chat",
-  "changelog": "Chat can now run every Network check: custom port lists (like 22,80,8000-8100, up to 1200 ports), UDP check (DNS, NTP, NetBIOS name), finding devices that announce services (printers, TVs, cameras) and the website security test.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.17.0/NazChat.apk",
-  "sha256": "be03e533e051e72d79bada302c4ff2b984f957b3287ac2a6baf215846e050643",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.17.0"
+  "changelog": "Asking Kita to scan your Wi-Fi or check ports now runs the real network checks and explains the results. Before, the model could write an nmap-style script instead.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.17.1/NazChat.apk",
+  "sha256": "46a75cdd4a7417a950f182c5077cd30844fee7926d150de2cd83b518f4a98cb6",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.17.1"
 }
