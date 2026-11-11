@@ -27,7 +27,8 @@ function skillData(){return require('../skills.json').skills;}
  await p.waitForFunction(()=>typeof db!=='undefined'&&typeof renderAll==='function');
  await p.evaluate(()=>{
    db.providers=[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'secret',headers:[],selectedModels:['model-a'],modelMeta:{'model-a':{context_length:8192}}}];
-   db.lastProviderId='p';db.lastModelId='model-a';db.search=false;save();renderAll();
+   // Skill routing only: the Designer and Reviewer have their own tests (agent-team).
+   db.lastProviderId='p';db.lastModelId='model-a';db.search=false;db.agentTeam={designer:false,review:false};save();renderAll();
  });
  const scenarios=[['buat landing page',['frontend-design','ui-ux']],['kenapa error ni',['debugging']],['buat REST API Node',['backend']],['hai apa khabar',[]]];
  for(const [text,expected] of scenarios){
