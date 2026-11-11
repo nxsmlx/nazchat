@@ -82,6 +82,8 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NazClipboard(this), "NazClipboard");
         // DNS-over-HTTPS for every native request (setting kept natively, see NazDns).
         web.addJavascriptInterface(new NazDns(this), "NazDns");
+        // Network tools: audit the user's own local network (private subnet only).
+        web.addJavascriptInterface(new NazNetScan(this), "NazNetScan");
         // Background builds: foreground service + progress / finished notifications.
         web.addJavascriptInterface(new NazWork(this), "NazWork");
         files = new NazFiles(this);

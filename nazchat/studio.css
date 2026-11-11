@@ -3881,3 +3881,28 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .search-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .search-head a { color: var(--link, var(--accent)); font-size: 13px; font-weight: 600; }
 .search-card textarea { min-height: 44px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+
+/* 4.14.0: network tools */
+.net-info { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg2); }
+.net-info small, .net-host small, .net-audit small, .net-port-notes small { color: var(--text2); font-size: 12px; }
+.hint.warn { color: var(--warning, #d29922); }
+.net-actions { display: flex; gap: 8px; margin: 8px 0; }
+.net-actions .btn { flex: 1 1 0; }
+.net-progress { margin: 4px 0 8px; color: var(--text2); font-size: 12.5px; }
+.net-hosts { display: flex; flex-direction: column; gap: 8px; }
+.net-host { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg2); }
+.net-host > .mini-btn { align-self: flex-start; }
+.net-host-head { display: flex; align-items: center; gap: 10px; }
+.net-host-head > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.net-dot { flex: 0 0 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--success, #3fb950); }
+.net-dot.medium { background: var(--warning, #d29922); }
+.net-dot.high { background: var(--danger, #f85149); }
+.net-ports { display: flex; flex-wrap: wrap; gap: 6px; }
+.net-port { padding: 2px 8px; border-radius: 999px; background: var(--bg3); color: var(--text2); font-size: 12px; font-variant-numeric: tabular-nums; }
+.net-port.medium { color: var(--warning, #d29922); }
+.net-port.high { color: var(--danger, #f85149); background: color-mix(in srgb, var(--danger, #f85149) 14%, var(--bg3)); }
+.net-port-notes, .net-audit { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.net-port-notes li, .net-audit li { display: flex; flex-direction: column; gap: 2px; padding-left: 10px; border-left: 3px solid var(--border); overflow-wrap: anywhere; }
+.net-port-notes li.high, .net-audit li.high { border-left-color: var(--danger, #f85149); }
+.net-port-notes li.medium, .net-audit li.medium { border-left-color: var(--warning, #d29922); }
+.net-audit li.ok { border-left-color: var(--success, #3fb950); }
