@@ -254,6 +254,8 @@ async function publishGitHub(name,files,log,pages,opts={}){
   if(!login){login=(await integrationFetch('github','/user')).login;setIntegrationState('github',{...integrationState('github'),login});}
   let repo=await githubRepo(login,name,pages,log);
   const branch=repo.default_branch||'main',base='/repos/'+login+'/'+name;
+  // Pages serves the files as they are: .nojekyll skips the Jekyll build (faster, keeps _files).
+  if(pages&&!files.some(f=>f.path==='.nojekyll')) files=files.concat({path:'.nojekyll',content:''});
   // GitHub Pages on a free plan needs a public repository. An existing private one (for
   // example published earlier as "GitHub repository") is made public only if the user agrees,
   // and nothing is committed before that is settled.
@@ -287,7 +289,19 @@ async function publishGitHub(name,files,log,pages,opts={}){
     try{ site=await integrationFetch('github',base+'/pages',{method:'POST',body:{source:{branch,path:'/'}}}); }
     catch(err){ if(err.status===422&&/plan/i.test(err.message)) throw new Error('GitHub Pages is not available for '+login+'/'+name+' on your plan. Make the repository public in its GitHub settings, or publish under another site name.'); throw err; }
   }
-  return {url:site?.html_url||('https://'+login.toLowerCase()+'.github.io/'+name+'/'),detail:'GitHub Pages goes live in about a minute',repo:repo.html_url};
+  const url=site?.html_url||('https://'+login.toLowerCase()+'.github.io/'+name+'/');
+  // The site answers 404 until GitHub has built it, so wait for the build before saying it is live.
+  log('Waiting for GitHub Pages to build…');
+  const until=Date.now()+(opts.buildWaitMs??150000);
+  let status='';
+  while(Date.now()<until){
+    await new Promise(r=>setTimeout(r,opts.buildPollMs??5000));
+    try{const b=await integrationFetch('github',base+'/pages/builds/latest');status=b?.status||'';
+      if(status==='built') return {url,detail:'Live',repo:repo.html_url};
+      if(status==='errored') throw new Error('GitHub Pages could not build the site: '+(b.error?.message||'see the repository\'s Actions tab'));
+    }catch(e){ if(/could not build/.test(e.message)) throw e; if(e.status&&e.status!==404) throw e; }
+  }
+  return {url,detail:'Still building on GitHub. If the link shows 404, refresh in a minute or two.',repo:repo.html_url};
 }
 async function publishSite(targetId,name,files,log=()=>{},opts={}){
   const slug=siteSlug(name);
