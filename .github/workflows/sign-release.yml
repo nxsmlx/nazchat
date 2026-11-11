@@ -77,7 +77,10 @@ jobs:
         if: steps.prior.outputs.green != 'true'
         run: |
           npm ci
-          npx playwright-core install --with-deps chromium
+          npx playwright-core install chromium
+          # System libraries and fonts come from apt. The hosted runner already has what
+          # Chromium needs, so an Ubuntu mirror outage must not fail the run.
+          timeout 240 npx playwright-core install-deps chromium || echo "::warning::Could not install Chromium system packages (apt mirror?); using the runner image as is."
       - name: Test suite
         if: steps.prior.outputs.green != 'true'
         run: npm test
