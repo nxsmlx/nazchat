@@ -249,8 +249,13 @@ async function publishGitHub(name,files,log,pages){
   if(!login){login=(await integrationFetch('github','/user')).login;setIntegrationState('github',{...integrationState('github'),login});}
   const repo=await githubRepo(login,name,pages,log);
   const branch=repo.default_branch||'main',base='/repos/'+login+'/'+name;
-  let ref=null;
-  for(let i=0;i<6&&!ref;i++){try{ref=await integrationFetch('github',base+'/git/ref/heads/'+branch);}catch(e){if(e.status!==404&&e.status!==409)throw e;await new Promise(r=>setTimeout(r,1500));}}
+  let ref=null,empty=false;
+  for(let i=0;i<6&&!ref;i++){try{ref=await integrationFetch('github',base+'/git/ref/heads/'+branch);}catch(e){if(e.status!==404&&e.status!==409)throw e;empty=e.status===409;if(empty)break;await new Promise(r=>setTimeout(r,1500));}}
+  if(!ref&&empty){
+    // An existing repository with no commits has no branch to build on: add the files one by one.
+    log('Repository is empty. Adding '+files.length+' file'+(files.length===1?'':'s')+'…');
+    for(const f of files) await integrationFetch('github',base+'/contents/'+f.path.split('/').map(encodeURIComponent).join('/'),{method:'PUT',body:{message:'Publish from Kita Chat',content:utf8Base64(f.content),branch}});
+  }else{
   if(!ref) throw new Error('The new repository is not ready yet. Try again in a moment.');
   const head=ref.object.sha;
   const commit=await integrationFetch('github',base+'/git/commits/'+head);
@@ -258,6 +263,7 @@ async function publishGitHub(name,files,log,pages){
   const tree=await integrationFetch('github',base+'/git/trees',{method:'POST',body:{base_tree:commit.tree.sha,tree:files.map(f=>({path:f.path,mode:'100644',type:'blob',content:f.content}))}});
   const next=await integrationFetch('github',base+'/git/commits',{method:'POST',body:{message:'Publish from Kita Chat',tree:tree.sha,parents:[head]}});
   await integrationFetch('github',base+'/git/refs/heads/'+branch,{method:'PATCH',body:{sha:next.sha}});
+  }
   if(!pages) return {url:repo.html_url||('https://github.com/'+login+'/'+name),detail:'Committed to '+branch};
   log('Turning on GitHub Pages…');
   let site=null;

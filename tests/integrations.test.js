@@ -179,6 +179,17 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
    const r2=await page.evaluate(PAGE=>publishSite('github','kopi',[{path:'index.html',content:PAGE}]),PAGE);
    assert.equal(r2.url,'https://github.com/Nazz/kopi');assert.equal(JSON.parse(calls.find(c=>c.p==='/user/repos').body).private,true);
    assert.equal(calls.some(c=>c.p.endsWith('/pages')),false);
+   // An existing empty repository (no branch yet): files are added with the contents API.
+   await page.unroute('https://api.github.com/**');calls.length=0;
+   await page.route('https://api.github.com/**',async r=>{const u=new URL(r.request().url()),m=r.request().method(),p=u.pathname;calls.push({m,p,body:r.request().postData()});
+     if(p==='/repos/Nazz/empty'&&m==='GET') return json(r,200,{name:'empty',default_branch:'main',html_url:'https://github.com/Nazz/empty'});
+     if(p==='/repos/Nazz/empty/git/ref/heads/main') return json(r,409,{message:'Git Repository is empty.'});
+     if(p.startsWith('/repos/Nazz/empty/contents/')&&m==='PUT') return json(r,201,{content:{path:p}});
+     return json(r,404,{message:'unexpected '+m+' '+p});});
+   const r3=await page.evaluate(PAGE=>publishSite('github','empty',[{path:'index.html',content:PAGE},{path:'css/site.css',content:'a{}'}]),PAGE);
+   assert.equal(r3.url,'https://github.com/Nazz/empty');
+   const puts=calls.filter(c=>c.m==='PUT');assert.deepEqual(puts.map(c=>c.p),['/repos/Nazz/empty/contents/index.html','/repos/Nazz/empty/contents/css/site.css']);
+   assert.equal(JSON.parse(puts[0].body).content,Buffer.from(PAGE).toString('base64'));
  });
 
  await scenario('Android: tokens go to Keystore and only through the native secret path',seed(),async page=>{
