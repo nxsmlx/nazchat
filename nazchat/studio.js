@@ -12,7 +12,7 @@ function studioCanNavigate(){if(generating){toast('Stop the current response bef
 function studioFocusContent(){const node=studioView==='chat'?(conv?.messages.length?$('#chatScroll'):$('#empty')):$('#workspaceView');node?.focus({preventScroll:true});}
 function studioNavigate(view){if(!studioCanNavigate())return;studioView=['chat','projects','library'].includes(view)?view:'chat';closeSidebar();renderAll();studioFocusContent();}
 function studioNewChat(projectId=null){if(!studioCanNavigate())return;conv=null;db.activeProjectId=projectId;studioView='chat';pendingAttachments=[];renderAttachments();save();closeSidebar();renderAll();studioFocusContent();}
-function studioOpenConversation(c){if(!studioCanNavigate())return;conv=c;db.activeProjectId=c.projectId||null;studioView='chat';save();closeSidebar();renderAll();studioFocusContent();haptic();}
+function studioOpenConversation(c){if(!studioCanNavigate())return;conv=c;db.uiMode=typeof convMode==='function'?convMode(c):'chat';db.activeProjectId=c.projectId||null;studioView='chat';save();closeSidebar();renderAll();studioFocusContent();haptic();}
 function renderStudioView(){
   if(!$('#workspaceView'))return;
   const chat=studioView==='chat',has=!!conv?.messages?.length;
@@ -23,9 +23,9 @@ function renderStudioView(){
   document.querySelectorAll('[data-studio-view]').forEach(b=>{const active=b.dataset.studioView===studioView;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   $('#studioProjectCount').textContent=db.projects.length||'';$('#studioLibraryCount').textContent=(db.prompts.length+db.artifacts.length)||'';
   $('#chatTitle').textContent=chat?(conv?.title||currentProject()?.name||'Kita Chat'):studioView==='projects'?'Projects':'Library';
-  $('#studioHeaderNote').textContent=chat?(currentProject()?.name||'A little room to think.'):studioView==='projects'?'Keep the context together.':'Good ideas, kept close.';
+  $('#studioHeaderNote').textContent=chat?(currentProject()?.name||(typeof kitaMode==='function'&&kitaMode()==='code'?'Code · build and publish':'A little room to think.')):studioView==='projects'?'Keep the context together.':'Good ideas, kept close.';
   applyComfort();
-  renderStudioContext();renderStudioHome();
+  renderStudioContext();renderStudioHome();if(typeof renderModeHome==='function')renderModeHome();if(typeof syncComposerSteer==='function')syncComposerSteer();
   if(!chat){if(studioView==='projects')renderStudioProjects();else renderStudioLibrary();}
 }
 /* One UI style floating glass navigation for phones. It shows on Home, Projects and
@@ -50,7 +50,8 @@ function renderStudioHome(){
   $('#studioGreeting').textContent=currentProject()?'Working in '+currentProject().name:'A fresh thought starts here.';
   const box=$('#studioResume');box.innerHTML='';
   const home=document.querySelector('.studio-home'),sugg=home?.querySelector('.sugg');
-  const recents=[...db.conversations].filter(c=>c.messages?.length&&(!db.activeProjectId||c.projectId===db.activeProjectId)).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  const mode=typeof kitaMode==='function'?kitaMode():'chat';
+  const recents=[...db.conversations].filter(c=>c.messages?.length&&(typeof convMode==='function'?convMode(c):'chat')===mode&&(!db.activeProjectId||c.projectId===db.activeProjectId)).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
   // Returning users come back to continue: recent chats go first and the welcome copy shrinks.
   const returning=recents.length>0;
   home?.classList.toggle('returning',returning);

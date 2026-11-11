@@ -29,6 +29,37 @@ final class NazSecretPolicy {
         return true;
     }
 
+    /**
+     * Integration tokens ("integration:github" etc.). Unlike provider keys they are
+     * never bound on first use: each service has one fixed official API origin, and the
+     * token is attached to requests for that origin only.
+     */
+    static String integrationOrigin(String ref) {
+        if (ref == null) return null;
+        switch (ref) {
+            case "integration:github": return "https://api.github.com";
+            case "integration:vercel": return "https://api.vercel.com";
+            case "integration:cloudflare": return "https://api.cloudflare.com";
+            case "integration:supabase": return "https://api.supabase.com";
+            default: return null;
+        }
+    }
+
+    static boolean isIntegrationRef(String ref) { return integrationOrigin(ref) != null; }
+
+    /** References JavaScript may store, test and use (never read). */
+    static boolean isJsRef(String ref) { return isProviderRef(ref) || isIntegrationRef(ref); }
+
+    /** Refuses an integration token for any URL outside its service's API origin. */
+    static String authorizeIntegration(String ref, String url) throws IOException {
+        String allowed = integrationOrigin(ref);
+        if (allowed == null) throw new IOException("Secret reference refused");
+        String requested = originOf(url);
+        if (!allowed.equals(requested))
+            throw new IOException("This token is only sent to " + allowed + ", not " + requested + ".");
+        return allowed;
+    }
+
     /** Canonical "https://host[:port]" for a request URL; refuses anything that is not plain HTTPS. */
     static String originOf(String url) throws IOException {
         URL u;

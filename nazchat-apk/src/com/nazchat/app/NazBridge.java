@@ -36,6 +36,19 @@ public class NazBridge {
         return startFetch(url, method, headersJson, body, secretRef);
     }
 
+    /** HttpURLConnection may refuse PATCH (needed by the GitHub API); set it directly then. */
+    static void setMethod(java.net.HttpURLConnection c, String method) throws java.io.IOException {
+        try { c.setRequestMethod(method); return; }
+        catch (java.net.ProtocolException e) { if (!"PATCH".equals(method)) throw e; }
+        try {
+            java.lang.reflect.Field f = java.net.HttpURLConnection.class.getDeclaredField("method");
+            f.setAccessible(true);
+            f.set(c, method);
+        } catch (Exception e) {
+            throw new java.io.IOException("PATCH requests are not supported on this device");
+        }
+    }
+
     private int startFetch(final String url, final String method, final String headersJson, final String body, final String secretRef) {
         final int reqId;
         synchronized (NazBridge.class) { reqId = nextReqId++; }
@@ -58,7 +71,8 @@ public class NazBridge {
                     // hosts only, and every redirect hop is checked again.
                     final boolean plain = secretRef == null || secretRef.length() == 0;
                     if (!plain) {
-                        // Refuses non-provider refs, non-HTTPS and hosts the key is not bound to.
+                        // Refuses unknown refs, non-HTTPS, hosts a provider key is not bound to,
+                        // and any host other than an integration token's official API.
                         key = NazSecrets.keyForRequest(NazApp.activity, secretRef, url);
                         if (key.length() > 0) headers.put("Authorization", "Bearer " + key);
                     }
@@ -77,7 +91,7 @@ public class NazBridge {
                         if (plain || key.length() > 0) c.setInstanceFollowRedirects(false);
                         c.setConnectTimeout(15000);
                         c.setReadTimeout(30000);
-                        c.setRequestMethod(currentMethod);
+                        setMethod(c, currentMethod);
                         c.setRequestProperty("User-Agent",
                             "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Mobile Safari/537.36 NazChat/1.3");
                         for (Map.Entry<String, String> e : headers.entrySet()) {

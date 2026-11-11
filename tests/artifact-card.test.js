@@ -17,13 +17,13 @@ const assert=require('assert');
   // A short page is still a card (it is a whole page), titled from <title>.
   const pageCards=await show('Here it is.\n\n```html\n'+html+'\n```',{codeChecks:[{errors:['boom']},{errors:[]}]});
   assert.equal(pageCards.length,1);
-  assert.deepEqual({...pageCards[0],buttons:pageCards[0].buttons.slice(0,2)},{kind:'page',title:'Kedai Kopi & Teh',meta:'Web page · 9 lines · ✓ tested',buttons:['Open','Code'],codeVisible:false});
+  assert.deepEqual({...pageCards[0],buttons:pageCards[0].buttons.slice(0,3)},{kind:'page',title:'Kedai Kopi & Teh',meta:'Web page · 9 lines · ✓ tested',buttons:['Open','Publish','Code'],codeVisible:false});
   // Open goes to the preview; Code reveals the full viewer, expanded.
   await page.getByRole('button',{name:'Open Kedai Kopi & Teh'}).click();
   assert.ok(await page.evaluate(()=>$('#htmlPreview').classList.contains('open')));
   assert.match(await page.evaluate(()=>$('#previewCode').value),/<title>Kedai Kopi &amp; Teh<\/title>/);
   await page.evaluate(()=>closePreview?closePreview():$('#htmlPreview').classList.remove('open'));
-  await page.evaluate(()=>document.querySelector('.artifact-card .artifact-btn:not(.primary):not(.artifact-more)').click());
+  await page.evaluate(()=>document.querySelector('.artifact-card .artifact-btn:not(.primary):not(.artifact-more):not(.publish)').click());
   const shown=await page.evaluate(()=>{const c=document.querySelector('.artifact-card');return {cls:c.classList.contains('show-code'),btn:c.querySelector('[aria-expanded="true"]')?.textContent,collapsed:c.querySelector('.code-wrap').classList.contains('collapsed'),code:c.querySelector('.code-body').textContent.includes('<h1>Hello</h1>')};});
   assert.deepEqual(shown,{cls:true,btn:'Hide code',collapsed:false,code:true});
   // More menu: copy and download.

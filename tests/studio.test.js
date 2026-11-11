@@ -19,6 +19,13 @@ const PREVIEW = '<!doctype html><html><body><h1>Restored document fixture</h1></
 const INSTRUCTIONS = 'Use the retained project glossary: amber means awaiting review.';
 const prototypeContent = /A quieter landing page|Studio website|Things I’m learning|Notes from a good read/;
 
+// 4.10.0: the chat list shows one mode (Chat or Code); switch tabs like a user would.
+async function showModeOf(page,title){
+  const mode=await page.evaluate(t=>{const c=db.conversations.find(x=>x.title===t);return c?convMode(c):'chat';},title);
+  const tab=page.locator('.side-mode .mode-tab[data-mode="'+mode+'"]');
+  if(await tab.getAttribute('aria-selected')!=='true') await tab.click();
+}
+
 function legacyDb() {
   const timestamp = 1700000000000;
   return {
@@ -476,7 +483,7 @@ async function target(page, selector, scroll = false) {
       assert.equal(await page.evaluate(() => conv.projectId),PROJECT);
       assert(requests[0].body.messages.some(m => m.role === 'system' && m.content.includes(INSTRUCTIONS)), 'project instructions missing from real request');
       await sidebar(page);
-      await page.locator('.studio-conv-open').filter({hasText:legacyDb().conversations[0].title}).click();
+      await showModeOf(page,legacyDb().conversations[0].title);await page.locator('.studio-conv-open').filter({hasText:legacyDb().conversations[0].title}).click();
       await assertContext(page,GENERAL_CHAT,null);
       assert(!(await page.locator('#studioContext').getByText(legacyDb().projects[0].name,{exact:true}).isVisible()));
       await send(page,'Please acknowledge the standalone message.',answer);
@@ -503,7 +510,7 @@ async function target(page, selector, scroll = false) {
       const projectName = legacyDb().projects[0].name;
       const openConversation = async () => {
         await sidebar(page);
-        await page.locator('.studio-conv-open').filter({hasText:legacyDb().conversations[1].title}).click();
+        await showModeOf(page,legacyDb().conversations[1].title);await page.locator('.studio-conv-open').filter({hasText:legacyDb().conversations[1].title}).click();
       };
       await openConversation();
       const before = await stored(page);
@@ -574,7 +581,7 @@ async function target(page, selector, scroll = false) {
           await unchanged();
         }
         for (const selector of ['#newChatBtn','#sideNew']) { await page.locator(selector).click(); await unchanged(); }
-        await page.locator('.studio-conv-open').filter({hasText:legacyDb().conversations[0].title}).click();
+        await showModeOf(page,legacyDb().conversations[0].title);await page.locator('.studio-conv-open').filter({hasText:legacyDb().conversations[0].title}).click();
         await unchanged();
         await page.evaluate(() => studioNewChat(null));
         await unchanged();

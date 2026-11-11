@@ -30,7 +30,7 @@ public final class NazSecrets {
     // "mcp:" (OAuth tokens) are never readable, writable or removable from JS.
     @JavascriptInterface
     public boolean put(String ref, String value) {
-        if (!NazSecretPolicy.isProviderRef(ref)) return false;
+        if (!NazSecretPolicy.isJsRef(ref)) return false;
         synchronized (NazSecrets.class) {
             if (!putStored(context, ref, value)) return false;
             // A new key value is the only way to move a key to another host.
@@ -44,12 +44,12 @@ public final class NazSecrets {
 
     @JavascriptInterface
     public boolean has(String ref) {
-        return NazSecretPolicy.isProviderRef(ref) && getStored(context, ref).length() > 0;
+        return NazSecretPolicy.isJsRef(ref) && getStored(context, ref).length() > 0;
     }
 
     @JavascriptInterface
     public boolean remove(String ref) {
-        if (!NazSecretPolicy.isProviderRef(ref)) return false;
+        if (!NazSecretPolicy.isJsRef(ref)) return false;
         synchronized (NazSecrets.class) {
             boolean ok = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(PREFIX + ref).commit();
             origins(context).edit().remove(ref).commit();
@@ -93,7 +93,7 @@ public final class NazSecrets {
             SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             SharedPreferences.Editor edit = prefs.edit();
             for (String key : prefs.getAll().keySet()) {
-                if (key.startsWith(PREFIX) && NazSecretPolicy.isProviderRef(key.substring(PREFIX.length()))) edit.remove(key);
+                if (key.startsWith(PREFIX) && NazSecretPolicy.isJsRef(key.substring(PREFIX.length()))) edit.remove(key);
             }
             edit.commit();
             origins(context).edit().clear().commit();
@@ -106,6 +106,10 @@ public final class NazSecrets {
      * and hosts other than the one the key is bound to.
      */
     static synchronized String keyForRequest(Context context, String ref, String url) throws java.io.IOException {
+        if (NazSecretPolicy.isIntegrationRef(ref)) {
+            NazSecretPolicy.authorizeIntegration(ref, url);
+            return getStored(context, ref);
+        }
         if (!NazSecretPolicy.isProviderRef(ref)) throw new java.io.IOException("Secret reference refused");
         String key = getStored(context, ref);
         if (key.length() == 0) return "";

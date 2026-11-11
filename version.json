@@ -1,9 +1,9 @@
 {
-  "version": "4.9.0",
-  "versionCode": 56,
+  "version": "4.11.0",
+  "versionCode": 58,
   "name": "Kita Chat",
-  "changelog": "Long builds are written by a team of agents at the same time (orchestrator + sub-agents), keep running in the background with a notification, and show the agents instead of a long terminal.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.9.0/NazChat.apk",
-  "sha256": "456cb3cdc8ac8255ec4f59756c08e127a6e3337f10174a2ae9a0128904fabd1e",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.9.0"
+  "changelog": "Chat and Code tabs, publish from your phone to Vercel, Cloudflare (Pages, Workers) and GitHub, and Supabase for apps with a database and sign-in.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.11.0/NazChat.apk",
+  "sha256": "fcabffa117f7a8c7ceedaa8b6bb69f3bbbc2de4106563a935b419884fc58ac6f",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.11.0"
 }

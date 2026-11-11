@@ -1,3 +1,39 @@
+# Kita Chat 4.11.0
+
+Supabase joins the integrations, so the apps you build in Code can have a real database, sign-in and storage. This release also includes everything in 4.10.0 (Chat | Code and publishing).
+
+- Settings → Integrations → Supabase:
+  - Paste a Supabase access token, then choose the project your apps should use. With one project, it is chosen for you.
+  - Kita keeps only the project URL and its public key (the publishable key, or the legacy anon key). The service_role or secret key is never fetched into the app, and the access token stays in Android Keystore and is only sent to api.supabase.com.
+  - Shows the tables in the public schema and whether Row Level Security is on. "Use in Code" turns the project on or off for building.
+- In Code, the model knows the project URL, the public key and the current tables, and writes pages that use supabase-js for data and sign-in, with Row Level Security.
+- Database changes:
+  - Models with tools can call supabase_sql (create tables, policies, buckets, or read data) and supabase_schema. Every change asks you first and shows the SQL; changes that can delete data (DROP, TRUNCATE, DELETE, dropping columns, turning off RLS) are marked as destructive. Bypass all never skips these. Reads follow your permission mode.
+  - For any SQL block in an answer, "Run on Supabase" runs it after the same confirmation and shows the result under the block.
+  - The table list is refreshed after every change.
+- Tool activity shows the SQL that ran.
+- VersionCode 58, same com.nazchat.app package and original signing identity. Tested against a mocked Supabase Management API, not a live project or a real device.
+
+# Kita Chat 4.10.0
+
+Chat and Code are now separate, and Code can publish what you design straight from your phone.
+
+- Chat | Code switch on Home and at the top of the chat list:
+  - Chat is for questions, writing and research.
+  - Code is for building: agents, the page test and artifact cards, with Publish on every page.
+  - Each conversation belongs to one mode and the lists show the current mode only. Older conversations that built a web page were moved to Code once; the rest stay in Chat.
+  - A build request typed into a fresh chat (for example "buat landing page…") moves that conversation to Code automatically. In Code, shorter requests such as "buat kalkulator" also start a build.
+  - The Code home shows where you can publish and your published sites.
+- Settings → Integrations: connect GitHub, Vercel and Cloudflare with a token (with a link to the right token page and the permissions it needs). Each token is checked when you connect, stored in Android Keystore, and attached by native code only to that service's official API (api.github.com, api.vercel.com, api.cloudflare.com). It never appears in app data or backups.
+- Publish (button on every web-page card): choose a site name and a target, confirm, and get the link.
+  - Vercel: production deployment at name.vercel.app.
+  - Cloudflare Pages: direct upload (files addressed with BLAKE3, as Cloudflare's own tool does) at name.pages.dev.
+  - Cloudflare Workers: a Worker that serves the page at name.your-subdomain.workers.dev.
+  - GitHub Pages: creates a public repository, commits the files in one commit and turns on Pages (live in about a minute).
+  - GitHub repository: a private repository with the files, without Pages.
+  - Publishing again with the same name updates the same site. Every publish asks first, also in Bypass all.
+- VersionCode 57, same com.nazchat.app package and original signing identity. Publishing was tested against mocked service APIs, not live accounts or a real device.
+
 # Kita Chat 4.9.0
 
 Long builds are now done by a team of agents instead of one long stream.
