@@ -3921,3 +3921,22 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .net-capture { max-height: 260px; margin: 8px 0; padding: 10px; overflow: auto; border-radius: 12px; background: var(--bg2); color: var(--text2); font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; }
 /* Tabs keep their width and scroll instead of squeezing into each other. */
 .code-tab { flex: 0 0 auto; }
+
+/* 4.15.2: Kita's own picker for every <select> */
+.kita-select-scrim { position: fixed; inset: 0; z-index: 400; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,0); transition: background .16s ease; }
+.kita-select-scrim.open { background: var(--scrim); }
+.kita-select { display: flex; flex-direction: column; width: 100%; max-width: 520px; max-height: 70vh; padding: 8px 8px calc(12px + var(--safe-b, 0px)); border: 1px solid var(--border); border-bottom: 0; border-radius: 22px 22px 0 0; background: var(--bg2); color: var(--text); box-shadow: var(--shadow-sheet); transform: translateY(24px); opacity: 0; transition: transform .16s ease, opacity .16s ease; }
+.kita-select-scrim.open .kita-select { transform: none; opacity: 1; }
+.kita-select-title { padding: 12px 12px 8px; color: var(--text2); font-size: 13px; font-weight: 600; }
+.kita-select-list { overflow-y: auto; overscroll-behavior: contain; }
+.kita-select-option { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 10px 12px; border: 0; border-radius: 14px; background: transparent; color: var(--text); font: inherit; font-size: 15px; text-align: left; }
+.kita-select-option:hover, .kita-select-option:focus-visible { background: var(--hover, var(--bg3)); outline: none; }
+.kita-select-option.on { font-weight: 600; }
+.kita-select-option:disabled { opacity: .45; }
+.kita-select-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.kita-select-check { flex: 0 0 22px; width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 50%; }
+.kita-select-option.on .kita-select-check { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 45%, transparent 50%); }
+@media (min-width: 760px) {
+  .kita-select-scrim { align-items: center; }
+  .kita-select { border-bottom: 1px solid var(--border); border-radius: 20px; padding-bottom: 12px; }
+}

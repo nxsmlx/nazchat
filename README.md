@@ -1,6 +1,13 @@
-# Kita Chat 4.15.1
+# Kita Chat 4.15.2
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+- Drop-down choices (port check profile, response style, web search provider, agent count, model per role, Cloudflare account, Supabase project, text sizes…) now open a Kita picker that slides up from the bottom, matching the light or dark theme, instead of the old grey Android dialog.
+- The current choice is marked; tap one to pick it. Tapping outside, Back or Escape closes the picker without changing anything.
+- Works with touch, mouse and keyboard (Enter to open, arrows to move).
+- VersionCode 65, same com.nazchat.app package and original signing identity.
+
+# Kita Chat 4.15.1
 
 - Code snippets in an explanation now stay where they are in the text. Before, every code block in an answer was pulled into one tabbed box at the first block, so a "BIND:" or "Unbound:" heading could be left with nothing under it.
 - Tabs are used only for multi-file answers: at least two blocks with file names, or a whole HTML page with its CSS / JavaScript / JSON.

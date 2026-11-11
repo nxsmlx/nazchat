@@ -43,6 +43,7 @@ async function automaticUpdateCheck(){
  }catch(e){/* Background check failures never block chatting. */}finally{updateCheckBusy=false;}
 }
 window.kitaHandleBack=function(){
+ if(kitaSelectOpen){closeKitaSelect();return true;}
  if(document.querySelector('.msg-menu')){closeMessageMenu();return true;}
  const overlay=studioTopOverlay();if(overlay){document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return true;}
  if(studioView!=='chat'){studioNavigate('chat');return true;}return false;
@@ -59,3 +60,65 @@ function initializeComfort(){
  // Deferred notice is displayed only once the current generation ends.
  const send=document.querySelector('#sendBtn');new MutationObserver(()=>{if(!generating&&updateNoticeInfo){const info=updateNoticeInfo;updateNoticeInfo=null;if(!document.querySelector('#updateNotice'))showUpdateNotice(info);}}).observe(send,{attributes:true,attributeFilter:['class']});
 }
+
+/* Pickers (4.15.2). Android WebView shows <select> as an old system dialog. Every select
+   opens Kita's own menu instead; the <select> stays the source of truth, so its value,
+   change events and accessibility keep working everywhere. */
+let kitaSelectOpen=null;
+function kitaSelectLabel(s){
+  return s.getAttribute('aria-label')||s.closest('label')?.querySelector('span,strong')?.textContent?.trim()||s.closest('.tools-row,.agent-role,.net-profile,.integration-card,.search-card')?.querySelector('strong,span')?.textContent?.trim()||'Choose';
+}
+function closeKitaSelect(){
+  const o=kitaSelectOpen;if(!o)return;kitaSelectOpen=null;
+  o.scrim.classList.remove('open');setTimeout(()=>o.scrim.remove(),160);
+  try{o.select.focus({preventScroll:true});}catch(e){}
+}
+function openKitaSelect(s){
+  if(kitaSelectOpen?.select===s)return;
+  closeKitaSelect();
+  const scrim=el('div','kita-select-scrim'),menu=el('div','kita-select');
+  menu.setAttribute('role','listbox');menu.setAttribute('aria-label',kitaSelectLabel(s));
+  menu.appendChild(el('div','kita-select-title',esc(kitaSelectLabel(s))));
+  const list=el('div','kita-select-list');
+  for(const o of s.options){
+    if(o.hidden)continue;
+    const b=el('button','kita-select-option'+(o.selected?' on':''));b.type='button';b.setAttribute('role','option');b.setAttribute('aria-selected',String(o.selected));b.disabled=o.disabled;
+    const t=el('span','kita-select-text');t.textContent=o.textContent;b.append(t,el('span','kita-select-check'));
+    b.onclick=()=>{const changed=s.value!==o.value;s.value=o.value;closeKitaSelect();if(changed){s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new Event('change',{bubbles:true}));}};
+    list.appendChild(b);
+  }
+  menu.appendChild(list);scrim.appendChild(menu);
+  scrim.addEventListener('click',e=>{if(e.target===scrim)closeKitaSelect();});
+  document.body.appendChild(scrim);kitaSelectOpen={scrim,menu,select:s};
+  requestAnimationFrame(()=>scrim.classList.add('open'));
+  const current=menu.querySelector('.kita-select-option.on')||menu.querySelector('.kita-select-option:not(:disabled)');
+  current?.focus({preventScroll:true});current?.scrollIntoView({block:'nearest'});
+}
+function kitaPickable(t){const s=t&&t.closest?t.closest('select'):null;return s&&!s.multiple&&!s.disabled&&!(s.size>1)?s:null;}
+// Touch: a tap (not a scroll) on a select opens Kita's menu; cancelling touchend stops
+// the system dialog and the emulated mouse events.
+let kitaSelectTouch=null;
+document.addEventListener('touchstart',e=>{const s=kitaPickable(e.target);kitaSelectTouch=s?{s,x:e.touches[0].clientX,y:e.touches[0].clientY}:null;},{capture:true,passive:true});
+document.addEventListener('touchend',e=>{
+  const t=kitaSelectTouch;kitaSelectTouch=null;if(!t)return;
+  const p=e.changedTouches[0];if(Math.hypot(p.clientX-t.x,p.clientY-t.y)>10||kitaPickable(e.target)!==t.s)return;
+  e.preventDefault();openKitaSelect(t.s);
+},{capture:true,passive:false});
+document.addEventListener('mousedown',e=>{const s=kitaPickable(e.target);if(!s)return;e.preventDefault();openKitaSelect(s);},true);
+// A click that reaches the select by itself (its <label> was tapped) opens the menu too.
+document.addEventListener('click',e=>{const s=kitaPickable(e.target);if(!s)return;e.preventDefault();if(!kitaSelectOpen)openKitaSelect(s);},true);
+// While the picker is open it owns the keyboard, wherever focus happens to be.
+window.addEventListener('keydown',e=>{
+  const o=kitaSelectOpen;if(!o)return;
+  const items=[...o.menu.querySelectorAll('.kita-select-option:not(:disabled)')],i=items.indexOf(document.activeElement);
+  const stop=()=>{e.preventDefault();e.stopImmediatePropagation();};
+  if(e.key==='Escape'){stop();closeKitaSelect();}
+  else if(e.key==='ArrowDown'){stop();items[i<0?Math.max(0,items.findIndex(b=>b.classList.contains('on'))):(i+1)%items.length]?.focus();}
+  else if(e.key==='ArrowUp'){stop();items[i<0?Math.max(0,items.findIndex(b=>b.classList.contains('on'))):(i-1+items.length)%items.length]?.focus();}
+  else if(e.key==='Tab'){stop();}
+  else if((e.key==='Enter'||e.key===' ')&&i<0){stop();}
+},true);
+document.addEventListener('keydown',e=>{
+  const s=kitaPickable(e.target);if(!s||kitaSelectOpen||e.target!==s)return;
+  if(e.key==='Enter'||e.key===' '||(e.altKey&&e.key==='ArrowDown')){e.preventDefault();openKitaSelect(s);}
+},true);
