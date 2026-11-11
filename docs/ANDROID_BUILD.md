@@ -3,8 +3,8 @@
 ## Sempadan keselamatan
 
 - CI hanya menghasilkan APK **unsigned**; APK ini belum boleh dipasang sebagai kemas kini.
-- Keystore asal dan kata laluan kekal pada mesin tempatan. Jangan masukkannya ke Git, GitHub Secrets, input workflow, log atau artifact.
-- Workflow tidak menandatangani, menerbitkan release, menaikkan versi atau menggantikan `NazChat.apk` pada root repositori.
+- Keystore asal disimpan **hanya** dalam GitHub Secrets (`KITA_KEYSTORE_B64`, `KITA_KEYSTORE_PASSWORD`) untuk workflow **Build, sign and release**. Jangan masukkannya ke Git, input workflow, log atau artifact.
+- Workflow `build-android.yml` ini tidak menandatangani atau menerbitkan release. Untuk rilis bertandatangan, guna `sign-release.yml`; lihat AGENTS.md bahagian 7.
 - Kekalkan package `com.nazchat.app` dan sijil signing asal untuk pemasangan sebagai kemas kini. Keystore baharu bukan pengganti keystore asal.
 - `nazchat-apk/AndroidManifest.xml` ialah sumber `versionCode` dan `versionName`. Skrip membaca atribut menggunakan POSIX `awk`, tanpa Python. Pemilik release perlu menetapkan `versionCode` yang lebih tinggi sebelum build naik taraf; skrip tidak menaikkannya secara automatik.
 
