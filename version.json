@@ -1,9 +1,9 @@
 {
-  "version": "4.16.1",
-  "versionCode": 67,
+  "version": "4.17.0",
+  "versionCode": 68,
   "name": "Kita Chat",
-  "changelog": "Website audit from Chat now asks first when the assistant picks a site you did not name, like opening a page. You can audit it once or allow that site for the whole chat; a site you typed yourself, or Bypass all, runs without asking.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.16.1/NazChat.apk",
-  "sha256": "252feda0ed53b2f1946739977060c83cb2d18234ba208d7c8bf4183d8baf9c0d",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.16.1"
+  "changelog": "Chat can now run every Network check: custom port lists (like 22,80,8000-8100, up to 1200 ports), UDP check (DNS, NTP, NetBIOS name), finding devices that announce services (printers, TVs, cameras) and the website security test.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.17.0/NazChat.apk",
+  "sha256": "be03e533e051e72d79bada302c4ff2b984f957b3287ac2a6baf215846e050643",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.17.0"
 }
