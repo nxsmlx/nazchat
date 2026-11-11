@@ -1,0 +1,182 @@
+name: Build, sign and release
+
+# One button release: runs the tests, builds the APK from source, signs it with the
+# keystore kept in GitHub Secrets, checks the signer, publishes the GitHub Release and
+# commits NazChat.apk + version.json back to the branch.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   KITA_KEYSTORE_B64       the keystore file as one line of base64
+#   KITA_KEYSTORE_PASSWORD  keystore password
+#   KITA_KEY_PASSWORD       key password (optional; defaults to the keystore password)
+#   KITA_KEY_ALIAS          key alias (optional; needed only if the keystore has several keys)
+#
+# Before running: bump the version (AndroidManifest.xml, APP_VERSION/APP_VERSION_CODE in
+# nazchat/index.html, package.json) and add a "# Kita Chat <version>" section on top of
+# RELEASE_NOTES.md. See AGENTS.md.
+on:
+  workflow_dispatch:
+    inputs:
+      changelog:
+        description: One-line summary shown by the in-app updater (empty = first bullet of the release notes)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sign-release
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install test dependencies and Chromium
+        run: |
+          npm ci
+          npx playwright-core install --with-deps chromium
+      - name: Test suite
+        run: npm test
+
+  release:
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      # SHA-256 of the original Kita Chat signing certificate. A different key is refused,
+      # because phones could not update over the installed app.
+      EXPECTED_SIGNER: ebd77288ed52773d694e35625e26e8ef8962eac0741e6b5eefc29f121dc598d3
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Ensure Android SDK 36 and Build Tools 36.0.0
+        run: |
+          set -eu
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses >/dev/null
+          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --install 'platforms;android-36' 'build-tools;36.0.0'
+
+      - name: Check version numbers and release notes
+        id: meta
+        run: |
+          set -eu
+          attr() { grep -o "android:$1=\"[^\"]*\"" nazchat-apk/AndroidManifest.xml | head -1 | cut -d'"' -f2; }
+          version=$(attr versionName); code=$(attr versionCode)
+          case "$version" in *[!0-9.]*|'') echo "Bad versionName: $version" >&2; exit 1 ;; esac
+          case "$code" in *[!0-9]*|'') echo "Bad versionCode: $code" >&2; exit 1 ;; esac
+          grep -q "^const APP_VERSION = \"$version\";" nazchat/index.html || { echo "APP_VERSION in nazchat/index.html is not $version" >&2; exit 1; }
+          grep -q "^const APP_VERSION_CODE = $code;" nazchat/index.html || { echo "APP_VERSION_CODE in nazchat/index.html is not $code" >&2; exit 1; }
+          test "$(jq -r .version package.json)" = "$version" || { echo "package.json version is not $version" >&2; exit 1; }
+          grep -qx "# Kita Chat $version" RELEASE_NOTES.md || { echo "RELEASE_NOTES.md has no '# Kita Chat $version' section" >&2; exit 1; }
+          old=$(jq -r .versionCode version.json)
+          [ "$code" -gt "$old" ] || { echo "versionCode $code must be higher than the released $old" >&2; exit 1; }
+          if gh release view "v$version" >/dev/null 2>&1; then echo "Release v$version already exists" >&2; exit 1; fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Build and sign
+        env:
+          KEYSTORE_B64: ${{ secrets.KITA_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KITA_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD_SECRET: ${{ secrets.KITA_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KITA_KEY_ALIAS }}
+        run: |
+          set -eu
+          [ -n "$KEYSTORE_B64" ] || { echo "Secret KITA_KEYSTORE_B64 is not set" >&2; exit 1; }
+          [ -n "$KEYSTORE_PASSWORD" ] || { echo "Secret KITA_KEYSTORE_PASSWORD is not set" >&2; exit 1; }
+          KEY_PASSWORD=${KEY_PASSWORD_SECRET:-$KEYSTORE_PASSWORD}
+          export KEYSTORE_PASSWORD KEY_PASSWORD KEY_ALIAS
+          KEYSTORE_PATH="$RUNNER_TEMP/kita-release.keystore"
+          trap 'rm -f "$KEYSTORE_PATH"' EXIT
+          printf '%s' "$KEYSTORE_B64" | tr -d ' \r\n' | base64 -d > "$KEYSTORE_PATH"
+          KEYSTORE_PATH="$KEYSTORE_PATH" sh build.sh
+
+      - name: Verify package and signer
+        run: |
+          set -eu
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          "$BT/aapt2" dump badging NazChat.apk > "$RUNNER_TEMP/badging.txt"
+          grep -q "^package: name='com.nazchat.app' versionCode='${{ steps.meta.outputs.code }}' versionName='${{ steps.meta.outputs.version }}'" "$RUNNER_TEMP/badging.txt"
+          java -jar "$BT/lib/apksigner.jar" verify --print-certs NazChat.apk > "$RUNNER_TEMP/certs.txt"
+          test "$(grep -c 'certificate SHA-256 digest' "$RUNNER_TEMP/certs.txt")" = 1
+          grep -q "certificate SHA-256 digest: $EXPECTED_SIGNER" "$RUNNER_TEMP/certs.txt" || { echo "APK is not signed with the original Kita Chat key" >&2; exit 1; }
+
+      - name: Write version.json
+        env:
+          CHANGELOG_INPUT: ${{ inputs.changelog }}
+        run: |
+          set -eu
+          version='${{ steps.meta.outputs.version }}'
+          awk -v head="# Kita Chat $version" '$0 == head { on = 1; next } on && /^# Kita Chat / { exit } on { print }' RELEASE_NOTES.md > "$RUNNER_TEMP/notes.md"
+          changelog=$CHANGELOG_INPUT
+          if [ -z "$changelog" ]; then
+            changelog=$(grep -m1 '^- ' "$RUNNER_TEMP/notes.md" | sed 's/^- //')
+          fi
+          jq -n --arg v "$version" --argjson c '${{ steps.meta.outputs.code }}' --arg log "$changelog" \
+            --arg sha "$(sha256sum NazChat.apk | cut -d' ' -f1)" --arg repo "$GITHUB_REPOSITORY" '{
+              version: $v, versionCode: $c, name: "Kita Chat", changelog: ($log | .[0:240]),
+              apkUrl: ("https://github.com/" + $repo + "/releases/download/v" + $v + "/NazChat.apk"),
+              sha256: $sha,
+              releaseUrl: ("https://github.com/" + $repo + "/releases/tag/v" + $v) }' > version.json
+          cat version.json
+
+      - name: Commit APK and version.json
+        id: commit
+        run: |
+          set -eu
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add NazChat.apk version.json
+          git commit -m "Release ${{ steps.meta.outputs.version }} signed APK"
+          if git push origin "HEAD:$GITHUB_REF_NAME"; then
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Could not push to $GITHUB_REF_NAME; the release is still published and the app finds it from the release notes."
+            echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish release
+        run: |
+          set -eu
+          version='${{ steps.meta.outputs.version }}'
+          {
+            cat "$RUNNER_TEMP/notes.md"
+            printf '\n## Update without uninstalling\n'
+            printf 'Settings → About → Check for updates → Install update. A private backup before updating is recommended.\n\n'
+            printf 'Package: `com.nazchat.app` · versionCode: **%s** · original signing certificate verified (v2/v3).\n\n' "$(jq -r .versionCode version.json)"
+            printf 'SHA-256: `%s`\n\n' "$(jq -r .sha256 version.json)"
+            printf '<!-- kita-update %s -->\n' "$(jq -c . version.json)"
+          } > "$RUNNER_TEMP/body.md"
+          gh release create "v$version" NazChat.apk version.json \
+            --target '${{ steps.commit.outputs.sha }}' --title "Kita Chat v$version" \
+            --notes-file "$RUNNER_TEMP/body.md" --latest
+
+      - name: Check the published asset
+        run: |
+          set -eu
+          version='${{ steps.meta.outputs.version }}'
+          gh release download "v$version" --pattern NazChat.apk --output "$RUNNER_TEMP/published.apk"
+          test "$(sha256sum "$RUNNER_TEMP/published.apk" | cut -d' ' -f1)" = "$(jq -r .sha256 version.json)"
+          gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name | grep -qx "v$version"
+          echo "Release v$version is live and its APK matches version.json."
