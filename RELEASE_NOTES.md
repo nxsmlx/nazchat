@@ -1,3 +1,11 @@
+# Kita Chat 4.16.0
+
+- Ask Kita in Chat to scan your own Wi-Fi, check a device's open ports or audit a website. Kita runs the check and explains the results in the conversation.
+- Network scans still ask for permission first, work only on the phone's private Wi-Fi subnet and never scan mobile data or public IP addresses.
+- Website audit checks the certificate, HTTPS redirect, security headers and DNS records without exploiting the site.
+- Tools → Network remains available for the full visual scanner, website tests and saved reports.
+- VersionCode 66, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.15.2
 
 - Drop-down choices (port check profile, response style, web search provider, agent count, model per role, Cloudflare account, Supabase project, text sizes…) now open a Kita picker that slides up from the bottom, matching the light or dark theme, instead of the old grey Android dialog.

@@ -20,7 +20,54 @@ const PORT_NOTES={
 function portNote(p){return PORT_NOTES[p]||['info','Open port'];}
 const net={info:null,hosts:new Map(),services:[],sweep:null,ports:new Set(),progress:'',audit:null,agreed:false,profile:'quick',custom:'',webtest:null,webStep:'',capture:null};
 const scanJobs=new Map();
-window.nazScanEvent=(job,text)=>{let e;try{e=JSON.parse(text);}catch(x){return;}const fn=scanJobs.get(job);if(fn)fn(e);if(e.type==='done')scanJobs.delete(job);};
+/* Chat tools use the same native scanner as the Network sheet. Each job gets its own
+   event stream, so opening the sheet or running a port check never mixes results. */
+function scanToolJob(start,onEvent,timeoutMs=90000){
+  return new Promise((resolve,reject)=>{
+    let id=-1,timer;
+    const signal=currentAbortSignal();
+    const done=()=>{clearTimeout(timer);scanJobs.delete(id);signal?.removeEventListener('abort',abort);};
+    const abort=()=>{try{if(id>=0)window.NazNetScan.cancel(id);}catch(e){}done();reject(cancellationError());};
+    const onDone=()=>{if(signal?.aborted){abort();return;}done();resolve();};
+    try{id=start();if(id<0){done();reject(new Error('Only devices on this private Wi-Fi can be checked'));return;}}catch(e){done();reject(e);return;}
+    scanJobs.set(id,e=>{
+      try{
+        if(e.type==='error'){done();reject(new Error(String(e.message||'Network scan failed')));return;}
+        onEvent?.(e);
+        if(e.type==='done')onDone();
+      }catch(err){done();reject(err);}
+    });
+    signal?.addEventListener('abort',abort,{once:true});
+    timer=setTimeout(()=>{try{window.NazNetScan.cancel(id);}catch(e){}done();reject(new Error('Network scan timed out'));},timeoutMs);
+  });
+}
+function scanToolHosts(hosts){
+  return [...hosts.values()].sort((a,b)=>NazIpSort(a.ip,b.ip)).map(h=>({
+    ip:h.ip,name:h.name||'',services:(h.services||[]).slice(0,20),
+    open:[...new Set([...(h.open||[]),...(h.ports||[]).map(p=>p.port)])].sort((a,b)=>a-b)
+  }));
+}
+async function networkScanTool(){
+  if(!hasNetScan())return {error:'Network scans require the installed app on Wi-Fi. Website audit still works in a browser.'};
+  refreshNetInfo();
+  if(!net.info?.scannable)return {error:'Connect to Wi-Fi first. Mobile data networks are never scanned.'};
+  const hosts=new Map();
+  await scanToolJob(()=>window.NazNetScan.sweep(),e=>{
+    if(e.type==='host'){const h=hosts.get(e.ip)||{ip:e.ip,name:'',open:[],services:[]};h.name=e.name||h.name;h.open=[...new Set([...h.open,...(e.open||[])])];hosts.set(e.ip,h);}
+  });
+  return {network:subnetLabel(net.info),gateway:net.info.gateway||'',deviceCount:hosts.size,devices:scanToolHosts(hosts)};
+}
+async function networkPortsTool(ip,profile){
+  if(!hasNetScan())return {error:'Port checks require the installed app on Wi-Fi.'};
+  ip=String(ip||'').trim();profile=['quick','top'].includes(profile)?profile:'quick';
+  if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)||ip.split('.').some(n=>Number(n)>255))return {error:'Enter a valid IPv4 address on your Wi-Fi.'};
+  refreshNetInfo();
+  if(!net.info?.scannable)return {error:'Connect to Wi-Fi first. Mobile data networks are never scanned.'};
+  const ports=[];
+  await scanToolJob(()=>window.NazNetScan.ports(ip,profile),e=>{if(e.type==='port')ports.push({port:e.port,banner:String(e.banner||'').slice(0,200),note:portNote(e.port)[1],risk:portNote(e.port)[0]});});
+  return {ip,profile,openPorts:ports.sort((a,b)=>a.port-b.port)};
+}
+window.nazScanEvent=(job,text)=>{let e;try{e=JSON.parse(text);}catch(x){return;}const fn=scanJobs.get(job);if(fn)fn(e);};
 function hasNetScan(){return typeof window.NazNetScan==='object'&&typeof window.NazNetScan.sweep==='function';}
 function netHost(ip){let h=net.hosts.get(ip);if(!h){h={ip,name:'',open:[],ports:[],services:[],udp:[]};net.hosts.set(ip,h);}return h;}
 function subnetLabel(i){return i&&i.ip?i.ip+'/'+i.prefix:'';}

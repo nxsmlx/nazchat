@@ -1519,8 +1519,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.15.2";
-const APP_VERSION_CODE = 65;
+const APP_VERSION = "4.16.0";
+const APP_VERSION_CODE = 66;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2200,7 +2200,7 @@ function renderAssistant(bubble, msg, live){
     box.appendChild(el("div","tool-trace-title", "🔧 "+msg.toolTrace.length+" tool "+(msg.toolTrace.length>1?"calls":"call")));
     msg.toolTrace.forEach(t=>{
       const row=el("div","tool-trace-row");
-      const what=t.name==="web_search" ? "Search: "+(t.args.query||"") : t.name==="fetch_url" ? "Read: "+(t.args.url||"") : t.name==="supabase_sql" ? "SQL: "+String(t.args.query||"").replace(/\s+/g," ") : "Tool: "+t.name.replace(/^mcp_/,"").replace(/_/g," ");
+      const what=t.name==="web_search" ? "Search: "+(t.args.query||"") : t.name==="fetch_url" ? "Read: "+(t.args.url||"") : t.name==="supabase_sql" ? "SQL: "+String(t.args.query||"").replace(/\s+/g," ") : isNetworkTool(t.name) ? networkToolLabel(t.name,t.args) : "Tool: "+t.name.replace(/^mcp_/,"").replace(/_/g," ");
       row.innerHTML=`<span>${esc(what.slice(0,90))}</span><span class="tool-trace-ms">${t.ms}ms${t.ok?"":" · failed"}</span>`;
       box.appendChild(row);
     });
@@ -3786,8 +3786,15 @@ function assembleHtml(parts){
 const REASONING_CHAR_CAP = 16000; // ~4k tokens; beyond this the answer budget is what matters
 const KITA_TOOLS = [
   {type:"function", function:{name:"web_search", description:"Search the public web for current facts, docs, prices or news. Returns titles, URLs and snippets.", parameters:{type:"object",properties:{query:{type:"string",description:"Search query"}},required:["query"]}}},
-  {type:"function", function:{name:"fetch_url", description:"Download one public web page or API endpoint and return its text, so you can read real documentation or source.", parameters:{type:"object",properties:{url:{type:"string",description:"Absolute http(s) URL"}},required:["url"]}}}
+  {type:"function", function:{name:"fetch_url", description:"Download one public web page or API endpoint and return its text, so you can read real documentation or source.", parameters:{type:"object",properties:{url:{type:"string",description:"Absolute http(s) URL"}},required:["url"]}}},
+  {type:"function", function:{name:"network_scan", description:"With the user's permission, scan only this phone's private Wi-Fi subnet for devices and open ports. Never use for public networks or addresses.", parameters:{type:"object",properties:{}}}},
+  {type:"function", function:{name:"network_ports", description:"With the user's permission, check common ports on one device already found on this phone's private Wi-Fi. Not for public IP addresses.", parameters:{type:"object",properties:{ip:{type:"string",description:"Private IPv4 address from a network_scan result"},profile:{type:"string",enum:["quick","top"],description:"quick checks 35 common ports; top checks about 1100"}},required:["ip"]}}},
+  {type:"function", function:{name:"website_audit", description:"Audit a public website's TLS certificate, HTTPS redirect, security headers and DNS records. Read-only; no exploitation.", parameters:{type:"object",properties:{domain:{type:"string",description:"Public domain, for example example.com"}},required:["domain"]}}}
 ];
+function networkToolLabel(name,args){
+  return name==='network_scan'?'Scan Wi-Fi devices':name==='network_ports'?'Check ports: '+(args.ip||''):name==='website_audit'?'Audit website: '+(args.domain||''):'';
+}
+function isNetworkTool(name){return name==='network_scan'||name==='network_ports'||name==='website_audit';}
 /* ===================== MCP servers (Streamable HTTPS + OAuth) ===================== */
 const mcpWaiters=new Map();
 window.nazMcpDone=(id,payload)=>{const fn=mcpWaiters.get(id);if(fn)fn(payload);};
@@ -3800,7 +3807,7 @@ function mcpToolDefs(){
  for(const s of mcpEnabledServers())for(const t of s.tools||[]){const name=mcpNames(s,t);if(seen.has(name)||name.length>64)continue;seen.add(name);out.push({type:'function',function:{name,description:('External tool on '+s.name+': '+(t.description||t.name)).slice(0,450),parameters:t.inputSchema&&typeof t.inputSchema==='object'?t.inputSchema:{type:'object',properties:{}}}});if(out.length>=40)return out;}
  return out;
 }
-function kitaTools(){return (db.search?KITA_TOOLS:KITA_TOOLS.filter(t=>t.function.name!=='web_search')).concat(db.mcpEnabled!==false?mcpToolDefs():[]).concat(typeof supabaseToolDefs==='function'?supabaseToolDefs():[]);}
+function kitaTools(mode){return (db.search?KITA_TOOLS:KITA_TOOLS.filter(t=>t.function.name!=='web_search')).filter(t=>!isNetworkTool(t.function.name)||mode!=='code').concat(db.mcpEnabled!==false?mcpToolDefs():[]).concat(typeof supabaseToolDefs==='function'?supabaseToolDefs():[]);}
 function mcpRequest(server,method,params,signal){
  if(!window.NazMcp?.request)return Promise.reject(new Error('MCP requires the installed app'));
  if(signal?.aborted)return Promise.reject(cancellationError());
@@ -3943,6 +3950,12 @@ async function runKitaTool(name,args){
       const text=/^\s*[[{]/.test(raw||"")?raw:String(new DOMParser().parseFromString(raw||"","text/html").body?.textContent||raw).replace(/\s+/g," ");
       return {url:u,status:res.status,text:String(text||"").slice(0,4000)};
     }catch(e){ return {error:String(e.message||e)}; }
+  }
+  if(name==='network_scan')return await networkScanTool();
+  if(name==='network_ports')return await networkPortsTool(args.ip,args.profile);
+  if(name==='website_audit'){
+    try{return await auditSite(String(args.domain||''));}
+    catch(e){return {error:String(e.message||e)};}
   }
   if(name.startsWith('supabase_') && typeof runSupabaseTool==="function") return await runSupabaseTool(name,args);
   if(name.startsWith('mcp_')){
@@ -4308,8 +4321,8 @@ async function sendResponse(text, opts, run){
     (p.baseUrl.replace(/\/+$/,"") + (p.apiType==="responses" ? "/responses" : "/chat/completions"));
 
   // Tool loop state: Kita executes tools natively, so calling one never leaves the app silent.
-  let toolsOn = toolsOnDefault && kitaTools().length>0;
-  const activeTools = kitaTools();
+  let toolsOn = toolsOnDefault && kitaTools(typeof convMode==='function'?convMode(conv_):'chat').length>0;
+  const activeTools = kitaTools(typeof convMode==='function'?convMode(conv_):'chat');
   if(toolsOn) history = history.map(h=>h.role==="system"?{...h, content:h.content+toolSystemNote(activeTools)}:h);
   let finishReason = null, pendingToolCalls = [], toolTrace = [], rounds = 0, retries = 0, reasoningRescued = false;
   // Research loop: search → read → search again, up to 6 rounds, then a tools-free answer.
@@ -4634,6 +4647,9 @@ async function sendResponse(text, opts, run){
     for(const c of calls){
       if(currentAbortSignal()?.aborted)break;
       let args = {}; try{ args = c.args?JSON.parse(c.args):{}; }catch(e){ args = {}; }
+      if(c.name.startsWith('network_')&&!await confirmNetworkUse()){
+        results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined scanning this network.'}});continue;
+      }
       if(c.name==='supabase_sql'&&!await confirmSupabaseSql(String(args.query||''),String(args.purpose||''))){
         results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined running this SQL.'}});continue;
       }
@@ -4644,7 +4660,7 @@ async function sendResponse(text, opts, run){
         results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined opening this page.'}});continue;
       }
       if(currentAbortSignal()?.aborted)break;
-      const what = c.name==="web_search" ? `Searching the web for “${args.query||""}”` : c.name==="fetch_url" ? `Reading ${args.url||"a page"}` : `Using ${c.name.replace(/^mcp_/,"").replace(/_/g," ")}`;
+      const what = c.name==="web_search" ? `Searching the web for “${args.query||""}”` : c.name==="fetch_url" ? `Reading ${args.url||"a page"}` : isNetworkTool(c.name) ? networkToolLabel(c.name,args) : `Using ${c.name.replace(/^mcp_/,"").replace(/_/g," ")}`;
       const label = `Step ${toolTrace.length+1} · ${what}`;
       setStreamNote(label+"…");
       const t0 = Date.now();
