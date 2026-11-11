@@ -1,9 +1,9 @@
 {
-  "version": "4.11.0",
-  "versionCode": 58,
+  "version": "4.13.0",
+  "versionCode": 61,
   "name": "Kita Chat",
-  "changelog": "Chat and Code tabs, publish from your phone to Vercel, Cloudflare (Pages, Workers) and GitHub, and Supabase for apps with a database and sign-in.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.11.0/NazChat.apk",
-  "sha256": "fcabffa117f7a8c7ceedaa8b6bb69f3bbbc2de4106563a935b419884fc58ac6f",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.11.0"
+  "changelog": "Agent team for long builds (Designer, Reviewer, Fixer, Database, a model per role), publish versions with rollback, and Web & DNS: DNS-over-HTTPS plus search with your API keys or model search.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.13.0/NazChat.apk",
+  "sha256": "d654a4f77566716ea5686819577218578cf813c7497c1279716e829c946cdfaa",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.13.0"
 }
