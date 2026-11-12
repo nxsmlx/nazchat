@@ -27,7 +27,20 @@ public final class NazFiles {
     @JavascriptInterface
     public synchronized boolean save(String name, String mime, String text) {
         if (text == null) return false;
-        byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+        return offer(name, mime, text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** Binary files such as a project .zip, passed from JavaScript as base64. */
+    @JavascriptInterface
+    public synchronized boolean saveBase64(String name, String mime, String base64) {
+        if (base64 == null || base64.length() > MAX_BYTES / 3 * 4 + 4) return false;
+        byte[] bytes;
+        try { bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT); }
+        catch (IllegalArgumentException e) { return false; }
+        return offer(name, mime, bytes);
+    }
+
+    private boolean offer(String name, String mime, byte[] bytes) {
         if (bytes.length > MAX_BYTES) return false;
         pending = bytes;
         pendingName = cleanName(name);

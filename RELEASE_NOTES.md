@@ -1,3 +1,11 @@
+# Kita Chat 4.19.0
+
+- Code tab: new Files setting. Choose Separate files to get a production layout: index.html, css/styles.css and js/app.js (plus js/main.js for modules). Kita splits the page when you download or publish, so preview and editing keep working the same with any model.
+- Download project (.zip): every web page or multi-file answer can be saved as one .zip from the card menu (⋯).
+- Answers that come as several files (index.html + styles.css + app.js) now open in Preview with their own CSS and JavaScript. Before, the page opened without them.
+- Publishing to GitHub, Vercel and Cloudflare uses the same file layout as the download.
+- VersionCode 73, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.18.0
 
 - Code tab: choose a design style for new builds: Minimal, Editorial, Bold, Soft, Technical, Playful, Trusted or Raw, or leave it on Auto. Each style comes with an open font pairing and a fallback for offline, and the Designer agent follows it.

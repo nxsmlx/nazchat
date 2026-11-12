@@ -93,7 +93,7 @@ esac
 rm -rf "$B/assets"
 mkdir -p "$B/assets"
 # Explicit frontend asset allowlist; never package design-lab or signing material.
-for asset in index.html studio.css studio.js comfort.js design.js provider-picker.js integrations.js agents.js websearch.js network.js pcap.js webtest.js; do
+for asset in index.html studio.css studio.js comfort.js design.js project.js provider-picker.js integrations.js agents.js websearch.js network.js pcap.js webtest.js; do
   [ -f "$ROOT/nazchat/$asset" ] || fail "Missing frontend asset: $asset"
   cp "$ROOT/nazchat/$asset" "$B/assets/$asset"
 done

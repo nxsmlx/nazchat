@@ -1074,6 +1074,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <script src="studio.js"></script>
 <script src="comfort.js"></script>
 <script src="design.js"></script>
+<script src="project.js"></script>
 <script src="provider-picker.js"></script>
 <script src="integrations.js"></script>
 <script src="agents.js"></script>
@@ -1835,8 +1836,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.18.0";
-const APP_VERSION_CODE = 72;
+const APP_VERSION = "4.19.0";
+const APP_VERSION_CODE = 73;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2129,7 +2130,8 @@ function makeArtifactCard(wrap, info){
   if(info.isPage){
     const open=el("button","artifact-btn primary","Open");
     open.setAttribute("aria-label","Open "+title);
-    open.onclick=()=>openPreview(info.rawCode,{live:false});
+    // A multi-file answer links styles.css / app.js: put them back in so the preview looks right.
+    open.onclick=()=>openPreview(multi&&typeof inlineProjectFiles==="function"?inlineProjectFiles(info.rawCode,info.files):info.rawCode,{live:false});
     acts.appendChild(open);
   }
   if(info.isPage && typeof openPublishSheet==="function"){
@@ -2154,6 +2156,7 @@ function makeArtifactCard(wrap, info){
     const items=multi
       ? [[info.isPage?"Copy page code":"Copy "+info.name,()=>copyText(info.rawCode)],...info.files.map(f=>["Download "+f.name,()=>downloadText(f.name,f.raw)])]
       : [["Copy code",()=>copyText(info.rawCode)],["Download "+info.name,()=>downloadText(info.name,info.rawCode)]];
+    if((info.isPage||multi) && typeof downloadProjectZip==="function") items.splice(multi?1:items.length,0,["Download project (.zip)",()=>downloadProjectZip(info,title)]);
     if(typeof window.NazShare==="object" || navigator.share) items.push(["Share",()=>shareText(info.rawCode)]);
     openMessageMenu(more, items);
   };
