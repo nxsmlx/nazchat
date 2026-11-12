@@ -83,7 +83,10 @@ function openKitaSelect(s){
   for(const o of s.options){
     if(o.hidden)continue;
     const b=el('button','kita-select-option'+(o.selected?' on':''));b.type='button';b.setAttribute('role','option');b.setAttribute('aria-selected',String(o.selected));b.disabled=o.disabled;
-    const t=el('span','kita-select-text');t.textContent=o.textContent;b.append(t,el('span','kita-select-check'));
+    const t=el('span','kita-select-text');t.textContent=o.textContent;
+    // Optional second line: <option data-sub="…">.
+    if(o.dataset.sub){const sub=el('small','kita-select-sub');sub.textContent=o.dataset.sub;t.appendChild(sub);}
+    b.append(t,el('span','kita-select-check'));
     b.onclick=()=>{const changed=s.value!==o.value;s.value=o.value;closeKitaSelect();if(changed){s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new Event('change',{bubbles:true}));}};
     list.appendChild(b);
   }

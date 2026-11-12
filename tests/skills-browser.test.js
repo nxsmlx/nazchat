@@ -79,9 +79,9 @@ function skillData(){return require('../skills.json').skills;}
  assert(await p.evaluate(()=>db.skillSettings.custom.some(x=>x.name==='Laravel Expert')));
  console.log('PASS custom SKILL.md import and reload persistence');
  await p.unroute('https://raw.githubusercontent.com/nxsmlx/nazchat/main/skills.json*');
- await p.route('https://raw.githubusercontent.com/nxsmlx/nazchat/main/skills.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({packVersion:3,skills:skillData()})}));
- const pack=await p.evaluate(()=>refreshSkillPack(false));assert.strictEqual(pack.packVersion,3);
- assert(await p.evaluate(()=>db.skillPackCache.packVersion===3));console.log('PASS background pack update');
+ await p.route('https://raw.githubusercontent.com/nxsmlx/nazchat/main/skills.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({packVersion:require('../skills.json').packVersion+1,skills:skillData()})}));
+ const pack=await p.evaluate(()=>refreshSkillPack(false));assert.strictEqual(pack.packVersion,require('../skills.json').packVersion+1);
+ assert(await p.evaluate(v=>db.skillPackCache.packVersion===v,require('../skills.json').packVersion+1));console.log('PASS background pack update');
  await p.evaluate(()=>{db.skillSettings.mode='auto';db.skillSettings.selected=[];conv=null;renderAll();});
  await p.fill('#promptInput','buat landing page');await p.click('#sendBtn');await p.waitForFunction(()=>!generating);
  // The multi-file build renders in one tabbed code viewer; it starts collapsed and expands.

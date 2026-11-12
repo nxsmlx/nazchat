@@ -72,7 +72,7 @@ async function runDesigner(msg,{model,task,contract,paint}){
   teamStep(msg,'designer',{status:'running',note:'Designing · '+agentLabel(model)});paint(msg);
   const out=await agentCall(model,[
     {role:'system',content:'You are the designer on a team of agents building one web page. Write a compact design system that every coder will share: CSS custom properties on :root (colours with good contrast, fonts, type scale, spacing, radius, shadows), base element styles, and reusable component classes (container, section, buttons, cards, form fields, navigation). Mobile first, accessible focus styles. Reply with one ```css block (at most 150 lines), then up to 8 short lines listing the class names and when to use them. No HTML.'},
-    {role:'user',content:'Task: '+String(task).slice(0,1500)+'\n\n[Shared contract]\n'+contract+'\n[End contract]'}],{temperature:.5});
+    {role:'user',content:'Task: '+String(task).slice(0,1500)+(typeof codeStyleNote==='function'?codeStyleNote():'')+'\n\n[Shared contract]\n'+contract+'\n[End contract]'}],{temperature:.5});
   const css=firstFence(out,'css');
   const guide=out.replace(/```[\s\S]*?```/g,'').trim().slice(0,1200);
   if(!css){teamStep(msg,'designer',{status:'skipped',note:'No design system returned'});return null;}
