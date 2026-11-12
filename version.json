@@ -1,9 +1,9 @@
 {
-  "version": "4.17.2",
-  "versionCode": 70,
+  "version": "4.17.3",
+  "versionCode": 71,
   "name": "Kita Chat",
-  "changelog": "Test connection now says why a provider cannot be reached (host not found, key locked to another URL, TLS, timeout, or the provider's own error) instead of a bare \"HTTP 0\".",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.17.2/NazChat.apk",
-  "sha256": "2c05be855991b99bcbed895b4603c62ec08782356c8a9d153481925fc7ca0357",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.17.2"
+  "changelog": "Fixed: with DNS-over-HTTPS on (Settings → Web & DNS), providers and other sites could fail with \"Hostname … not verified\" or \"TLSV1_ALERT_INTERNAL_ERROR\". Android replaced the site name sent during the secure handshake with the IP address, ",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.17.3/NazChat.apk",
+  "sha256": "44f1e454bf3a11528468ddef719b7653a8e7b149aa7ad39e26dd1a286d4a92df",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.17.3"
 }
