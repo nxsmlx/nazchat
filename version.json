@@ -1,9 +1,9 @@
 {
-  "version": "4.18.0",
-  "versionCode": 72,
+  "version": "4.20.0",
+  "versionCode": 74,
   "name": "Kita Chat",
-  "changelog": "Code tab: choose a design style for new builds: Minimal, Editorial, Bold, Soft, Technical, Playful, Trusted or Raw, or leave it on Auto. Each style comes with an open font pairing and a fallback for offline, and the Designer agent follows i",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.18.0/NazChat.apk",
-  "sha256": "e34e9baac25501dd11d85663ff0faccece6e705c1aae137e68b1524617653567",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.18.0"
+  "changelog": "Attach images: photos, screenshots or pasted pictures. Kita resizes them on the phone and vision models read them, for example \"what is in this photo\", \"read this menu\" or \"build a page like this screenshot\".",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.20.0/NazChat.apk",
+  "sha256": "73a6b835f8a61520d5feab7cce4225c333df218b3b4598831276a867080d5363",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.20.0"
 }
