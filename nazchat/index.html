@@ -911,7 +911,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
         <div class="attachment-inline" id="attachmentInline"></div>
         <div id="inputRow">
           <button id="attachBtn" aria-label="Attach documents" title="Attach document or code"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
-          <input id="fileInput" type="file" multiple accept=".pcap,.pcapng,.pdf,.docx,.txt,.md,.markdown,.mdx,.csv,.tsv,.json,.yaml,.yml,.toml,.xml,.html,.htm,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.java,.kt,.go,.rs,.rb,.php,.swift,.dart,.c,.cpp,.h,.cs,.sql,.sh,.log,text/*,text/markdown,application/json">
+          <input id="fileInput" type="file" multiple accept="image/*,.png,.jpg,.jpeg,.webp,.gif,.pcap,.pcapng,.pdf,.docx,.txt,.md,.markdown,.mdx,.csv,.tsv,.json,.yaml,.yml,.toml,.xml,.html,.htm,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.java,.kt,.go,.rs,.rb,.php,.swift,.dart,.c,.cpp,.h,.cs,.sql,.sh,.log,text/*,text/markdown,application/json">
           <textarea id="promptInput" rows="1" placeholder="What’s on your mind?" aria-label="Message Kita"></textarea>
           <button id="steerBtn" type="button" aria-label="Steer response with this message" hidden>Steer</button>
           <button id="sendBtn" aria-label="Send message">
@@ -1074,6 +1074,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <script src="studio.js"></script>
 <script src="comfort.js"></script>
 <script src="design.js"></script>
+<script src="project.js"></script>
+<script src="images.js"></script>
 <script src="provider-picker.js"></script>
 <script src="integrations.js"></script>
 <script src="agents.js"></script>
@@ -1835,8 +1837,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.18.0";
-const APP_VERSION_CODE = 72;
+const APP_VERSION = "4.20.0";
+const APP_VERSION_CODE = 74;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2129,7 +2131,8 @@ function makeArtifactCard(wrap, info){
   if(info.isPage){
     const open=el("button","artifact-btn primary","Open");
     open.setAttribute("aria-label","Open "+title);
-    open.onclick=()=>openPreview(info.rawCode,{live:false});
+    // A multi-file answer links styles.css / app.js: put them back in so the preview looks right.
+    open.onclick=()=>openPreview(multi&&typeof inlineProjectFiles==="function"?inlineProjectFiles(info.rawCode,info.files):info.rawCode,{live:false});
     acts.appendChild(open);
   }
   if(info.isPage && typeof openPublishSheet==="function"){
@@ -2154,6 +2157,7 @@ function makeArtifactCard(wrap, info){
     const items=multi
       ? [[info.isPage?"Copy page code":"Copy "+info.name,()=>copyText(info.rawCode)],...info.files.map(f=>["Download "+f.name,()=>downloadText(f.name,f.raw)])]
       : [["Copy code",()=>copyText(info.rawCode)],["Download "+info.name,()=>downloadText(info.name,info.rawCode)]];
+    if((info.isPage||multi) && typeof downloadProjectZip==="function") items.splice(multi?1:items.length,0,["Download project (.zip)",()=>downloadProjectZip(info,title)]);
     if(typeof window.NazShare==="object" || navigator.share) items.push(["Share",()=>shareText(info.rawCode)]);
     openMessageMenu(more, items);
   };
@@ -2314,6 +2318,12 @@ function msgEl(msg){
     if(msg.attachments && msg.attachments.length){
       const files = el("div","user-files");
       msg.attachments.forEach(a=>{
+        if(a.imageId){
+          const b = el("button","user-image"); b.type="button"; b.setAttribute("aria-label","View image "+(a.name||""));
+          const img = el("img"); img.src=a.thumb||""; img.alt=a.name||"Image"; b.appendChild(img);
+          b.onclick=()=>viewImage(a.imageId,a.name);
+          files.appendChild(b); return;
+        }
         const f = el("div","user-file");
         f.innerHTML = a.pasted ? `<span>Pasted text · ${esc(attachmentSize(a.text))}</span>` : `<span>Document · ${esc(a.name)}</span>`;
         files.appendChild(f);
@@ -4551,6 +4561,7 @@ function friendlyProviderError(raw, model){
   const status=Number((text.match(/\bHTTP (\d{3})\b/)||[])[1]||0);
   let advice;
   if(/locked to https?:\/\//i.test(text)) return "⚠️ **Error:** "+text;
+  if(/image_url|input_image|\bimages?\b.*(not supported|unsupported|invalid)|(vision|multimodal).*(not supported|unsupported)|does not support (image|vision)/i.test(text)) advice=`This model on ${host} cannot read images. Choose a model with vision, or send the message without the image.`;
   if(!navigator.onLine) advice="You are offline. Connect to the internet and send again.";
   else if(!status && /network|failed to fetch|connection|timed out|unreachable|refused|resolve/i.test(text)) advice=`Could not reach ${host}. Check your connection and the provider URL.`;
   else if(status===401) advice=`${host} did not accept the API key (401). Open Settings → Providers and enter the key again.`;
@@ -4628,7 +4639,7 @@ async function sendResponse(text, opts, run){
 
   const attachments = opts.attachments || [];
   const steerMode = !!opts.steer;
-  const userMsg = { id:uid(), role:"user", content:text, attachments:attachments.map(a=>({name:a.name,type:a.type,text:a.text,...(a.pasted?{pasted:true}:{})})), timestamp:Date.now() };
+  const userMsg = { id:uid(), role:"user", content:text, attachments:attachments.map(a=>a.imageId?{name:a.name,type:a.type,imageId:a.imageId,thumb:a.thumb,width:a.width,height:a.height}:({name:a.name,type:a.type,text:a.text,...(a.pasted?{pasted:true}:{})})), timestamp:Date.now() };
   if(!opts.editing && !steerMode && !opts.resumeMessage && !opts.continueMessage) conv_.messages.push(userMsg);
   if(!opts.skipTitle && conv_.title==="New chat"){ conv_.title = text.slice(0,42) + (text.length>42?"…":""); }
   conv_.updatedAt = Date.now(); save();
@@ -4649,7 +4660,9 @@ async function sendResponse(text, opts, run){
   const prevHtml = opts.review ? "" : lastHtmlArtifact();
   const editingPage = !steerMode && !!prevHtml && isEditRequest(text);
   const priorMsgs = conv_.messages.filter(m=>(m.role==="user"||m.role==="assistant") && m.id!==aiMsg.id && m.id!==opts.steerMessageId && m.steerState!=="cancelled" && (opts.editing || steerMode || m.id!==userMsg.id));
-  const toApi = m=>({role:m.role, content:m.role==="user" ? apiContent(m.content,m.attachments||[]) : m.id===opts.steerSourceId ? (String(m.content||"").length>60000?"[Earlier output omitted from this request for context length. The full partial response remains in the conversation.]\n":"")+String(m.content||"").slice(-60000)+"\n[Interrupted response. Only the supplied output is available.]" : stripErrorNote(m.content)});
+  if(typeof preloadMessageImages==="function") await preloadMessageImages(priorMsgs.concat([{attachments}]));
+  const toApiText = m=>({role:m.role, content:m.role==="user" ? apiContent(m.content,m.attachments||[]) : m.id===opts.steerSourceId ? (String(m.content||"").length>60000?"[Earlier output omitted from this request for context length. The full partial response remains in the conversation.]\n":"")+String(m.content||"").slice(-60000)+"\n[Interrupted response. Only the supplied output is available.]" : stripErrorNote(m.content)});
+  const toApi = m=>typeof withMessageImages==="function"&&m.role==="user" ? withMessageImages(toApiText(m),m) : toApiText(m);
   // Long chats: older messages become a running summary; the latest ones go in full.
   let history = await compactHistory(conv_, priorMsgs, toApi, model, steerMode||!!opts.review);
   if(steerMode){
@@ -4657,9 +4670,9 @@ async function sendResponse(text, opts, run){
     const continuation=source?.phases
       ? "The phased build is paused. Only completed parts are retained in the current artifact above; the running part was not completed. If the output is labelled as an excerpt, do not assume the full artifact was supplied. This is a new continuation, not a resume of the original phases. Apply my latest instruction to the retained artifact and original task. Return a complete updated artifact, or explain what is still missing. Do not claim that unfinished phases are intact."
       : "The previous response was interrupted. Apply my latest instruction and complete the answer using the partial output above. Do not repeat completed prose. For code or an artifact, return a complete usable replacement rather than an unjoinable fragment.";
-    history.push({role:"user", content:apiContent(text,attachments)+"\n\n"+continuation});
+    history.push(withMessageImages({role:"user", content:apiContent(text,attachments)+"\n\n"+continuation},{attachments}));
   } else if(!opts.continueMessage){
-    history.push({role:"user", content:apiContent(text,attachments)});
+    history.push(withMessageImages({role:"user", content:apiContent(text,attachments)},{attachments}));
   }
   history.unshift({role:"system",content:skillSystemMessage(usedSkills,text)});
   const projectContext=retrieveProjectContext(text);
@@ -4868,9 +4881,12 @@ async function sendResponse(text, opts, run){
   if(currentAbortSignal()?.aborted)break;
   const params=modelParameters(model);
   aiMsg.context=contextStats(model,history,text);
+  // Images go only into this request (vision models), as image_url / input_image parts.
+  const visionReq = imagePartsForRequest(history, p.apiType, modelVision(model));
+  if(visionReq.textOnlyNotes && !aiMsg._visionWarned){ aiMsg._visionWarned=true; toast("This model can't see images. Pick a model with vision to read them."); }
   const body = p.apiType==="responses"
-    ? { model: model.modelId, input: history.map(h=>({role:h.role, content:h.content})), stream:true, temperature:params.temperature, top_p:params.top_p, max_output_tokens:params.max_tokens, ...(toolsOn?{tools:toolsToResponses(activeTools)}:{}), ...(db.thinking?{reasoning:{effort:db.reasoningEffort}}:{}) }
-    : { model: model.modelId, messages: history, stream:true, temperature:params.temperature, top_p:params.top_p, max_tokens:params.max_tokens, ...(toolsOn?{tools:activeTools, tool_choice:"auto"}:{}), ...(db.thinking?{reasoning_effort:db.reasoningEffort}:{}) };
+    ? { model: model.modelId, input: visionReq.messages.map(h=>({role:h.role, content:h.content})), stream:true, temperature:params.temperature, top_p:params.top_p, max_output_tokens:params.max_tokens, ...(toolsOn?{tools:toolsToResponses(activeTools)}:{}), ...(db.thinking?{reasoning:{effort:db.reasoningEffort}}:{}) }
+    : { model: model.modelId, messages: visionReq.messages, stream:true, temperature:params.temperature, top_p:params.top_p, max_tokens:params.max_tokens, ...(toolsOn?{tools:activeTools, tool_choice:"auto"}:{}), ...(db.thinking?{reasoning_effort:db.reasoningEffort}:{}) };
   aiMsg.content=carried; aiMsg.reasoning=""; aiMsg._thinkShown=false; thinkStart=null; lastPaint=0; lastDataAt=Date.now();
   pendingToolCalls=[]; finishReason=null; sawEnd=false;
   startWatchdog();
@@ -5202,8 +5218,10 @@ $("#editScrim").onclick = e=>{ if(e.target.id==="editScrim") $("#editScrim").cla
 function renderAttachments(){
   const box = $("#attachmentInline"); box.innerHTML = "";
   pendingAttachments.forEach((a,i)=>{
-    const chip = el("div","attachment-chip"+(a.pasted?" pasted":""));
-    chip.innerHTML = a.pasted
+    const chip = el("div","attachment-chip"+(a.pasted?" pasted":"")+(a.imageId?" image":""));
+    chip.innerHTML = a.imageId
+      ? `<img class="attachment-thumb" src="${esc(a.thumb||"")}" alt=""><span class="name">${esc(a.name)}<small>${esc((a.width||"?")+" × "+(a.height||"?"))}</small></span>`
+      : a.pasted
       ? `<span class="attachment-type">PASTE</span><span class="name"><span class="paste-line">${esc(String(a.text).trim().split("\n")[0].slice(0,60)||"Pasted text")}</span><small>${esc(attachmentSize(a.text))}</small></span>`
       : `<span class="attachment-type">${esc(attachmentLabel(a.name))}</span><span class="name">${esc(a.name)}</span>`;
     chip.title=a.pasted?"Pasted text, sent as an attachment":a.name;
@@ -5277,8 +5295,12 @@ async function handleFiles(files){
         continue;
       }
       const kind=attachableKind(file);
-      if(kind==="image"){toast("Image attachments are not supported");continue;}
-      if(!kind){toast("Can't read "+file.name+". Attach PDF, DOCX, Markdown, text or code files.");continue;}
+      if(kind==="image"){
+        if(pendingAttachments.filter(a=>a.imageId).length>=IMAGES_PER_MESSAGE){toast("Up to "+IMAGES_PER_MESSAGE+" images per message");continue;}
+        try{ pendingAttachments.push(await prepareImageAttachment(file)); }catch(e){ toast(String(e.message||e)); }
+        continue;
+      }
+      if(!kind){toast("Can't read "+file.name+". Attach images, PDF, DOCX, Markdown, text or code files.");continue;}
       if(file.size>20*1024*1024){toast('File too large: '+file.name+' (maximum 20 MB)');continue;}
       toast('Reading '+file.name+'…');
       const attachment={name:file.name,type:(file.type&&file.type!=="application/octet-stream")?file.type:(/\.(md|markdown|mdx)$/i.test(file.name)?"text/markdown":"text/plain"),text:await extractFileText(file)};
@@ -5317,6 +5339,8 @@ function attachPastedText(text){
   toast(`Long paste added as an attachment (${attachmentSize(text)})`);
 }
 input.addEventListener("paste", e=>{
+  const pastedImages=[...(e.clipboardData?.files||[])].filter(f=>/^image\//.test(f.type));
+  if(pastedImages.length){ e.preventDefault(); handleFiles(pastedImages); return; }
   const t=e.clipboardData?.getData("text/plain")||"";
   if(!isLongPaste(t))return;
   e.preventDefault();

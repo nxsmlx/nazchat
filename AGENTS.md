@@ -78,6 +78,8 @@ nazchat/                 Web app: the ONLY source of the UI and app logic
   studio.js / studio.css Newer UI: sheets, settings, Chat|Code tabs, keyboard/focus handling
   comfort.js             Reading preferences, Android Back (kitaHandleBack), Kita picker for every <select>
   design.js              Design kit: style presets + font pairings for Code builds, bundled Lucide icons (<i data-icon> → inline SVG)
+  project.js             Project files: split a page into index.html + css/ + js/ for download and publish, preview multi-file answers, .zip export
+  images.js              Image attachments: resize on device, full images in IndexedDB (thumbnail in chat data), vision request parts
   provider-picker.js     Provider preset dialog
   integrations.js        GitHub / Vercel / Cloudflare / Supabase publishing
   agents.js              Orchestrator, sub-agents, agent team (designer, tester, reviewer, fixer, database)

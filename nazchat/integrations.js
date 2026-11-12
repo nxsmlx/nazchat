@@ -160,20 +160,9 @@ function siteSlug(text){
 }
 const SITE_TYPES={html:'text/html; charset=utf-8',htm:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'text/javascript; charset=utf-8',mjs:'text/javascript; charset=utf-8',json:'application/json',svg:'image/svg+xml',txt:'text/plain; charset=utf-8',md:'text/markdown; charset=utf-8',xml:'application/xml',webmanifest:'application/manifest+json'};
 function siteType(path){return SITE_TYPES[(String(path).split('.').pop()||'').toLowerCase()]||'text/plain; charset=utf-8';}
-/* Files from an answer: the page becomes index.html; named files keep their names. */
-function siteFilesFrom(info){
-  const files=[];
-  const list=info.files&&info.files.length?info.files:[{name:info.name,raw:info.rawCode,lang:info.lang}];
-  const page=list.find(f=>/^(html|htm|xhtml)$/.test(f.lang||'')&&/<(?:!doctype\s+html|html\b|body\b)/i.test(f.raw))||list.find(f=>/\.html?$/i.test(f.name));
-  for(const f of list){
-    let path=String(f.name||'file.txt').replace(/^\/+/,'').replace(/\.\.+/g,'.');
-    if(f===page) path='index.html';
-    if(files.some(x=>x.path===path)) continue;
-    const content=String(f.raw||'');
-    files.push({path,content:/\.html?$/i.test(path)&&typeof kitaInlineIcons==='function'?kitaInlineIcons(content):content});
-  }
-  return files;
-}
+/* Files from an answer: the page becomes index.html; named files keep their names; a single
+   page is split into css/ and js/ when Code is set to separate files (see project.js). */
+function siteFilesFrom(info){return projectFiles(info);}
 
 /* ---------- Publishers ---------- */
 async function publishVercel(name,files,log){
@@ -528,6 +517,7 @@ function renderModeHome(){
   if(!sites){sites=el('div','code-sites');home.appendChild(sites);}
   sites.innerHTML='';
   if(typeof renderCodeStylePicker==='function') sites.appendChild(renderCodeStylePicker());
+  if(typeof renderCodeFilesPicker==='function') sites.appendChild(renderCodeFilesPicker());
   const connected=Object.keys(INTEGRATIONS).filter(integrationConnected);
   const bar=el('button','code-integrations');bar.type='button';
   bar.innerHTML='<span class="integration-icons">'+Object.keys(INTEGRATIONS).map(s=>'<span class="integration-icon'+(integrationConnected(s)?' on':'')+'">'+integrationIcon(s)+'</span>').join('')+'</span><span><strong>'+(connected.length?'Publishing to '+connected.map(s=>INTEGRATIONS[s].name).join(', '):'Connect where to publish')+'</strong><small>'+(connected.length?'Manage integrations':'GitHub, Vercel and Cloudflare')+'</small></span>'+kitaIcon('arrow');

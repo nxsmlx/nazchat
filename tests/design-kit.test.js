@@ -36,7 +36,7 @@ console.log('PASS preview and publish inline the icons; other files untouched');
 
 // 3. Code home: style picker, saved choice, notes for builds and the Designer agent.
 await page.evaluate(()=>{conv=null;setKitaMode('code');renderAll();});
-const pick=page.locator('.code-style select');await pick.waitFor();
+const pick=page.locator('select[aria-label="Design style for new builds"]');await pick.waitFor();
 assert.equal(await pick.inputValue(),'auto');
 assert.equal(await page.evaluate(()=>codeStyleNote()),'','Auto adds no style note');
 assert.equal(await page.evaluate(()=>'codeStyle' in db),false,'reading must not create the setting');
@@ -46,7 +46,7 @@ await page.locator('.kita-select-option',{hasText:'Editorial'}).click();
 assert.equal(await pick.evaluate(s=>s.options[s.selectedIndex].textContent),'Editorial');
 await page.locator('.kita-select-scrim').waitFor({state:'detached'});
 assert.equal(await page.evaluate(()=>db.codeStyle),'editorial');
-assert.match(await page.locator('.code-style small').innerText(),/Magazine type/);
+assert.match(await pick.locator('xpath=ancestor::label').locator('small').innerText(),/Magazine type/);
 const note=await page.evaluate(()=>codeContextNote());
 assert.match(note,/Visual style chosen by the user: Editorial/);
 assert.match(note,/fonts\.googleapis\.com\/css2\?family=Newsreader/);assert.match(note,/fallback stack Newsreader, Georgia/);

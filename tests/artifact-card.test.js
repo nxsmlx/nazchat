@@ -32,7 +32,7 @@ const assert=require('assert');
   await page.locator('.artifact-more').click();
   const items=await page.locator('.artifact-actions .msg-menu-item').allTextContents();
   assert.deepEqual(items.slice(0,2),['Copy code','Download snippet.html']);
-  await page.locator('.artifact-actions .msg-menu-item',{hasText:'Download'}).click();
+  await page.locator('.artifact-actions .msg-menu-item',{hasText:/^Download (?!project)/}).click();
   assert.equal((await page.evaluate(()=>window.__saved))[0][0],'snippet.html');
 
   // Failing test result is shown on the card.
