@@ -1,3 +1,11 @@
+# Kita Chat 4.20.0
+
+- Attach images: photos, screenshots or pasted pictures. Kita resizes them on the phone and vision models read them, for example "what is in this photo", "read this menu" or "build a page like this screenshot".
+- Images are shown as thumbnails in the chat; tap one to see it full size. Full images stay on your phone (not in the chat data), so chats stay fast.
+- Works with Chat Completions and the Responses API. If the selected model cannot see images, Kita says so instead of failing; pick a model with vision.
+- Also in this update (4.19.0): Code tab Files setting for a production layout (index.html, css/styles.css, js/app.js), Download project (.zip), and multi-file answers that preview with their own CSS and JavaScript.
+- VersionCode 74, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.19.0
 
 - Code tab: new Files setting. Choose Separate files to get a production layout: index.html, css/styles.css and js/app.js (plus js/main.js for modules). Kita splits the page when you download or publish, so preview and editing keep working the same with any model.
