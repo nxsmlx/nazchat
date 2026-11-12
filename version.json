@@ -1,9 +1,9 @@
 {
-  "version": "4.17.3",
-  "versionCode": 71,
+  "version": "4.18.0",
+  "versionCode": 72,
   "name": "Kita Chat",
-  "changelog": "Fixed: with DNS-over-HTTPS on (Settings → Web & DNS), providers and other sites could fail with \"Hostname … not verified\" or \"TLSV1_ALERT_INTERNAL_ERROR\". Android replaced the site name sent during the secure handshake with the IP address, ",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.17.3/NazChat.apk",
-  "sha256": "44f1e454bf3a11528468ddef719b7653a8e7b149aa7ad39e26dd1a286d4a92df",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.17.3"
+  "changelog": "Code tab: choose a design style for new builds: Minimal, Editorial, Bold, Soft, Technical, Playful, Trusted or Raw, or leave it on Auto. Each style comes with an open font pairing and a fallback for offline, and the Designer agent follows i",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.18.0/NazChat.apk",
+  "sha256": "e34e9baac25501dd11d85663ff0faccece6e705c1aae137e68b1524617653567",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.18.0"
 }
