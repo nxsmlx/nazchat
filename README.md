@@ -1,6 +1,14 @@
-# Kita Chat 4.17.3
+# Kita Chat 4.18.0
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+- Code tab: choose a design style for new builds: Minimal, Editorial, Bold, Soft, Technical, Playful, Trusted or Raw, or leave it on Auto. Each style comes with an open font pairing and a fallback for offline, and the Designer agent follows it.
+- Built-in icons: pages Kita builds can use 95 clean line icons (Lucide). They are added as inline SVG in preview, download and publish, so pages need no icon library and no emoji icons.
+- Four new design skills: Motion & Micro-interactions, Layout Patterns (landing sections, app screens, grids), Icons & Imagery, and Data Viz & Dashboards. They are picked automatically for matching requests, in English or Malay.
+- Pickers can show a short description under each choice.
+- VersionCode 72, same com.nazchat.app package and original signing identity.
+
+# Kita Chat 4.17.3
 
 - Fixed: with DNS-over-HTTPS on (Settings → Web & DNS), providers and other sites could fail with "Hostname … not verified" or "TLSV1_ALERT_INTERNAL_ERROR". Android replaced the site name sent during the secure handshake with the IP address, so servers that host many sites (Caddy, Cloudflare, shared hosting) did not know which site was meant. Kita now finishes the handshake with the real site name.
 - If a TLS error happens while DNS-over-HTTPS is on, Test connection now suggests switching Web & DNS to System.

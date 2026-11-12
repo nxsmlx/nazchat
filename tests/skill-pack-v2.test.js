@@ -7,7 +7,7 @@ const path=require('node:path');
 // the new art-direction, interface-copy and design-critique skills exist and route.
 (async()=>{
  const pack=require('../skills.json');
- assert.strictEqual(pack.packVersion,2);
+ assert(pack.packVersion>=3,'pack v3 or later');
  const html=fs.readFileSync(path.join(__dirname,'../nazchat/index.html'),'utf8');
  const embedded=JSON.parse(html.split('const SKILL_PACK = ')[1].split('const SKILL_PACK_URL')[0].trim().replace(/;\s*$/,''));
  assert.deepStrictEqual(embedded,pack,'offline embedded pack must exactly match skills.json');
@@ -35,7 +35,7 @@ const path=require('node:path');
  await p.addInitScript(()=>{if(window===window.top)localStorage.setItem('nazchat_v1',JSON.stringify({onboardingDone:true,providers:[{id:'p1',name:'Mock',baseUrl:'https://api.test/v1',apiType:'chat',endpointMode:'chat',secretRef:'provider:p1',selectedModels:['m1'],models:[{id:'m1',name:'M1'}],apiKey:'test',modelMeta:{m1:{context_length:128000}}}],skillPackCache:{packVersion:1,skills:[{id:'legacy',name:'Legacy',content:'Old cached guidance'}]}}));});
  await p.goto(appUrl,{waitUntil:'domcontentloaded',timeout:60000});
  await p.waitForFunction(()=>typeof db!=='undefined'&&typeof renderAll==='function');
- assert.equal(await p.evaluate(()=>skillPack.packVersion),2,'v1 cache must not downgrade bundled v2');
+ assert.equal(await p.evaluate(()=>skillPack.packVersion),pack.packVersion,'v1 cache must not downgrade the bundled pack');
  const sel=await p.evaluate(()=>selectSkills('buat landing page yang cantik',currentModel()).map(s=>s.id));
  assert(sel.includes('frontend-design'),'frontend-design not selected for design request');
  const selArt=await p.evaluate(()=>selectSkills('choose palette and typography for a coffee brand',currentModel()).map(s=>s.id));

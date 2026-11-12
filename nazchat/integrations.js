@@ -169,7 +169,8 @@ function siteFilesFrom(info){
     let path=String(f.name||'file.txt').replace(/^\/+/,'').replace(/\.\.+/g,'.');
     if(f===page) path='index.html';
     if(files.some(x=>x.path===path)) continue;
-    files.push({path,content:String(f.raw||'')});
+    const content=String(f.raw||'');
+    files.push({path,content:/\.html?$/i.test(path)&&typeof kitaInlineIcons==='function'?kitaInlineIcons(content):content});
   }
   return files;
 }
@@ -526,6 +527,7 @@ function renderModeHome(){
   if(mode!=='code'){sites?.remove();return;}
   if(!sites){sites=el('div','code-sites');home.appendChild(sites);}
   sites.innerHTML='';
+  if(typeof renderCodeStylePicker==='function') sites.appendChild(renderCodeStylePicker());
   const connected=Object.keys(INTEGRATIONS).filter(integrationConnected);
   const bar=el('button','code-integrations');bar.type='button';
   bar.innerHTML='<span class="integration-icons">'+Object.keys(INTEGRATIONS).map(s=>'<span class="integration-icon'+(integrationConnected(s)?' on':'')+'">'+integrationIcon(s)+'</span>').join('')+'</span><span><strong>'+(connected.length?'Publishing to '+connected.map(s=>INTEGRATIONS[s].name).join(', '):'Connect where to publish')+'</strong><small>'+(connected.length?'Manage integrations':'GitHub, Vercel and Cloudflare')+'</small></span>'+kitaIcon('arrow');
@@ -601,7 +603,7 @@ function supabaseContextNote(){
     +'\nIn web pages use supabase-js v2: <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> then const supabase = window.supabase.createClient(URL, KEY). Use supabase.auth for sign-in and Row Level Security policies to protect every table.'
     +' To create or change tables, policies or buckets, call the supabase_sql tool with the SQL (the user approves each run); if you cannot call tools, put the SQL in a ```sql block so the user can tap Run on Supabase.';
 }
-function codeContextNote(){return CODE_MODE_NOTE+supabaseContextNote();}
+function codeContextNote(){return CODE_MODE_NOTE+(typeof kitaDesignNote==='function'?kitaDesignNote():'')+supabaseContextNote();}
 /* SQL risk: reads, changes, and destructive changes (always shown in red). */
 function sqlRisk(sql){
   const s=String(sql||'').replace(/--.*$/gm,'').replace(/\/\*[\s\S]*?\*\//g,'').trim();

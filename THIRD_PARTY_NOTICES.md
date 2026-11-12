@@ -44,6 +44,10 @@ License: CC0 1.0 Universal. See `licenses/CC0-1.0.txt`.
 
 Changes for NazChat: condensed and generalized into framework-aware, provider-neutral chat prompts.
 
+## Skill pack v3 additions
+
+Motion & Micro-interactions, Layout Patterns, Icons & Imagery and Data Viz & Dashboards are original guidance written for Kita Chat. The 4.18.0 style presets name open fonts served by Google Fonts (SIL OFL 1.1 or Apache-2.0); the app does not bundle these fonts, generated pages link to them.
+
 ## Skill pack v2 additions
 
 Art Direction, Interface Copy and Design Critique are concise adapted guidance from the already attributed Anthropic skills (Apache-2.0) and UI UX Pro Max (MIT) sources. No third-party scripts are executed. Protocol and OAuth implementations are original code based on MCP specifications and OAuth RFCs. Host-side test dependency org.json is test-only and is not bundled in the APK.
@@ -61,3 +65,4 @@ Since 4.5.4 these libraries ship unmodified inside the app (`nazchat/vendor/`) i
 | PDF.js (`pdfjs-dist`) | 3.11.174 | `pdf.min.js`, `pdf.worker.min.js` (loaded on demand) | Apache-2.0 |
 | mammoth | 1.8.0 | `mammoth.browser.min.js` (loaded on demand) | BSD-2-Clause |
 | DM Sans (`@fontsource-variable/dm-sans`) | 5.1.0 | `fonts/dm-sans-latin*-wght-normal.woff2` | SIL OFL 1.1 |
+| Lucide icons (`lucide-static`) | 1.61.0 | 95 icon paths embedded in `design.js` (`KITA_ICON_SET`) | ISC |
