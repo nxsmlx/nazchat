@@ -66,7 +66,7 @@ function blake3Hex(input){
 }
 
 const INTEGRATIONS={
-  github:{name:'GitHub',origin:'https://api.github.com',tokenUrl:'https://github.com/settings/tokens/new?scopes=repo&description=Kita%20Chat',
+  github:{name:'GitHub',origin:'https://api.github.com',tokenUrl:'https://github.com/settings/tokens/new?scopes=repo,workflow&description=Kita%20Chat',
     steps:'Create a classic token with the "repo" scope (or a fine-grained token for all repositories with Contents, Administration and Pages: read and write), then paste it here.'},
   vercel:{name:'Vercel',origin:'https://api.vercel.com',tokenUrl:'https://vercel.com/account/tokens',
     steps:'Create a token (scope: your account or team), then paste it here. Team ID is only needed to deploy into a team.'},
@@ -79,6 +79,7 @@ const PUBLISH_TARGETS=[
   {id:'cloudflare-workers',service:'cloudflare',label:'Cloudflare Workers',host:n=>n+'.'+(integrationState('cloudflare').subdomain||'<subdomain>')+'.workers.dev'},
   {id:'github-pages',service:'github',label:'GitHub Pages',host:n=>(integrationState('github').login||'<you>')+'.github.io/'+n},
   {id:'github',service:'github',label:'GitHub repository',host:n=>'github.com/'+(integrationState('github').login||'<you>')+'/'+n},
+  {id:'android',service:'github',label:'Android app (APK)',host:n=>'github.com/'+(integrationState('github').login||'<you>')+'/'+n+'-android/releases'},
 ];
 const integrationMemoryTokens={};
 function integrationState(service){const all=db.integrations&&typeof db.integrations==='object'?db.integrations:null;return (all&&all[service])||{};}
@@ -300,6 +301,7 @@ async function publishSite(targetId,name,files,log=()=>{},opts={}){
   if(targetId==='cloudflare-workers') return publishCloudflareWorker(slug,files,log);
   if(targetId==='github-pages') return publishGitHub(slug,files,log,true,opts);
   if(targetId==='github') return publishGitHub(slug,files,log,false);
+  if(targetId==='android' && typeof buildAndroidApp==='function') return buildAndroidApp(slug,files,log,opts);
   throw new Error('Unknown publish target');
 }
 
@@ -375,6 +377,7 @@ function openPublishSheet(info){
     const slug=siteSlug(name.value);
     preview.textContent=chosen?('https://'+chosen.host(slug)+(c?.sites?.[chosen.id]?'  · updates your existing site':'')):'Connect a service in Settings → Integrations to publish.';
     go.disabled=!chosen||!slug;
+    if(/^(Publish|Build app)$/.test(go.textContent)) go.textContent=chosen?.id==='android'?'Build app':'Publish';
     renderVersions();
   };
   for(const t of PUBLISH_TARGETS){
@@ -418,17 +421,21 @@ function openPublishSheet(info){
     const where='https://'+t.host(slug);
     const ok=opts.rollbackOf
       ? await confirmDialog('Publish '+opts.label+' again to '+where+'? It replaces what is live now. You can roll forward the same way.',{title:'Roll back '+t.label,confirmText:'Roll back'})
+      : t.id==='android'
+      ? await confirmDialog('Build an Android app from '+sendFiles.length+' file'+(sendFiles.length===1?'':'s')+'? Kita puts the site and a small Android project in the private repository '+where.replace(/^https:\/\//,'').replace(/\/releases$/,'')+'. GitHub builds and signs the APK in about 3 to 5 minutes, using your GitHub Actions minutes.',{title:'Build Android app',confirmText:'Build app'})
       : await confirmDialog('Publish '+sendFiles.length+' file'+(sendFiles.length===1?'':'s')+' to '+where+'? '+(t.id==='github'?'The repository is private.':'Anyone with the link can open it.'),{title:'Publish to '+t.label,confirmText:'Publish'});
     if(!ok)return;
     go.disabled=true;go.textContent=opts.rollbackOf?'Rolling back…':'Publishing…';progress.innerHTML='';body.querySelectorAll('.publish-done').forEach(n=>n.remove());
     versions.querySelectorAll('button').forEach(b=>b.disabled=true);
     const log=m=>{const li=el('li');li.textContent=m;progress.appendChild(li);};
     try{
-      const r=await publishSite(t.id,slug,sendFiles,log,{confirmPublic:full=>confirmDialog(full+' is a private repository. GitHub Pages on a free plan only works with public repositories. Make it public so the site can go live? Anyone will be able to see its files.',{title:'Make repository public?',confirmText:'Make public',danger:true})});
+      const r=await publishSite(t.id,slug,sendFiles,log,{confirmPublic:full=>confirmDialog(full+' is a private repository. GitHub Pages on a free plan only works with public repositories. Make it public so the site can go live? Anyone will be able to see its files.',{title:'Make repository public?',confirmText:'Make public',danger:true}),appName:(info.title&&!/\.[a-z0-9]{1,5}$/i.test(info.title)?info.title:'')||(c?.title&&c.title!=='New chat'?c.title:'')});
       if(c){c.sites=c.sites||{};c.sites[t.id]={target:t.id,name:slug,url:r.url,at:Date.now()};recordSiteVersion(c,{target:t.id,name:slug,url:r.url,files:sendFiles,messageId:opts.rollbackOf?null:info.messageId,rollbackOf:opts.rollbackOf||null});c.updatedAt=Date.now();save();}
       log('✓ '+(r.detail||'Published'));
       const done=el('div','publish-done');
-      done.innerHTML='<strong>'+(opts.rollbackOf?'Rolled back to '+esc(opts.label):'Published')+'</strong><a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.url.replace(/^https:\/\//,''))+'</a>';
+      done.innerHTML='<strong>'+(opts.rollbackOf?'Rolled back to '+esc(opts.label):t.id==='android'?(r.download?'App ready':'Building'):'Published')+'</strong><a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.url.replace(/^https:\/\//,''))+'</a>';
+      // The APK itself: a private repository's release needs you signed in to GitHub in the browser.
+      if(r.download){const dl=el('a','btn publish-download','Download APK');dl.href=r.download;dl.target='_blank';dl.rel='noopener';done.appendChild(dl);}
       const copy=el('button','mini-btn','Copy link');copy.type='button';copy.onclick=()=>copyText(r.url,copy,'Copied');done.appendChild(copy);
       body.appendChild(done);go.textContent='Publish again';go.disabled=false;
       toast((opts.rollbackOf?'Rolled back on ':'Published to ')+t.label);haptic?.('success');
