@@ -21,7 +21,7 @@ const files = [
   ...['updater', 'themes', 'ui-minimal', 'phased-building', 'skills-browser', 'streaming-long-answers',
     'tools-and-budget', 'fetch-url-approval', 'preview-and-retrieval', 'studio', 'execution',
     'renderer-isolation', 'stop-native', 'comfort', 'provider-picker', 'steer-memory-mcp',
-    'skill-editor-browser', 'skill-pack-v2', 'mcp-client', 'provider-delete', 'durable-state', 'ui-460', 'file-save', 'reliability-462', 'ui-470', 'ui-480', 'markdown-fences', 'attach-paste', 'artifact-card', 'offline-resume', 'orchestrator', 'integrations', 'supabase', 'agent-team', 'websearch', 'network', 'network-chat-tools', 'security-tools', 'select-picker', 'provider-test-connection', 'design-kit', 'project-files', 'images']
+    'skill-editor-browser', 'skill-pack-v2', 'mcp-client', 'provider-delete', 'durable-state', 'ui-460', 'file-save', 'reliability-462', 'ui-470', 'ui-480', 'markdown-fences', 'attach-paste', 'artifact-card', 'offline-resume', 'orchestrator', 'integrations', 'supabase', 'agent-team', 'websearch', 'network', 'network-chat-tools', 'security-tools', 'select-picker', 'provider-test-connection', 'design-kit', 'project-files', 'images', 'workspace']
     .map(name => ['node', `tests/${name}.test.js`]),
   ['node', '--test', 'tests/native-secrets.test.cjs'],
   ['node', '--test', 'tests/native-store.test.cjs'],

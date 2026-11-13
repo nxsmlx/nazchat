@@ -1,6 +1,15 @@
-# Kita Chat 4.20.0
+# Kita Chat 4.21.0
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
+
+- Code tab: changes to an existing page are now small edits. The AI reads only the lines it needs and replaces exact pieces of the files instead of rewriting the whole page, so edits to long projects (2000+ lines) are faster, cheaper and no longer stop halfway.
+- The updated page is tested automatically; if it shows errors, the AI fixes them with more small edits. The steps (Read index.html, Edit css/styles.css…) appear on the answer.
+- Works with the Files setting: with Separate files the AI edits index.html, css/styles.css and js/app.js directly.
+- The AI tools only touch the project files: there is no shell and no access to your phone. If a provider does not support tools, Kita falls back to the full-page edit.
+- Fixed: an attached image was dropped when a provider rejected tools and Kita retried without them.
+- VersionCode 75, same com.nazchat.app package and original signing identity.
+
+# Kita Chat 4.20.0
 
 - Attach images: photos, screenshots or pasted pictures. Kita resizes them on the phone and vision models read them, for example "what is in this photo", "read this menu" or "build a page like this screenshot".
 - Images are shown as thumbnails in the chat; tap one to see it full size. Full images stay on your phone (not in the chat data), so chats stay fast.

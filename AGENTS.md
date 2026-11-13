@@ -80,6 +80,7 @@ nazchat/                 Web app: the ONLY source of the UI and app logic
   design.js              Design kit: style presets + font pairings for Code builds, bundled Lucide icons (<i data-icon> → inline SVG)
   project.js             Project files: split a page into index.html + css/ + js/ for download and publish, preview multi-file answers, .zip export
   images.js              Image attachments: resize on device, full images in IndexedDB (thumbnail in chat data), vision request parts
+  workspace.js           Code follow-ups: list/read/edit/write tools on the project files (no shell), page test + fix, files appended as an artifact
   provider-picker.js     Provider preset dialog
   integrations.js        GitHub / Vercel / Cloudflare / Supabase publishing
   agents.js              Orchestrator, sub-agents, agent team (designer, tester, reviewer, fixer, database)
