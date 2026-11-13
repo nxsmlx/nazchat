@@ -1,9 +1,9 @@
 {
-  "version": "4.21.1",
-  "versionCode": 76,
+  "version": "4.22.0",
+  "versionCode": 77,
   "name": "Kita Chat",
-  "changelog": "Settings → About now links to the official website keetakita.my, the Privacy Policy and the Terms of Use, and has Share Kita Chat to send the download page to a friend.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.21.1/NazChat.apk",
-  "sha256": "1f3dbe09b0e823f1f3bc5d3c82e1b5b463af8fac5d038317fd1c2d85f3b76232",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.21.1"
+  "changelog": "Turn your website into an Android app: in Code, tap Publish and choose Android app (APK). Kita puts your site and a small Android project in a private GitHub repository of yours, GitHub builds and signs the APK in about 3 to 5 minutes, and ",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.22.0/NazChat.apk",
+  "sha256": "bf36faf35579aa4765b4c91ee5c5feff0468729fa756734672a7eaa15843f9f0",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.22.0"
 }
