@@ -1076,6 +1076,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <script src="design.js"></script>
 <script src="project.js"></script>
 <script src="images.js"></script>
+<script src="workspace.js"></script>
 <script src="provider-picker.js"></script>
 <script src="integrations.js"></script>
 <script src="agents.js"></script>
@@ -1837,8 +1838,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.20.0";
-const APP_VERSION_CODE = 74;
+const APP_VERSION = "4.21.0";
+const APP_VERSION_CODE = 75;
 const UPDATE_REPO = "nxsmlx/nazchat";
 
 /* ===================== DOM utils ===================== */
@@ -2527,7 +2528,7 @@ function renderAssistant(bubble, msg, live){
     box.appendChild(el("div","tool-trace-title", "🔧 "+msg.toolTrace.length+" tool "+(msg.toolTrace.length>1?"calls":"call")));
     msg.toolTrace.forEach(t=>{
       const row=el("div","tool-trace-row");
-      const what=t.name==="web_search" ? "Search: "+(t.args.query||"") : t.name==="fetch_url" ? "Read: "+(t.args.url||"") : t.name==="supabase_sql" ? "SQL: "+String(t.args.query||"").replace(/\s+/g," ") : isNetworkTool(t.name) ? networkToolLabel(t.name,t.args) : "Tool: "+t.name.replace(/^mcp_/,"").replace(/_/g," ");
+      const what=t.name==="web_search" ? "Search: "+(t.args.query||"") : t.name==="fetch_url" ? "Read: "+(t.args.url||"") : t.name==="supabase_sql" ? "SQL: "+String(t.args.query||"").replace(/\s+/g," ") : isNetworkTool(t.name) ? networkToolLabel(t.name,t.args) : isWorkspaceTool(t.name) ? workspaceToolLabel(t.name,t.args) : "Tool: "+t.name.replace(/^mcp_/,"").replace(/_/g," ");
       row.innerHTML=`<span>${esc(what.slice(0,90))}</span><span class="tool-trace-ms">${t.ms}ms${t.ok?"":" · failed"}</span>`;
       box.appendChild(row);
     });
@@ -2656,7 +2657,7 @@ let previewRenderState = { renderer:"", timer:null };
 function extractHtmlBlock(content){
   const src = String(content||"");
   if(!src.trim()) return "";
-  const fences = Array.from(src.matchAll(/```[ \t]*(html|htm|xhtml)[ \t]*\r?\n([\s\S]*?)(?:```|$)/gi));
+  const fences = Array.from(src.matchAll(/```[ \t]*(html|htm|xhtml)\b[^\n`]*\r?\n([\s\S]*?)(?:```|$)/gi));
   if(fences.length){
     const full = fences.filter(f=>/<html[\s>]|<!doctype|<body[\s>]/i.test(f[2]));
     const pool = full.length ? full : fences;
@@ -4658,10 +4659,15 @@ async function sendResponse(text, opts, run){
 
   // Build a bounded request history. Active skills affect this request only and remain visible on the answer.
   const prevHtml = opts.review ? "" : lastHtmlArtifact();
-  const editingPage = !steerMode && !!prevHtml && isEditRequest(text);
+  // Code follow-up on an existing build: the model edits project files with tools instead of
+  // rewriting the whole document (workspace.js). A clear new-build request still builds anew.
+  const workspace = !steerMode && !opts.review && !opts.editing && !opts.continueMessage && !opts.resumeMessage && prevHtml
+    && typeof workspaceFrom==="function" && convMode(conv_)==="code" && toolsSupported(model) && !opts.noTools
+    && (isEditRequest(text) || !isCodeBuildRequest(text)) ? workspaceFrom(conv_) : null;
+  const editingPage = !workspace && !steerMode && !!prevHtml && isEditRequest(text);
   const priorMsgs = conv_.messages.filter(m=>(m.role==="user"||m.role==="assistant") && m.id!==aiMsg.id && m.id!==opts.steerMessageId && m.steerState!=="cancelled" && (opts.editing || steerMode || m.id!==userMsg.id));
   if(typeof preloadMessageImages==="function") await preloadMessageImages(priorMsgs.concat([{attachments}]));
-  const toApiText = m=>({role:m.role, content:m.role==="user" ? apiContent(m.content,m.attachments||[]) : m.id===opts.steerSourceId ? (String(m.content||"").length>60000?"[Earlier output omitted from this request for context length. The full partial response remains in the conversation.]\n":"")+String(m.content||"").slice(-60000)+"\n[Interrupted response. Only the supplied output is available.]" : stripErrorNote(m.content)});
+  const toApiText = m=>({role:m.role, content:m.role==="user" ? apiContent(m.content,m.attachments||[]) : m.id===opts.steerSourceId ? (String(m.content||"").length>60000?"[Earlier output omitted from this request for context length. The full partial response remains in the conversation.]\n":"")+String(m.content||"").slice(-60000)+"\n[Interrupted response. Only the supplied output is available.]" : (workspace ? stripCodeForWorkspace(stripErrorNote(m.content)) : stripErrorNote(m.content))});
   const toApi = m=>typeof withMessageImages==="function"&&m.role==="user" ? withMessageImages(toApiText(m),m) : toApiText(m);
   // Long chats: older messages become a running summary; the latest ones go in full.
   let history = await compactHistory(conv_, priorMsgs, toApi, model, steerMode||!!opts.review);
@@ -4718,12 +4724,13 @@ async function sendResponse(text, opts, run){
     (p.baseUrl.replace(/\/+$/,"") + (p.apiType==="responses" ? "/responses" : "/chat/completions"));
 
   // Tool loop state: Kita executes tools natively, so calling one never leaves the app silent.
-  let toolsOn = toolsOnDefault && kitaTools(typeof convMode==='function'?convMode(conv_):'chat').length>0;
-  const activeTools = kitaTools(typeof convMode==='function'?convMode(conv_):'chat');
+  const activeTools = kitaTools(typeof convMode==='function'?convMode(conv_):'chat').concat(workspace?WORKSPACE_TOOLS:[]);
+  let toolsOn = toolsOnDefault && activeTools.length>0;
   if(toolsOn) history = history.map(h=>h.role==="system"?{...h, content:h.content+toolSystemNote(activeTools)}:h);
+  if(workspace) history.splice(1,0,{role:"system",content:workspaceSystemNote(workspace)});
   let finishReason = null, pendingToolCalls = [], toolTrace = [], rounds = 0, retries = 0, reasoningRescued = false;
   // Research loop: search → read → search again, up to 6 rounds, then a tools-free answer.
-  const MAX_TOOL_ROUNDS = 6;
+  const MAX_TOOL_ROUNDS = workspace ? WORKSPACE_MAX_ROUNDS : 6;
 
   // live render target — throttled so long HTML answers cannot freeze the WebView
   let bubble, thinkStart = null, lastPaint = 0, paintTimer = null, lastDataAt = Date.now(), watchdog = null, firstByteSeen = false;
@@ -4792,7 +4799,7 @@ async function sendResponse(text, opts, run){
   if(!opts.review && !steerMode && typeof routeBuildToCode==="function") routeBuildToCode(conv_, text);
   const codeMode = typeof convMode==="function" && convMode(conv_)==="code";
   if(codeMode) history.splice(1,0,{role:"system",content:typeof codeContextNote==="function"?codeContextNote():CODE_MODE_NOTE});
-  const wantsPhased = !opts.review && !opts.editing && !steerMode && !editingPage && !opts.continueMessage && PHASE_BUILD.enabled && (codeMode ? isCodeBuildRequest(text) : isLongBuildRequest(text));
+  const wantsPhased = !opts.review && !opts.editing && !steerMode && !editingPage && !workspace && !opts.continueMessage && PHASE_BUILD.enabled && (codeMode ? isCodeBuildRequest(text) : isLongBuildRequest(text));
   if(wantsPhased){
     const kind = detectBuildKind(text);
     const params0 = modelParameters(model);
@@ -5028,7 +5035,16 @@ async function sendResponse(text, opts, run){
       }
       // Some providers reject tool payloads; drop tools and answer plainly.
       if(toolsOn && /tool|function|unsupported|not supported|invalid.*parameter/i.test(msg)){
-        toolsOn = false; history = history.map(h=>({...h, content:String(h.content||"").split(toolSystemNote(activeTools))[0]}));
+        toolsOn = false;
+        // Keep attached images (a non-enumerable property) when the messages are rebuilt.
+        history = history.map(h=>{ const n={...h, content:String(h.content||"").split(toolSystemNote(activeTools))[0]}; if(h.images) Object.defineProperty(n,"images",{value:h.images,enumerable:false}); return n; });
+        // Without tools the workspace cannot be edited: hand over the document as before.
+        if(workspace && !workspace.disabled){
+          workspace.disabled=true;
+          history=history.filter(h=>!(h.role==="system"&&String(h.content).startsWith("[Project workspace]")));
+          history.push({role:"system",content:"[Current document to edit]\n"+workspacePreviewDoc(workspace).slice(0,60000)+"\n[End current document]"});
+          history.push({role:"user",content:"Apply this change to the current document above: "+text+"\n\nReturn the complete updated document in one ```html block, keeping everything that still works."});
+        }
         retries++; aiMsg.reasoning=""; aiMsg.content=""; aiMsg._thinkShown=false;
         continue;
       }
@@ -5063,11 +5079,11 @@ async function sendResponse(text, opts, run){
         results.push({id:c.id||('call_'+rounds+'_'+results.length),name:c.name,args,out:{error:'The user declined opening this page.'}});continue;
       }
       if(currentAbortSignal()?.aborted)break;
-      const what = c.name==="web_search" ? `Searching the web for “${args.query||""}”` : c.name==="fetch_url" ? `Reading ${args.url||"a page"}` : isNetworkTool(c.name) ? networkToolLabel(c.name,args) : `Using ${c.name.replace(/^mcp_/,"").replace(/_/g," ")}`;
+      const what = c.name==="web_search" ? `Searching the web for “${args.query||""}”` : c.name==="fetch_url" ? `Reading ${args.url||"a page"}` : isNetworkTool(c.name) ? networkToolLabel(c.name,args) : workspace&&isWorkspaceTool(c.name) ? workspaceToolLabel(c.name,args) : `Using ${c.name.replace(/^mcp_/,"").replace(/_/g," ")}`;
       const label = `Step ${toolTrace.length+1} · ${what}`;
       setStreamNote(label+"…");
       const t0 = Date.now();
-      let out; try{ out = await runKitaTool(c.name, args); }catch(e){ out = {error:String(e.message||e)}; }
+      let out; try{ out = workspace&&isWorkspaceTool(c.name) ? runWorkspaceTool(workspace,c.name,args) : await runKitaTool(c.name, args); }catch(e){ out = {error:String(e.message||e)}; }
       toolTrace.push({name:c.name, args, ms:Date.now()-t0, ok:!out.error});
       if(c.name==="web_search" && Array.isArray(out.results)){
         aiMsg.sources = (aiMsg.sources||[]).concat(out.results.filter(r=>r.url && !(aiMsg.sources||[]).some(s=>s.url===r.url)).map(r=>({title:r.title,url:r.url}))).slice(0,8);
@@ -5078,12 +5094,12 @@ async function sendResponse(text, opts, run){
     if(p.apiType==="responses"){
       history = history.concat(
         calls.map((c,i)=>({role:"assistant", content:"", function_call:{name:c.name, arguments:c.args||"{}", call_id:c.id||("call_"+i)}})),
-        results.map(r=>({role:"tool", tool_call_id:r.id, content:JSON.stringify(r.out).slice(0,6000)}))
+        results.map(r=>({role:"tool", tool_call_id:r.id, content:JSON.stringify(r.out).slice(0,isWorkspaceTool(r.name)?WORKSPACE_RESULT_CHARS:6000)}))
       );
     } else {
       history = history.concat(
         {role:"assistant", content:aiMsg.content||"", tool_calls:calls.map((c,i)=>({id:c.id||("call_"+rounds+"_"+i), type:"function", function:{name:c.name, arguments:c.args||"{}"}}))},
-        ...results.map(r=>({role:"tool", tool_call_id:r.id, name:r.name, content:JSON.stringify(r.out).slice(0,6000)}))
+        ...results.map(r=>({role:"tool", tool_call_id:r.id, name:r.name, content:JSON.stringify(r.out).slice(0,isWorkspaceTool(r.name)?WORKSPACE_RESULT_CHARS:6000)}))
       );
     }
     aiMsg.toolTrace = toolTrace.slice();
@@ -5108,12 +5124,34 @@ async function sendResponse(text, opts, run){
     aiMsg.reasoning += "\n\n⚠️ Reasoning hit the output limit, so the answer is being requested directly.";
     continue;
   }
+  // Workspace edits: run the updated page; errors go back for small fixes (2 rounds).
+  if(workspace && workspace.changed?.size && !workspace.checked && db.autoCheckCode!==false && generating && !currentAbortSignal()?.aborted){
+    const doc=workspacePreviewDoc(workspace);
+    if(/<(html|body)[\s>]/i.test(doc)){
+      setStreamNote(workspace.fixRounds?"Testing the corrected page…":"Testing the page…");
+      const errors=await checkHtmlRuns(doc);
+      if(currentAbortSignal()?.aborted || !generating) break;
+      (aiMsg.codeChecks=aiMsg.codeChecks||[]).push({round:(workspace.fixRounds||0)+1, errors});
+      if(errors.length && (workspace.fixRounds||0)<2 && rounds<MAX_TOOL_ROUNDS){
+        workspace.fixRounds=(workspace.fixRounds||0)+1;
+        setStreamNote(`Found ${errors.length} error${errors.length===1?"":"s"} when running the page. Fixing (${workspace.fixRounds}/2)…`);
+        history=history.concat({role:"assistant",content:aiMsg.content||"Done."},{role:"user",content:"I ran the updated page. It reported these errors:\n"+errors.map((e,i)=>(i+1)+". "+e).join("\n")+"\n\nFix the cause with edit_file, then reply with a short summary of all changes."});
+        toolsOn=true; carried=""; continue;
+      }
+      workspace.checked=true; setStreamNote("");
+    }
+  }
   break;
+  }
+  // The edited project becomes a normal artifact: every file is appended to the answer.
+  if(workspace && !workspace.disabled && workspace.changed?.size && !currentAbortSignal()?.aborted){
+    aiMsg.content=String(aiMsg.content||"").trim()+workspaceFilesBlock(workspace);
+    aiMsg.workspace={files:[...workspace.files.keys()], changed:[...workspace.changed]};
   }
 
   // Coding loop: a generated web page is run in a hidden, bridge-free WebView; runtime
   // errors go back to the model for a corrected document (write → run → fix, 2 rounds).
-  if(!aiMsg.failed && !aiMsg.phases && generating && !currentAbortSignal()?.aborted && db.autoCheckCode!==false){
+  if((!workspace||workspace.disabled) && !aiMsg.failed && !aiMsg.phases && generating && !currentAbortSignal()?.aborted && db.autoCheckCode!==false){
     for(let round=1; round<=3; round++){
       const doc=runnableHtml(aiMsg.content);
       if(!doc) break;

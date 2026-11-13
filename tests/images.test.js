@@ -72,6 +72,18 @@ user=bodies.at(-1).messages.at(-1);
 assert.equal(typeof user.content,'string');assert.match(user.content,/cannot see images/);assert.doesNotMatch(JSON.stringify(bodies.at(-1)),/data:image/);
 console.log('PASS text-only model: no image sent, model and user are told');
 
+// 7b. A provider that rejects tools: the retry without tools still carries the image.
+await page.evaluate(()=>{db.lastModelId='see';conv=null;renderAll();});
+await page.unroute(/^https?:\/\//);const retry=[];
+await page.route(/^https?:\/\//,r=>{if(r.request().url()!==API)return r.fulfill({status:503,body:'{}'});const body=JSON.parse(r.request().postData());retry.push(body);
+  if(body.tools)return r.fulfill({status:400,contentType:'application/json',body:JSON.stringify({error:{message:'tools are not supported'}})});
+  return r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:sse('Seen without tools.')});});
+await makeFile(300,200,'retry.png');await page.evaluate(()=>handleFiles([window.__f]));await page.locator('.attachment-chip.image').waitFor();
+await page.fill('#promptInput','Tengok ni');await page.click('#sendBtn');await done();
+assert.equal(retry.length,2);assert.equal(retry[1].tools,undefined);
+assert.equal(retry[1].messages.at(-1).content[1].type,'image_url','image lost on the retry without tools');
+console.log('PASS retry without tools keeps the image');
+
 // 8. Pasting an image attaches it.
 await page.evaluate(async()=>{const dt=new DataTransfer();dt.items.add(window.__f);const ev=new ClipboardEvent('paste',{clipboardData:dt,bubbles:true,cancelable:true});document.querySelector('#promptInput').dispatchEvent(ev);});
 await page.waitForFunction(()=>pendingAttachments.some(a=>a.imageId));
