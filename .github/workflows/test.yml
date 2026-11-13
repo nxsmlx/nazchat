@@ -41,6 +41,13 @@ jobs:
           # Chromium needs, so an Ubuntu mirror outage must not fail the run.
           timeout 240 npx playwright-core install-deps chromium || echo "::warning::Could not install Chromium system packages (apt mirror?); using the runner image as is."
 
+      # The Android app-builder test builds a real APK from the project Kita generates.
+      - name: Android SDK 36 for the app-builder test
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --sdk_root="$ANDROID_HOME" --licenses >/dev/null || true
+          "$SDKM" --sdk_root="$ANDROID_HOME" --install 'platforms;android-36' 'build-tools;36.0.0' >/dev/null
+
       # Libraries and fonts are bundled, so the browser suites need no CDN access.
       - name: Browser and launcher-icon suites
         run: npm test

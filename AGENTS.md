@@ -83,6 +83,7 @@ nazchat/                 Web app: the ONLY source of the UI and app logic
   project.js             Project files: split a page into index.html + css/ + js/ for download and publish, preview multi-file answers, .zip export
   images.js              Image attachments: resize on device, full images in IndexedDB (thumbnail in chat data), vision request parts
   workspace.js           Code follow-ups: list/read/edit/write tools on the project files (no shell), page test + fix, files appended as an artifact
+  android.js             Publish → Android app (APK): writes the site + a WebView Android project + build workflow to the user's private GitHub repo; sealed-box signing secret
   provider-picker.js     Provider preset dialog
   integrations.js        GitHub / Vercel / Cloudflare / Supabase publishing
   agents.js              Orchestrator, sub-agents, agent team (designer, tester, reviewer, fixer, database)
@@ -225,6 +226,7 @@ Never merge into `main` with red CI. Never force-push `main`.
   - Each file launches headless Chromium on `nazchat/index.html` (via `tests/browser.js`), drives the real UI and asserts results.
   - Each prints `PASS …` and exits non-zero on failure.
 - **Native tests:** `tests/native-*.test.cjs`. These compile the pure Java `*Core` classes and run them on the host JVM. Run them with `node --test tests/native-dns.test.cjs` and so on.
+  - `native-android-app` builds a real APK from the Android project `android.js` generates, using the generated workflow's own steps. It needs the Android SDK (`platforms;android-36`, `build-tools;36.0.0`) at `ANDROID_HOME`; CI installs it. Without the SDK a local run reports it skipped; on CI it fails.
 - **Full suite:** `npm test` (`scripts/run-tests.cjs`).
   - It retries a failing file up to twice. Files that pass only on retry are reported as FLAKY; a file that fails 3 times fails the run.
   - **Subset:** `npm test -- network comfort` runs only the files whose name contains one of the words.

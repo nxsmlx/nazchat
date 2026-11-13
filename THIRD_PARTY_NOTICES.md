@@ -66,3 +66,4 @@ Since 4.5.4 these libraries ship unmodified inside the app (`nazchat/vendor/`) i
 | mammoth | 1.8.0 | `mammoth.browser.min.js` (loaded on demand) | BSD-2-Clause |
 | DM Sans (`@fontsource-variable/dm-sans`) | 5.1.0 | `fonts/dm-sans-latin*-wght-normal.woff2` | SIL OFL 1.1 |
 | Lucide icons (`lucide-static`) | 1.61.0 | 95 icon paths embedded in `design.js` (`KITA_ICON_SET`) | ISC |
+| TweetNaCl.js (`tweetnacl`) | 1.0.3 | `nacl-fast.min.js` (loaded on demand to seal GitHub Actions secrets) | Unlicense (public domain) |

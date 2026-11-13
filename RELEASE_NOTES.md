@@ -1,3 +1,11 @@
+# Kita Chat 4.22.0
+
+- Turn your website into an Android app: in Code, tap Publish and choose Android app (APK). Kita puts your site and a small Android project in a private GitHub repository of yours, GitHub builds and signs the APK in about 3 to 5 minutes, and you get a Download APK link.
+- Every new version is signed with the same key, so your app updates in place on phones. The key is created once on GitHub and kept there only encrypted; the secret that unlocks it is sealed on your phone before it is sent to GitHub, and Kita does not keep it.
+- The app shows your site full screen, opens outside links in the browser, and has no access to anything else on the phone.
+- GitHub connection: the token now needs the repo and workflow scopes (the Create token link asks for both). Kita tells you clearly if an older token is missing the workflow scope.
+- VersionCode 77, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.21.1
 
 - Settings → About now links to the official website keetakita.my, the Privacy Policy and the Terms of Use, and has Share Kita Chat to send the download page to a friend.
