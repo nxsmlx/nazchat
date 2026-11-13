@@ -1,3 +1,8 @@
+# Kita Chat 4.21.1
+
+- Settings → About now links to the official website keetakita.my, the Privacy Policy and the Terms of Use, and has Share Kita Chat to send the download page to a friend.
+- VersionCode 76, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.21.0
 
 - Code tab: changes to an existing page are now small edits. The AI reads only the lines it needs and replaces exact pieces of the files instead of rewriting the whole page, so edits to long projects (2000+ lines) are faster, cheaper and no longer stop halfway.
