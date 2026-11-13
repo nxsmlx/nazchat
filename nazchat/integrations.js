@@ -425,7 +425,7 @@ function openPublishSheet(info){
       ? await confirmDialog('Build an Android app from '+sendFiles.length+' file'+(sendFiles.length===1?'':'s')+'? Kita puts the site and a small Android project in the private repository '+where.replace(/^https:\/\//,'').replace(/\/releases$/,'')+'. GitHub builds and signs the APK in about 3 to 5 minutes, using your GitHub Actions minutes.',{title:'Build Android app',confirmText:'Build app'})
       : await confirmDialog('Publish '+sendFiles.length+' file'+(sendFiles.length===1?'':'s')+' to '+where+'? '+(t.id==='github'?'The repository is private.':'Anyone with the link can open it.'),{title:'Publish to '+t.label,confirmText:'Publish'});
     if(!ok)return;
-    go.disabled=true;go.textContent=opts.rollbackOf?'Rolling back…':'Publishing…';progress.innerHTML='';body.querySelectorAll('.publish-done').forEach(n=>n.remove());
+    go.disabled=true;go.textContent=opts.rollbackOf?'Rolling back…':'Publishing…';progress.innerHTML='';body.querySelectorAll('.publish-done,.publish-error').forEach(n=>n.remove());
     versions.querySelectorAll('button').forEach(b=>b.disabled=true);
     const log=m=>{const li=el('li');li.textContent=m;progress.appendChild(li);};
     try{
@@ -439,7 +439,22 @@ function openPublishSheet(info){
       const copy=el('button','mini-btn','Copy link');copy.type='button';copy.onclick=()=>copyText(r.url,copy,'Copied');done.appendChild(copy);
       body.appendChild(done);go.textContent='Publish again';go.disabled=false;
       toast((opts.rollbackOf?'Rolled back on ':'Published to ')+t.label);haptic?.('success');
-    }catch(e){log('✕ '+String(e.message||e));go.disabled=false;go.textContent='Try again';}
+    }catch(e){
+      const msg=String(e.message||e);
+      log('✕ '+msg);go.disabled=false;go.textContent='Try again';
+      // The reason goes right above the button, where it is seen, not only at the end of the log.
+      const box=el('div','publish-error');box.setAttribute('role','alert');
+      const head=el('strong');head.textContent=t.id==='android'?'Could not build the app':'Could not publish';
+      const p=el('p');p.textContent=msg;box.append(head,p);
+      if(e.code==='github-token'){
+        const actions=el('div','publish-error-actions');
+        const make=el('a','btn secondary','Create a new token');make.href=INTEGRATIONS.github.tokenUrl;make.target='_blank';make.rel='noopener';
+        const open=el('button','btn secondary','GitHub settings');open.type='button';open.onclick=()=>{closeSheet('toolsSheet');renderIntegrationsSettings();openSheet('setSheet');};
+        actions.append(make,open);box.appendChild(actions);
+      }
+      go.before(box);try{box.scrollIntoView({block:'center',behavior:'smooth'});}catch(_){}
+      toast(t.id==='android'?'Could not build the app. See the reason above the button.':'Could not publish. See the reason above the button.');
+    }
     renderVersions();
   };
   go.onclick=()=>publishNow(files);

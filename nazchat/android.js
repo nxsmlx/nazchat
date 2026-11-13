@@ -298,9 +298,15 @@ function androidAppFiles(app, siteFiles, icons){
 
 /* ---------- GitHub ---------- */
 function ghPath(p){ return p.split('/').map(encodeURIComponent).join('/'); }
+/* GitHub answers a token without the workflow scope (or a fine-grained token without Secrets
+   or Workflows access) in several ways: 403, 404 or 422, with different wording. Name the fix. */
+function githubTokenError(what, e){
+  const said=String(e?.message||e||'').replace(/^GitHub (?:error|refused the token)[^:]*:\s*/,'').replace(/\.? Check the token and its permissions\.$/,'').slice(0,160);
+  const err=new Error('Your GitHub token cannot '+what+'. Create a new token (classic) with the repo and workflow scopes, then paste it in Settings → Integrations → GitHub.'+(said?' GitHub said: '+said:''));
+  err.code='github-token'; return err;
+}
 function githubScopeError(e){
-  if(/workflow/i.test(String(e.message||'')) && /scope|refusing|permission/i.test(String(e.message||'')))
-    return new Error('Your GitHub token cannot add the build workflow. Create a new token with the repo and workflow scopes, and paste it in Settings → Integrations → GitHub.');
+  if([403,404,422].includes(e?.status) || /workflow/i.test(String(e?.message||''))) return githubTokenError('add the build workflow',e);
   return e;
 }
 /* Commits files (text or base64) on top of the branch, removing site/ files that are gone. */
@@ -337,10 +343,11 @@ async function ensureSigningSeed(base, log){
   try{ await integrationFetch('github',base+'/actions/secrets/KITA_SIGNING_SEED'); return false; }
   catch(e){ if(e.status!==404) throw e; }
   log('Creating the signing secret…');
-  const key=await integrationFetch('github',base+'/actions/secrets/public-key');
+  const denied=e=>[401,403,404].includes(e?.status)?githubTokenError('save the signing secret in the repository',e):e;
+  let key;try{ key=await integrationFetch('github',base+'/actions/secrets/public-key'); }catch(e){ throw denied(e); }
   const seed=bytesToBase64(crypto.getRandomValues(new Uint8Array(32)));
   const encrypted_value=await sealedBox(seed,key.key);
-  await integrationFetch('github',base+'/actions/secrets/KITA_SIGNING_SEED',{method:'PUT',body:{encrypted_value,key_id:key.key_id}});
+  try{ await integrationFetch('github',base+'/actions/secrets/KITA_SIGNING_SEED',{method:'PUT',body:{encrypted_value,key_id:key.key_id}}); }catch(e){ throw denied(e); }
   return true;
 }
 
