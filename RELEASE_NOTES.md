@@ -1,3 +1,9 @@
+# Kita Chat 4.22.1
+
+- Publish and Android app builds now show why they failed, in a red box right above the button, instead of only "Try again". The screen scrolls to it and a short notice points to it.
+- When the GitHub token is the problem (missing the workflow scope, or a fine-grained token without Secrets or Workflows access), the box says so and has Create a new token, which opens GitHub with the repo and workflow scopes already ticked, and GitHub settings, where you paste the new token.
+- VersionCode 78, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.22.0
 
 - Turn your website into an Android app: in Code, tap Publish and choose Android app (APK). Kita puts your site and a small Android project in a private GitHub repository of yours, GitHub builds and signs the APK in about 3 to 5 minutes, and you get a Download APK link.

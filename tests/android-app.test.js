@@ -25,7 +25,7 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
      const base='/repos/naz/kopi-kita-android';
      if(p===base+'/contents/android/app.json') return state.app?json(r,200,{content:Buffer.from(JSON.stringify(state.app)).toString('base64')}):json(r,404,{message:'Not Found'});
      if(p===base+'/actions/secrets/KITA_SIGNING_SEED'&&m==='GET') return state.secret?json(r,200,{name:'KITA_SIGNING_SEED'}):json(r,404,{message:'Not Found'});
-     if(p===base+'/actions/secrets/public-key') return json(r,200,{key_id:'kid1',key:state.publicKey});
+     if(p===base+'/actions/secrets/public-key') return state.secretStatus?json(r,state.secretStatus,{message:'Resource not accessible by personal access token'}):json(r,200,{key_id:'kid1',key:state.publicKey});
      if(p===base+'/actions/secrets/KITA_SIGNING_SEED'&&m==='PUT'){state.secret=JSON.parse(body);return r.fulfill({status:201,body:''});}
      if(p===base+'/git/ref/heads/main') return json(r,200,{object:{sha:'h1'}});
      if(p===base+'/git/commits/h1') return json(r,200,{tree:{sha:'t0'}});
@@ -33,7 +33,7 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
      if(p===base+'/git/trees/t0') return json(r,200,{tree:[{type:'blob',path:'site/old.css'},{type:'blob',path:'README.md'}]});
      if(p===base+'/git/trees'&&m==='POST'){state.tree=JSON.parse(body);return json(r,201,{sha:'t1'});}
      if(p===base+'/git/commits'&&m==='POST'){state.commit=JSON.parse(body);return json(r,201,{sha:'c1'});}
-     if(p===base+'/git/refs/heads/main'&&m==='PATCH') return state.refError?json(r,422,{message:state.refError}):json(r,200,{});
+     if(p===base+'/git/refs/heads/main'&&m==='PATCH') return state.refError?json(r,state.refStatus||422,{message:state.refError}):json(r,200,{});
      if(p===base+'/actions/runs'){state.polls=(state.polls||0)+1;const done=state.polls>1;
        return json(r,200,{workflow_runs:[{path:'.github/workflows/build-apk.yml',status:done?'completed':'in_progress',conclusion:done?(state.conclusion||'success'):null,html_url:'https://github.com/naz/kopi-kita-android/actions/runs/9'}]});}
      const tag=p.match(/\/releases\/tags\/v([\d.]+)$/);
@@ -97,13 +97,45 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
    assert.match(manifest,/package="com\.naz\.kopi_kita"[\s\S]*android:versionCode="5"/);
  });
 
- await scenario('token without the workflow scope: clear message',seed({integrations:{github:{connected:true,login:'naz'}}}),async page=>{
+ const tokenErrorShown=async(page,what)=>{
+   await page.waitForSelector('.publish-error[role="alert"]',{timeout:15000});
+   const box=page.locator('.publish-error');
+   assert.equal(await box.count(),1);
+   const text=await box.innerText();
+   assert.match(text,/Could not build the app/);
+   assert.match(text,what);
+   assert.match(text,/new token \(classic\) with the repo and workflow scopes[\s\S]*Settings → Integrations → GitHub/);
+   assert.equal(await page.locator('.publish-error a:has-text("Create a new token")').getAttribute('href'),'https://github.com/settings/tokens/new?scopes=repo,workflow&description=Kita%20Chat');
+   assert(await page.locator('.publish-error button:has-text("GitHub settings")').isVisible());
+   // The box sits above the button, in view, and a toast says so too.
+   assert(await page.evaluate(()=>{const b=document.querySelector('.publish-error'),g=document.getElementById('publishGo');return !!(b.compareDocumentPosition(g)&Node.DOCUMENT_POSITION_FOLLOWING);}));
+   assert.match(await page.locator('#toast, .toast').first().innerText().catch(()=>''),/See the reason above the button/);
+   assert.equal(await page.locator('#publishGo').innerText(),'Try again');
+ };
+ await scenario('token without the workflow scope (422): clear box with a new-token link',seed({integrations:{github:{connected:true,login:'naz'}}}),async page=>{
    const state={refError:'refusing to allow a Personal Access Token to create or update workflow `.github/workflows/build-apk.yml` without `workflow` scope'};
    state.publicKey=await keypair(page);await fakeGitHub(page,state);
    await publishAndroid(page);
-   await page.waitForFunction(()=>/✕/.test(document.querySelector('.publish-progress')?.textContent||''),null,{timeout:15000});
-   assert.match(await page.locator('.publish-progress').innerText(),/new token with the repo and workflow scopes/);
-   assert.equal(await page.locator('#publishGo').innerText(),'Try again');
+   await tokenErrorShown(page,/cannot add the build workflow[\s\S]*GitHub said: refusing to allow/);
+   assert.match(await page.locator('.publish-progress').innerText(),/✕ Your GitHub token cannot add the build workflow/);
+   // Try again clears the old box before the next attempt.
+   delete state.refError;
+   await page.click('#publishGo');
+   await page.waitForSelector('#customDialogScrim.open');await page.locator('#customDialogScrim.open #customDialogConfirm').click().catch(()=>{});
+   await page.waitForSelector('.publish-done a.publish-download',{timeout:15000});
+   assert.equal(await page.locator('.publish-error').count(),0);
+ });
+ await scenario('token without the workflow scope, other wording (404): same clear box',seed({integrations:{github:{connected:true,login:'naz'}}}),async page=>{
+   const state={refError:'Not Found',refStatus:404};
+   state.publicKey=await keypair(page);await fakeGitHub(page,state);
+   await publishAndroid(page);
+   await tokenErrorShown(page,/cannot add the build workflow/);
+ });
+ await scenario('fine-grained token without Secrets access (403): clear box',seed({integrations:{github:{connected:true,login:'naz'}}}),async page=>{
+   const state={secretStatus:403};
+   state.publicKey=await keypair(page);await fakeGitHub(page,state);
+   await publishAndroid(page);
+   await tokenErrorShown(page,/cannot save the signing secret in the repository[\s\S]*Resource not accessible/);
  });
 
  await scenario('failed build on GitHub: says so with the run link',seed({integrations:{github:{connected:true,login:'naz'}}}),async page=>{
@@ -111,6 +143,9 @@ const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'applicatio
    await publishAndroid(page);
    await page.waitForFunction(()=>/✕/.test(document.querySelector('.publish-progress')?.textContent||''),null,{timeout:15000});
    assert.match(await page.locator('.publish-progress').innerText(),/build failed on GitHub \(failure\)[\s\S]*actions\/runs\/9/);
+   // Every failure shows its reason in the box; only token problems get the token buttons.
+   assert.match(await page.locator('.publish-error').innerText(),/Could not build the app[\s\S]*build failed on GitHub/);
+   assert.equal(await page.locator('.publish-error a:has-text("Create a new token")').count(),0);
  });
 
  await scenario('names: package ids and Android string escapes',seed({}),async page=>{
