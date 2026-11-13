@@ -1,9 +1,9 @@
 {
-  "version": "4.21.0",
-  "versionCode": 75,
+  "version": "4.21.1",
+  "versionCode": 76,
   "name": "Kita Chat",
-  "changelog": "Code tab: changes to an existing page are now small edits. The AI reads only the lines it needs and replaces exact pieces of the files instead of rewriting the whole page, so edits to long projects (2000+ lines) are faster, cheaper and no l",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.21.0/NazChat.apk",
-  "sha256": "c1c6c0277711e1013987dee1e3f43ca9603277ab11349a08abf95d007c3a80ef",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.21.0"
+  "changelog": "Settings → About now links to the official website keetakita.my, the Privacy Policy and the Terms of Use, and has Share Kita Chat to send the download page to a friend.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.21.1/NazChat.apk",
+  "sha256": "1f3dbe09b0e823f1f3bc5d3c82e1b5b463af8fac5d038317fd1c2d85f3b76232",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.21.1"
 }
