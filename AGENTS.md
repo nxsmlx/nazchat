@@ -9,6 +9,8 @@ Kita Chat (Android package `com.nazchat.app`) is a bring-your-own-key AI chat ap
 
 Created by **Nazz**. © Nazz, all rights reserved (see LICENSE). Use the author name "Nazz" only; never add other personal names, e-mails or contact details.
 
+Official website: **https://keetakita.my** (features, download, privacy policy, terms). The website is not in this repository; the app links to it from Settings → About (`KITA_SITE` in `nazchat/index.html`). Keep app texts consistent with the website's privacy policy: if a change sends new data anywhere, tell the user so the policy can be updated.
+
 ---
 
 ## 1. Requirements (install once)
@@ -275,7 +277,7 @@ Version numbers: `MAJOR.MINOR.PATCH`.
    - Add a new section at the very top of `RELEASE_NOTES.md`, starting with the exact line `# Kita Chat X.Y.Z`, followed by plain bullet points (`- …`) of what changed for the user.
    - Put the most important change first; the first bullet becomes the in-app update summary.
    - End with `- VersionCode N, same com.nazchat.app package and original signing identity.`
-3. **Update `README.md` the same way.** Its top is `# Kita Chat X.Y.Z`, then `Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.`, then the new notes. Move the previous heading down.
+3. **Update `README.md` the same way.** Its top is `# Kita Chat X.Y.Z`, then `Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.`, then `Website and download: https://keetakita.my`, then the new notes. Move the previous heading down.
 4. **Test, commit and merge:** run `npm test`, then commit, push, open a PR and merge into `main` once CI is green.
 5. **Run the release:**
    - Go to GitHub → **Actions** → **Build, sign and release** → **Run workflow** on `main`. Leave "dry run" unticked.
@@ -300,7 +302,11 @@ Repository secrets are already set up by the owner, so never ask for or print th
 - `KITA_KEYSTORE_PASSWORD`
 - Optional: `KITA_KEY_PASSWORD` and `KITA_KEY_ALIAS`
 
-Download link to share (always the newest APK): https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk
+Links to share:
+- Website with the download button: https://keetakita.my
+- Direct APK, always the newest release: https://github.com/nxsmlx/nazchat/releases/latest/download/NazChat.apk
+
+The in-app updater keeps using GitHub Releases (`version.json` on `main` and the release marker), because the signing and release workflow publishes there.
 
 ---
 

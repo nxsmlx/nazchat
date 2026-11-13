@@ -1838,9 +1838,10 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.21.0";
-const APP_VERSION_CODE = 75;
+const APP_VERSION = "4.21.1";
+const APP_VERSION_CODE = 76;
 const UPDATE_REPO = "nxsmlx/nazchat";
+const KITA_SITE = "https://keetakita.my";
 
 /* ===================== DOM utils ===================== */
 const $ = s => document.querySelector(s);
@@ -3285,7 +3286,17 @@ function openMemoryForm(existing){
   closeSheet("setSheet");openSheet("provSheet");ta.focus();
 }
 function renderSettingsAbout(){
-  renderSettingsPage("About",null,null,list=>{const card=el("div","settings-card");card.innerHTML=`<h4>Kita Chat ${APP_VERSION}</h4><p class="about-author">Made by Nazz · © 2026 Nazz. All rights reserved.</p><p>Private, local-first Android BYOK chat for OpenAI-compatible providers.</p><p style="margin-top:10px">API keys stay in Android Keystore storage. Conversations and workspaces remain on this device.</p>`;list.appendChild(card);const update=el("button","btn secondary","Check for updates");update.id="checkUpdateBtn";update.onclick=checkForUpdate;list.appendChild(update);const status=el("div","update-badge");status.id="updateStatus";status.style.display="none";list.appendChild(status);const diagnostics=el('button','btn secondary','Copy safe diagnostics');diagnostics.dataset.safeDiagnostics='true';list.appendChild(diagnostics);});
+  renderSettingsPage("About",null,null,list=>{const card=el("div","settings-card");card.innerHTML=`<h4>Kita Chat ${APP_VERSION}</h4><p class="about-author">Made by Nazz · © 2026 Nazz. All rights reserved.</p><p>Private, local-first Android BYOK chat for OpenAI-compatible providers.</p><p style="margin-top:10px">API keys stay in Android Keystore storage. Conversations and workspaces remain on this device.</p>`;list.appendChild(card);
+    // The official website: features, privacy policy, terms and the download page to share.
+    const links=el("div","settings-card about-links");
+    [["Website","keetakita.my",KITA_SITE+"/"],["Privacy Policy","What stays on your phone and what is sent",KITA_SITE+"/privacy.html"],["Terms of Use","Using Kita Chat and AI providers",KITA_SITE+"/terms.html"]].forEach(([t,s,href])=>{
+      const a=el("a","about-link");a.href=href;a.target="_blank";a.rel="noopener";
+      a.innerHTML=`<span><strong>${esc(t)}</strong><small>${esc(s)}</small></span><span aria-hidden="true">›</span>`;links.appendChild(a);
+    });
+    const share=el("button","about-link");share.type="button";share.innerHTML=`<span><strong>Share Kita Chat</strong><small>Send the download page to a friend</small></span><span aria-hidden="true">›</span>`;
+    share.onclick=()=>shareText("Kita Chat: AI chat on your phone with your own API key. Download: "+KITA_SITE);links.appendChild(share);
+    list.appendChild(links);
+    const update=el("button","btn secondary","Check for updates");update.id="checkUpdateBtn";update.onclick=checkForUpdate;list.appendChild(update);const status=el("div","update-badge");status.id="updateStatus";status.style.display="none";list.appendChild(status);const diagnostics=el('button','btn secondary','Copy safe diagnostics');diagnostics.dataset.safeDiagnostics='true';list.appendChild(diagnostics);});
 }
 function renderProvidersSubView(){
   renderSettingsPage("Providers","Add",()=>openProvForm(null),list=>{
