@@ -44,6 +44,17 @@ License: CC0 1.0 Universal. See `licenses/CC0-1.0.txt`.
 
 Changes for NazChat: condensed and generalized into framework-aware, provider-neutral chat prompts.
 
+## The Antislop
+
+Copyright (c) 2026 Jim Christian
+Source: https://github.com/aplaceforallmystuff/the-antislop
+
+Adapted the Horoscope Test, the structural and vocabulary patterns, the tiered slop score and editor mode for the Anti-slop Writing skill (skill pack v4).
+
+License: MIT. See `licenses/MIT-the-antislop.txt`.
+
+Changes for Kita Chat: condensed into prompt guidance; removed the file-editing tools, the Wikipedia refresh script and long examples; added Malay translation habits, a rule never to invent facts or statistics, and answers in the user's language.
+
 ## Skill pack v3 additions
 
 Motion & Micro-interactions, Layout Patterns, Icons & Imagery and Data Viz & Dashboards are original guidance written for Kita Chat. The 4.18.0 style presets name open fonts served by Google Fonts (SIL OFL 1.1 or Apache-2.0); the app does not bundle these fonts, generated pages link to them.
