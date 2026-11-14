@@ -1874,8 +1874,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.22.1";
-const APP_VERSION_CODE = 78;
+const APP_VERSION = "4.22.2";
+const APP_VERSION_CODE = 79;
 const UPDATE_REPO = "nxsmlx/nazchat";
 const KITA_SITE = "https://keetakita.my";
 
@@ -2737,6 +2737,21 @@ function showPreviewDiag(reason){
   box.appendChild(acts);
   box.classList.add("show");
 }
+/* Previews and the page test run pages without a site address (an opaque origin), where
+   the browser blocks localStorage, sessionStorage and cookies. A real site has them, so the
+   page gets an in-memory stand-in there instead of a false "SecurityError". Only blocked
+   storage is replaced; the published files are unchanged. One line, so error line numbers
+   in the page stay the same. */
+const KITA_STORAGE_SHIM = '<script>(function(){function mem(){var d=Object.create(null),api={getItem:function(k){k=String(k);return k in d?d[k]:null},setItem:function(k,v){d[String(k)]=String(v)},removeItem:function(k){delete d[String(k)]},clear:function(){for(var k in d)delete d[k]},key:function(i){var ks=Object.keys(d);return i>=0&&i<ks.length?ks[i]:null}};return new Proxy(api,{get:function(t,k){if(k==="length")return Object.keys(d).length;if(k in api)return api[k];return typeof k==="string"&&k in d?d[k]:undefined},set:function(t,k,v){if(!(k in api))d[String(k)]=String(v);return true},has:function(t,k){return k in api||k in d},deleteProperty:function(t,k){delete d[k];return true},ownKeys:function(){return Object.keys(d)},getOwnPropertyDescriptor:function(t,k){if(typeof k==="string"&&k in d)return{value:d[k],writable:true,enumerable:true,configurable:true}}})}["localStorage","sessionStorage"].forEach(function(n){try{if(!window[n])throw 0;window[n].length}catch(e){try{Object.defineProperty(window,n,{value:mem(),configurable:true})}catch(_){}}});try{document.cookie}catch(e){var c=Object.create(null);try{Object.defineProperty(document,"cookie",{configurable:true,get:function(){return Object.keys(c).map(function(k){return k+"="+c[k]}).join("; ")},set:function(v){var p=String(v).split(";")[0],i=p.indexOf("=");if(i>0)c[p.slice(0,i).trim()]=p.slice(i+1).trim()}})}catch(_){}}})();<\/script>';
+/* Puts a script before every script of the page, without adding lines. */
+function withStorageShim(html){
+  const doc=String(html||"");
+  if(doc.includes("function mem(){var d=Object.create(null)")) return doc;
+  if(/<head[^>]*>/i.test(doc)) return doc.replace(/<head([^>]*)>/i,"<head$1>"+KITA_STORAGE_SHIM);
+  if(/<html[^>]*>/i.test(doc)) return doc.replace(/<html([^>]*)>/i,"<html$1>"+KITA_STORAGE_SHIM);
+  if(/^\s*<!doctype[^>]*>/i.test(doc)) return doc.replace(/^(\s*<!doctype[^>]*>)/i,"$1"+KITA_STORAGE_SHIM);
+  return KITA_STORAGE_SHIM+doc;
+}
 function buildPreviewDoc(html, runJs){
   if(typeof kitaInlineIcons==="function") html = kitaInlineIcons(html);
   const isFull = /<html[\s>]/i.test(html) || /^\s*<!doctype/i.test(html);
@@ -2747,9 +2762,9 @@ function buildPreviewDoc(html, runJs){
       doc = doc.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width, initial-scale=1">');
     if(/<\/head>\s*<body/i.test(doc)) doc = doc.replace(/<\/head>\s*<body/i, bridge + "</head><body");
     else if(/<\/head>/i.test(doc)) doc = doc.replace(/<\/head>/i, bridge + "</head>");
-    return doc;
+    return withStorageShim(doc);
   }
-  return `<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>html,body{margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:0}</style>${bridge}</head><body>${html}</body></html>`;
+  return `<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${KITA_STORAGE_SHIM}<style>html,body{margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:0}</style>${bridge}</head><body>${html}</body></html>`;
 }
 function showPreviewTab(name){
   document.querySelectorAll(".preview-tab").forEach(t=>t.classList.toggle("active", t.dataset.tab===name));
@@ -4529,6 +4544,7 @@ function codeFixPrompt(errors){
    NazCodeCheck (a separate WebView without bridges); in a browser, a sandboxed iframe. */
 let codeCheckSeq=0;
 function checkHtmlRuns(html){
+  html=withStorageShim(html);
   const id="c"+(++codeCheckSeq)+"_"+Date.now();
   return new Promise(resolve=>{
     let settled=false; const done=list=>{ if(settled) return; settled=true; resolve(Array.isArray(list)?list.slice(0,6):[]); };

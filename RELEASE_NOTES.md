@@ -1,3 +1,10 @@
+# Kita Chat 4.22.2
+
+- Pages that save data (a to-do list, a cart, a theme switch) no longer fail the automatic page test with "SecurityError: Failed to read the 'localStorage' property". Previews and the page test run without a site address, where the browser blocks storage; the page now gets temporary in-memory storage there, so only real errors are reported and fixed.
+- Previews of these pages now work too. Saved values last until the preview closes; the published site uses the browser's normal storage and is unchanged.
+- New built-in skill: Anti-slop Writing. Ask Kita to rewrite or check a pitch, post, email or caption and it removes AI-sounding patterns, including common Malay ones, and gives a slop score.
+- VersionCode 79, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.22.1
 
 - Publish and Android app builds now show why they failed, in a red box right above the button, instead of only "Try again". The screen scrolls to it and a short notice points to it.
