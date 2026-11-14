@@ -1,9 +1,9 @@
 {
-  "version": "4.22.1",
-  "versionCode": 78,
+  "version": "4.22.2",
+  "versionCode": 79,
   "name": "Kita Chat",
-  "changelog": "Publish and Android app builds now show why they failed, in a red box right above the button, instead of only \"Try again\". The screen scrolls to it and a short notice points to it.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.22.1/NazChat.apk",
-  "sha256": "4aa9d4741bae9362540f62e37c9879a53d2d3952447cfbb2ca031fe13f8d32dc",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.22.1"
+  "changelog": "Pages that save data (a to-do list, a cart, a theme switch) no longer fail the automatic page test with \"SecurityError: Failed to read the 'localStorage' property\". Previews and the page test run without a site address, where the browser bl",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.22.2/NazChat.apk",
+  "sha256": "5215d504e4f847b62c60c5ee7ad64d684a1ef2ab0c783fedfb46915a9d59755a",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.22.2"
 }
