@@ -1,9 +1,9 @@
 {
-  "version": "4.23.0",
-  "versionCode": 80,
+  "version": "4.24.0",
+  "versionCode": 81,
   "name": "Kita Chat",
-  "changelog": "Make PDF, Word, Excel and PowerPoint files in chat. Ask for a report, a budget, an invoice or a pitch deck, and Kita shows a file card with Download; the file is made on your phone and opens in Microsoft Office, Google Docs, WPS and LibreOf",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.23.0/NazChat.apk",
-  "sha256": "32a5a2b5437b1f01647573cb8ada09bf18db996c92878989afc26d3900561aff",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.23.0"
+  "changelog": "Folders for your chats. In the chat list, tap New folder, then use ⋯ on any chat → Move to folder. Chats in a folder are listed inside it, with a count beside each folder; search still finds every chat and shows its folder.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.24.0/NazChat.apk",
+  "sha256": "5b6ca2b1c2e1aebd96d5628ac55e4eb29a65ad21873d8f62adf7d638b5368d6b",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.24.0"
 }
