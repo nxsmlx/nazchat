@@ -1,9 +1,9 @@
 {
-  "version": "4.22.2",
-  "versionCode": 79,
+  "version": "4.23.0",
+  "versionCode": 80,
   "name": "Kita Chat",
-  "changelog": "Pages that save data (a to-do list, a cart, a theme switch) no longer fail the automatic page test with \"SecurityError: Failed to read the 'localStorage' property\". Previews and the page test run without a site address, where the browser bl",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.22.2/NazChat.apk",
-  "sha256": "5215d504e4f847b62c60c5ee7ad64d684a1ef2ab0c783fedfb46915a9d59755a",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.22.2"
+  "changelog": "Make PDF, Word, Excel and PowerPoint files in chat. Ask for a report, a budget, an invoice or a pitch deck, and Kita shows a file card with Download; the file is made on your phone and opens in Microsoft Office, Google Docs, WPS and LibreOf",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.23.0/NazChat.apk",
+  "sha256": "32a5a2b5437b1f01647573cb8ada09bf18db996c92878989afc26d3900561aff",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.23.0"
 }
