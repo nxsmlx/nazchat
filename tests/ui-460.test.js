@@ -40,7 +40,7 @@ const conv=(id,title,at,messages)=>({id,title,updatedAt:at,messages});
    assert.equal(await bar.getByRole('button',{name:'Review & Improve'}).count(),0,'secondary action should be in the menu');
    await bar.getByRole('button',{name:'More actions'}).click();
    assert.equal(await bar.getByRole('button',{name:'More actions'}).getAttribute('aria-expanded'),'true');
-   assert.deepEqual(await page.getByRole('menuitem').allTextContents(),['Compare models','Review & Improve','Save artifact']);
+   assert.deepEqual(await page.getByRole('menuitem').allTextContents(),['Compare models','Review & Improve','Save artifact','Download as…']);
    assert.equal(await page.evaluate(()=>document.activeElement.textContent),'Compare models');
    await page.keyboard.press('ArrowDown');assert.equal(await page.evaluate(()=>document.activeElement.textContent),'Review & Improve');
    await page.keyboard.press('Escape');assert.equal(await page.locator('.msg-menu').count(),0);

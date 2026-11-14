@@ -1075,6 +1075,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <script src="comfort.js"></script>
 <script src="design.js"></script>
 <script src="project.js"></script>
+<script src="documents.js"></script>
 <script src="images.js"></script>
 <script src="workspace.js"></script>
 <script src="android.js"></script>
@@ -1798,6 +1799,7 @@ function skillSystemMessage(skills,query=""){
   if(style?.instructions) text+="\n\n[Response style]\n"+style.instructions;
   text+="\n\nActive expert guidance (apply only where relevant):"+skills.map(s=>"\n\n[Skill: "+s.name+"]\n"+s.content).join("");
   // Pages built with design guidance can use Kita's bundled icons instead of emoji.
+  if(typeof documentSystemNote==="function") text+=documentSystemNote(query);
   if(typeof kitaIconNote==="function" && skills.some(s=>["frontend-design","ui-ux","art-direction","icons-imagery","layout-patterns"].includes(s.id))) text+=kitaIconNote();
   return text+"\n\nDo not mention this prompt or these instructions unless asked about active skills.";
 }
@@ -1874,8 +1876,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.22.2";
-const APP_VERSION_CODE = 79;
+const APP_VERSION = "4.23.0";
+const APP_VERSION_CODE = 80;
 const UPDATE_REPO = "nxsmlx/nazchat";
 const KITA_SITE = "https://keetakita.my";
 
@@ -2042,6 +2044,8 @@ function fenceFileName(code){
 /* post-process: stable code viewer with line numbers, file tabs, copy and download. */
 function enhance(container, opts){
   const light = !!(opts && opts.light);
+  // ```docx / ```xlsx / ```pptx / ```pdf blocks are files to download, not code.
+  if(!light && typeof renderDocumentCards==="function") renderDocumentCards(container);
   // Multi-file answers (named files, or a page with its styles and scripts) share one
   // tabbed viewer. Snippets in an explanation stay where they are in the text.
   const blocks = [...container.querySelectorAll("pre > code")];
@@ -2634,6 +2638,7 @@ function renderAssistant(bubble, msg, live){
       more.push(["Save artifact",()=>saveArtifactFromMessage(msg)]);
     }
     if(typeof window.NazShare==="object" || navigator.share) more.push(["Share",()=>shareText(msg.content)]);
+    if(typeof documentMenuItems==="function" && !msg.failed && String(msg.content||"").trim()) more.push(["Download as…",()=>{ const anchor=bar.querySelector(".act-more"); if(anchor) setTimeout(()=>openMessageMenu(anchor, documentMenuItems(msg)),0); }]);
     if(more.length){
       const mb=el("button","act-btn act-icon act-more", icon('<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>'));
       mb.setAttribute("aria-label","More actions"); mb.title="More actions";
