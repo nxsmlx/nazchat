@@ -13,7 +13,7 @@ const path=require('node:path');
  assert.deepStrictEqual(embedded,pack,'offline embedded pack must exactly match skills.json');
  assert.equal(pack.maxSkills,3);
  const ids=pack.skills.map(s=>s.id);
- for(const id of ['frontend-design','art-direction','interface-copy','design-critique','ui-ux'])assert(ids.includes(id),'missing '+id);
+ for(const id of ['frontend-design','art-direction','interface-copy','design-critique','ui-ux','anti-slop'])assert(ids.includes(id),'missing '+id);
  const fd=pack.skills.find(s=>s.id==='frontend-design');
  assert(fd.content.includes('cream'),'anti-AI pattern list missing cream/terracotta');
  assert(fd.content.includes('em dash'),'em dash tell missing');
@@ -42,6 +42,12 @@ const path=require('node:path');
  assert(selArt.includes('art-direction'),'art-direction not routed for palette/typography');
  const selCopy=await p.evaluate(()=>selectSkills('write the button labels and empty states',currentModel()).map(s=>s.id));
  assert(selCopy.includes('interface-copy'),'interface-copy not routed for copywriting');
+ for(const ask of ['tolong tulis semula pitch ni, bunyi macam AI','does this sound like AI? humanize it','run antislop on my linkedin post']){
+   const ids=await p.evaluate(q=>selectSkills(q,currentModel()).map(s=>s.id),ask);
+   assert(ids.includes('anti-slop'),'anti-slop not routed for: '+ask);
+ }
+ for(const ask of ['copy this code to a new file','buat landing page yang cantik','fix the login bug'])
+   assert(!(await p.evaluate(q=>selectSkills(q,currentModel()).map(s=>s.id),ask)).includes('anti-slop'),'anti-slop routed for unrelated: '+ask);
  const critique=await p.evaluate(()=>selectSkills('review and improve this interface',currentModel()).map(s=>s.id));
  assert(critique.includes('design-critique'),'critique not routed');
  const boundary=await p.evaluate(()=>selectSkills('contextual colourful brandish',currentModel()).map(s=>s.id));
