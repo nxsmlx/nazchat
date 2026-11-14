@@ -45,6 +45,8 @@ async function automaticUpdateCheck(){
 window.kitaHandleBack=function(){
  if(kitaSelectOpen){closeKitaSelect();return true;}
  if(document.querySelector('.msg-menu')){closeMessageMenu();return true;}
+ // In a folder of the sidebar, Back first returns to all chats.
+ if(typeof sidebarFolderId!=='undefined'&&sidebarFolderId&&document.querySelector('#sidebar.open')&&studioTopOverlay()===document.querySelector('#sidebar.open #sidebarPanel')){sidebarFolderId=null;renderSidebar();return true;}
  const overlay=studioTopOverlay();if(overlay){document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return true;}
  if(studioView!=='chat'){studioNavigate('chat');return true;}return false;
 };
