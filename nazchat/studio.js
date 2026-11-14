@@ -110,7 +110,50 @@ async function studioManageLibraryItem(item){const next=await promptDialog('Rena
 async function studioConversationMenu(c){
   const body=$('#toolsSheetBody');body.innerHTML='';$('#studioChatControls').hidden=true;$('#toolsSheet .sheet-head h3').textContent='Conversation';
   body.appendChild(el('p','hint',esc(c.title||'New chat')));
-  for(const [label,fn] of [['Rename',()=>renameConversation(c)],[c.pinned?'Unpin conversation':'Pin conversation',()=>{c.pinned=!c.pinned;save();renderSidebar();}],['Delete conversation',async()=>{if(!studioCanNavigate())return;if(await confirmDialog('Delete this conversation?',{title:'Delete conversation',danger:true,confirmText:'Delete'})){db.conversations=db.conversations.filter(x=>x.id!==c.id);if(conv?.id===c.id)conv=null;save();renderAll();}}]]){const b=el('button','btn secondary',label);if(label.startsWith('Delete'))b.classList.add('danger');b.onclick=()=>{closeSheet('toolsSheet');fn();};body.appendChild(b);}openSheet('toolsSheet');
+  const inFolder=typeof convFolder==='function'?convFolder(c):null;
+  for(const [label,fn] of [['Rename',()=>renameConversation(c)],[c.pinned?'Unpin conversation':'Pin conversation',()=>{c.pinned=!c.pinned;save();renderSidebar();}],[inFolder?'Move to folder · '+inFolder.name:'Move to folder',()=>studioFolderPicker(c)],['Delete conversation',async()=>{if(!studioCanNavigate())return;if(await confirmDialog('Delete this conversation?',{title:'Delete conversation',danger:true,confirmText:'Delete'})){db.conversations=db.conversations.filter(x=>x.id!==c.id);if(conv?.id===c.id)conv=null;save();renderAll();}}]]){const b=el('button','btn secondary',label);if(label.startsWith('Delete'))b.classList.add('danger');b.onclick=()=>{closeSheet('toolsSheet');fn();};body.appendChild(b);}openSheet('toolsSheet');
+}
+/* Folders: create, move a chat, rename and delete (chats are kept). */
+async function createFolder(){
+  const name=await promptDialog('Name the new folder','',{title:'New folder'});
+  if(!name||!name.trim())return null;
+  const clean=name.trim().slice(0,60);
+  const same=db.folders.find(f=>f.name.toLowerCase()===clean.toLowerCase());
+  if(same){toast('A folder with this name already exists');return same;}
+  const f={id:uid(),name:clean,createdAt:Date.now()};db.folders.push(f);save();renderSidebar();return f;
+}
+function moveConversationToFolder(c,folderId){
+  if((c.folderId||null)===(folderId||null))return;
+  c.folderId=folderId||null;save();renderSidebar();
+  const f=folderId&&db.folders.find(x=>x.id===folderId);toast(f?'Moved to '+f.name:'Moved to All chats');
+}
+function studioFolderPicker(c){
+  const body=$('#toolsSheetBody');body.innerHTML='';$('#studioChatControls').hidden=true;$('#toolsSheet .sheet-head h3').textContent='Move to folder';
+  body.appendChild(el('p','hint',esc(c.title||'New chat')));
+  const current=convFolder(c)?.id||null;
+  const choice=(label,id)=>{const b=el('button','btn secondary folder-choice'+(current===id?' active':''));b.type='button';b.textContent=label+(current===id?' ✓':'');b.setAttribute('aria-pressed',String(current===id));b.onclick=()=>{closeSheet('toolsSheet');moveConversationToFolder(c,id);};body.appendChild(b);};
+  choice('No folder',null);
+  [...db.folders].sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>choice(f.name,f.id));
+  const add=el('button','btn secondary','New folder…');add.type='button';add.onclick=async()=>{closeSheet('toolsSheet');const f=await createFolder();if(f)moveConversationToFolder(c,f.id);};body.appendChild(add);
+  openSheet('toolsSheet');
+}
+function studioFolderMenu(folder){
+  const body=$('#toolsSheetBody');body.innerHTML='';$('#studioChatControls').hidden=true;$('#toolsSheet .sheet-head h3').textContent='Folder';
+  body.appendChild(el('p','hint',esc(folder.name)));
+  const rename=el('button','btn secondary','Rename folder');rename.type='button';
+  rename.onclick=async()=>{closeSheet('toolsSheet');const next=await promptDialog('Rename this folder',folder.name,{title:'Rename folder'});if(next&&next.trim()){folder.name=next.trim().slice(0,60);save();renderSidebar();}};
+  const del=el('button','btn secondary danger','Delete folder');del.type='button';
+  del.onclick=async()=>{
+    closeSheet('toolsSheet');
+    const chats=db.conversations.filter(c=>c.folderId===folder.id);
+    const ok=await confirmDialog('Delete the folder “'+folder.name+'”? '+(chats.length?'Its '+chats.length+' chat'+(chats.length===1?' is':'s are')+' kept and moved to All chats.':'It is empty.'),{title:'Delete folder',danger:true,confirmText:'Delete folder'});
+    if(!ok)return;
+    chats.forEach(c=>{c.folderId=null;});
+    db.folders=db.folders.filter(f=>f.id!==folder.id);
+    if(sidebarFolderId===folder.id)sidebarFolderId=null;
+    save();renderSidebar();toast('Folder deleted. Chats kept.');
+  };
+  body.append(rename,del);openSheet('toolsSheet');
 }
 function studioExtractCodeBlock(content){
   const text=String(content||'');const opening=/^ {0,3}(`{3,}|~{3,})([^\r\n]*)\r?\n/gm;let match;

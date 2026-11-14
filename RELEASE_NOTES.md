@@ -1,3 +1,10 @@
+# Kita Chat 4.24.0
+
+- Folders for your chats. In the chat list, tap New folder, then use ⋯ on any chat → Move to folder. Chats in a folder are listed inside it, with a count beside each folder; search still finds every chat and shows its folder.
+- Rename or delete a folder from ⋯ inside it. Deleting a folder keeps its chats and moves them back to All chats. Android Back leaves a folder before it closes the chat list.
+- Folders are separate from Projects: they only organise chats and do not change how Kita answers. Backups include them.
+- VersionCode 81, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.23.0
 
 - Make PDF, Word, Excel and PowerPoint files in chat. Ask for a report, a budget, an invoice or a pitch deck, and Kita shows a file card with Download; the file is made on your phone and opens in Microsoft Office, Google Docs, WPS and LibreOffice.

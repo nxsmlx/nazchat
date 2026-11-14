@@ -1633,13 +1633,14 @@ const CORE_PROMPT = "You are Kita Chat, a helpful expert assistant. Respond in t
 /* ===================== State & Storage ===================== */
 const LS_KEY = "nazchat_v1";
 const DATA_SCHEMA_VERSION = 3;
-function defaultDb(){ return { schemaVersion:DATA_SCHEMA_VERSION, providers:[], conversations:[], projects:[], prompts:[], styles:[], artifacts:[], activeProjectId:null, lastProviderId:null, lastModelId:null, theme:"dark", thinking:false, search:false, reasoningEffort:"medium", onboardingDone:false, parametersByModel:{}, skillSettings:{mode:"auto",selected:[],disabled:[],custom:[]}, memory:{enabled:false,items:[]}, mcpServers:[], mcpConfirm:true }; }
+function defaultDb(){ return { schemaVersion:DATA_SCHEMA_VERSION, providers:[], conversations:[], folders:[], projects:[], prompts:[], styles:[], artifacts:[], activeProjectId:null, lastProviderId:null, lastModelId:null, theme:"dark", thinking:false, search:false, reasoningEffort:"medium", onboardingDone:false, parametersByModel:{}, skillSettings:{mode:"auto",selected:[],disabled:[],custom:[]}, memory:{enabled:false,items:[]}, mcpServers:[], mcpConfirm:true }; }
 function migrateDb(raw){
   const d = raw && typeof raw === "object" ? {...defaultDb(),...raw} : defaultDb();
   d.schemaVersion = DATA_SCHEMA_VERSION;
   d.providers = Array.isArray(d.providers) ? d.providers.map(p=>({...p, secretRef:p.secretRef||("provider:"+(p.id||("legacy-"+Date.now()+"-"+Math.random().toString(36).slice(2)))), capabilities:p.capabilities||{}, parameters:p.parameters||{}})) : [];
   d.conversations = Array.isArray(d.conversations) ? d.conversations : [];
   d.projects = Array.isArray(d.projects) ? d.projects : [];
+  d.folders = Array.isArray(d.folders) ? d.folders.filter(f=>f && typeof f.id==="string" && typeof f.name==="string") : [];
   d.prompts = Array.isArray(d.prompts) ? d.prompts : [];
   d.styles = Array.isArray(d.styles) ? d.styles : [];
   d.artifacts = Array.isArray(d.artifacts) ? d.artifacts : [];
@@ -1876,8 +1877,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.23.0";
-const APP_VERSION_CODE = 80;
+const APP_VERSION = "4.24.0";
+const APP_VERSION_CODE = 81;
 const UPDATE_REPO = "nxsmlx/nazchat";
 const KITA_SITE = "https://keetakita.my";
 
@@ -2283,6 +2284,44 @@ async function renameConversation(c){
   const next=await promptDialog("Choose a new name",c.title||"New chat",{title:"Rename conversation"});
   if(next && next.trim()){ c.title=next.trim().slice(0,80); c.updatedAt=Date.now(); save(); renderAll(); haptic(); }
 }
+/* Folders (4.24.0): chats can be moved into folders to keep work organised. A chat in a
+   folder is listed inside its folder; search still finds every chat. */
+let sidebarFolderId=null; // folder open in the sidebar (view state, not saved)
+function convFolder(c){ return (c&&c.folderId&&db.folders.find(f=>f.id===c.folderId))||null; }
+function sidebarConvRow(c, showFolder){
+  const item=el("div","conv-item"+(conv&&c.id===conv.id?" active":"")+(c.pinned?" pinned":""));
+  const folder=showFolder?convFolder(c):null;
+  item.innerHTML=`<button class="studio-conv-open"><span class="pin">●</span><span class="t">${esc(c.title||"New chat")}</span>${folder?`<small class="conv-folder-tag">${esc(folder.name)}</small>`:""}</button><button class="studio-conv-menu" aria-label="Manage conversation: ${esc(c.title||"New chat")}">${kitaIcon('more')}</button>`;
+  item.querySelector('.studio-conv-open').onclick=()=>studioOpenConversation(c);
+  item.querySelector('.studio-conv-menu').onclick=()=>{closeSidebar();studioConversationMenu(c);};
+  return item;
+}
+function sidebarFolders(inMode){
+  const box=el("div","folder-section");
+  const head=el("div","folder-section-head");
+  head.appendChild(el("span","conv-group-label","Folders"));
+  const add=el("button","folder-add",kitaIcon('plus')+"<span>New folder</span>");add.type="button";add.setAttribute("aria-label","New folder");
+  add.onclick=async()=>{ const f=await createFolder(); if(f){ sidebarFolderId=f.id; renderSidebar(); } };
+  head.appendChild(add);box.appendChild(head);
+  [...db.folders].sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>{
+    const n=inMode.filter(c=>c.folderId===f.id).length;
+    const row=el("button","folder-row");row.type="button";row.setAttribute("aria-label","Open folder "+f.name+", "+n+" chat"+(n===1?"":"s"));
+    row.innerHTML=`${kitaIcon('folder')}<span class="t">${esc(f.name)}</span><span class="folder-count">${n}</span>`;
+    row.onclick=()=>{ sidebarFolderId=f.id; renderSidebar(); $("#convList .folder-back")?.focus({preventScroll:true}); };
+    box.appendChild(row);
+  });
+  return box;
+}
+function sidebarFolderHead(folder){
+  const head=el("div","folder-view-head");
+  const back=el("button","folder-back",`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span>All chats</span>`);
+  back.type="button";back.setAttribute("aria-label","Back to all chats");back.onclick=()=>{ sidebarFolderId=null; renderSidebar(); };
+  const title=el("strong","folder-view-title");title.textContent=folder.name;
+  const menu=el("button","studio-conv-menu",kitaIcon('more'));menu.type="button";menu.setAttribute("aria-label","Manage folder: "+folder.name);
+  menu.onclick=()=>{ closeSidebar(); studioFolderMenu(folder); };
+  head.append(back,title,menu);
+  return head;
+}
 function renderSidebar(){
   const list=$("#convList"); list.innerHTML="";
   const search=$("#convSearch");
@@ -2290,17 +2329,23 @@ function renderSidebar(){
   const q=(search?.value||"").trim().toLowerCase();
   const mode=typeof kitaMode==="function"?kitaMode():"chat";
   if(typeof modeSwitch==="function") list.appendChild(modeSwitch("side-mode"));
-  const sorted=[...db.conversations].filter(c=>(typeof convMode==="function"?convMode(c):"chat")===mode).filter(c=>!q||(c.title||"").toLowerCase().includes(q)).sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.updatedAt-a.updatedAt));
-  if(!sorted.length){list.appendChild(el("div","",`<div style="color:var(--text2);font-size:13px;padding:16px 10px">${q?"No matching conversations":mode==="code"?"No Code projects yet":"No conversations yet"}</div>`));return;}
+  const folder=sidebarFolderId?db.folders.find(f=>f.id===sidebarFolderId)||null:null;
+  if(!folder) sidebarFolderId=null;
+  const inMode=db.conversations.filter(c=>(typeof convMode==="function"?convMode(c):"chat")===mode);
+  let shown;
+  if(q) shown=inMode.filter(c=>(c.title||"").toLowerCase().includes(q));
+  else if(folder){ list.appendChild(sidebarFolderHead(folder)); shown=inMode.filter(c=>c.folderId===folder.id); }
+  else { list.appendChild(sidebarFolders(inMode)); shown=inMode.filter(c=>!convFolder(c)); }
+  const sorted=shown.sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.updatedAt-a.updatedAt));
+  if(!sorted.length){
+    const text=q?"No matching conversations":folder?"No chats in this folder yet. Use ⋯ on a chat, then Move to folder.":mode==="code"?"No Code projects yet":"No conversations yet";
+    const empty=el("div","conv-empty");empty.textContent=text;list.appendChild(empty);return;
+  }
   let previousGroup="";
   sorted.forEach(c=>{
     const group=conversationDay(c.updatedAt);
     if(group!==previousGroup){list.appendChild(el("div","conv-group-label",group));previousGroup=group;}
-    const item=el("div","conv-item"+(conv&&c.id===conv.id?" active":"")+(c.pinned?" pinned":""));
-    item.innerHTML=`<button class="studio-conv-open"><span class="pin">●</span><span class="t">${esc(c.title||"New chat")}</span></button><button class="studio-conv-menu" aria-label="Manage conversation: ${esc(c.title||"New chat")}">${kitaIcon('more')}</button>`;
-    item.querySelector('.studio-conv-open').onclick=()=>studioOpenConversation(c);
-    item.querySelector('.studio-conv-menu').onclick=()=>{closeSidebar();studioConversationMenu(c);};
-    list.appendChild(item);
+    list.appendChild(sidebarConvRow(c,!!q));
   });
 }
 function openSidebar(){ studioSidebarFocus=document.activeElement;$("#sidebar").classList.add("open");$("#menuBtn").setAttribute('aria-expanded','true');if(innerWidth<=760)$("#closeSide").focus();haptic(); }
