@@ -1,8 +1,15 @@
-# Kita Chat 4.22.1
+# Kita Chat 4.22.2
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
 
 Website and download: https://keetakita.my
+
+- Pages that save data (a to-do list, a cart, a theme switch) no longer fail the automatic page test with "SecurityError: Failed to read the 'localStorage' property". Previews and the page test run without a site address, where the browser blocks storage; the page now gets temporary in-memory storage there, so only real errors are reported and fixed.
+- Previews of these pages now work too. Saved values last until the preview closes; the published site uses the browser's normal storage and is unchanged.
+- New built-in skill: Anti-slop Writing. Ask Kita to rewrite or check a pitch, post, email or caption and it removes AI-sounding patterns, including common Malay ones, and gives a slop score.
+- VersionCode 79, same com.nazchat.app package and original signing identity.
+
+# Kita Chat 4.22.1
 
 - Publish and Android app builds now show why they failed, in a red box right above the button, instead of only "Try again". The screen scrolls to it and a short notice points to it.
 - When the GitHub token is the problem (missing the workflow scope, or a fine-grained token without Secrets or Workflows access), the box says so and has Create a new token, which opens GitHub with the repo and workflow scopes already ticked, and GitHub settings, where you paste the new token.
