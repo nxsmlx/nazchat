@@ -40,7 +40,7 @@ const conv=(id,title,at,messages)=>({id,title,updatedAt:at,messages});
    assert.equal(await bar.getByRole('button',{name:'Review & Improve'}).count(),0,'secondary action should be in the menu');
    await bar.getByRole('button',{name:'More actions'}).click();
    assert.equal(await bar.getByRole('button',{name:'More actions'}).getAttribute('aria-expanded'),'true');
-   assert.deepEqual(await page.getByRole('menuitem').allTextContents(),['Compare models','Review & Improve','Save artifact']);
+   assert.deepEqual(await page.getByRole('menuitem').allTextContents(),['Compare models','Review & Improve','Save artifact','Download as…']);
    assert.equal(await page.evaluate(()=>document.activeElement.textContent),'Compare models');
    await page.keyboard.press('ArrowDown');assert.equal(await page.evaluate(()=>document.activeElement.textContent),'Review & Improve');
    await page.keyboard.press('Escape');assert.equal(await page.locator('.msg-menu').count(),0);
@@ -96,7 +96,7 @@ const conv=(id,title,at,messages)=>({id,title,updatedAt:at,messages});
 
  await scenario('Tools rows: project, voice, style and library share one pattern',base({}),async page=>{
    await page.evaluate(()=>openToolsSheet());
-   const rows=await page.locator('#toolsSheetBody .tools-row').count();assert.equal(rows,9,'5 rows plus the agent, agent team, network and background rows');
+   const rows=await page.locator('#toolsSheetBody .tools-row').count();assert.equal(rows,10,'5 rows plus make a file, agent, agent team, network and background rows');
    assert(await page.getByRole('button',{name:'Project: None',exact:true}).isVisible());
    for(const n of ['Dictate','Read latest answer aloud','New response style','Open prompt & artifact library'])assert(await page.getByRole('button',{name:n}).isVisible(),n);
    assert(await page.getByRole('combobox',{name:'Response style'}).isVisible());

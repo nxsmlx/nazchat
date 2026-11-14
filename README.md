@@ -1,8 +1,18 @@
-# Kita Chat 4.22.2
+# Kita Chat 4.23.0
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
 
 Website and download: https://keetakita.my
+
+- Make PDF, Word, Excel and PowerPoint files in chat. Ask for a report, a budget, an invoice or a pitch deck, and Kita shows a file card with Download; the file is made on your phone and opens in Microsoft Office, Google Docs, WPS and LibreOffice.
+- Kita makes only the file you ask for: ask for slides and you get a PowerPoint, nothing else. To work on one kind of file, open Tools → Make a file and choose PDF, Word, Excel or PowerPoint; a chip above the message box shows it, and tapping its × turns it off.
+- Excel files keep numbers, RM amounts and percentages as real numbers, with working formulas such as =SUM(B2:B6). One sheet per table.
+- PowerPoint files get a title slide, one slide per heading, bullets, tables and slide numbers; long lists continue on the next slide.
+- Any answer can be saved as a PDF, Word, Excel (when it has a table) or PowerPoint file from its ⋯ menu → Download as….
+- PDFs keep text selectable. Answers in Chinese, Tamil, Arabic and other scripts are saved as page images, so every language prints correctly.
+- VersionCode 80, same com.nazchat.app package and original signing identity.
+
+# Kita Chat 4.22.2
 
 - Pages that save data (a to-do list, a cart, a theme switch) no longer fail the automatic page test with "SecurityError: Failed to read the 'localStorage' property". Previews and the page test run without a site address, where the browser blocks storage; the page now gets temporary in-memory storage there, so only real errors are reported and fixed.
 - Previews of these pages now work too. Saved values last until the preview closes; the published site uses the browser's normal storage and is unchanged.

@@ -81,6 +81,7 @@ nazchat/                 Web app: the ONLY source of the UI and app logic
   comfort.js             Reading preferences, Android Back (kitaHandleBack), Kita picker for every <select>
   design.js              Design kit: style presets + font pairings for Code builds, bundled Lucide icons (<i data-icon> → inline SVG)
   project.js             Project files: split a page into index.html + css/ + js/ for download and publish, preview multi-file answers, .zip export
+  documents.js           PDF, Word (.docx), Excel (.xlsx) and PowerPoint (.pptx) files from Markdown, made on the phone; ```docx/xlsx/pptx/pdf blocks become file cards, ⋯ → Download as…
   images.js              Image attachments: resize on device, full images in IndexedDB (thumbnail in chat data), vision request parts
   workspace.js           Code follow-ups: list/read/edit/write tools on the project files (no shell), page test + fix, files appended as an artifact
   android.js             Publish → Android app (APK): writes the site + a WebView Android project + build workflow to the user's private GitHub repo; sealed-box signing secret

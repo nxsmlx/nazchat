@@ -79,6 +79,7 @@ function renderStudioContext(){
   if(db.search)chips.push({label:'Web search',icon:'globe',clear:()=>{db.search=false;save();syncToggles();}});
   if(db.thinking)chips.push({label:'Thinking · '+db.reasoningEffort,icon:'think',clear:()=>{db.thinking=false;save();syncToggles();}});
   if(db.skillSettings.mode==='manual')chips.push({label:db.skillSettings.selected.length+' skills',icon:'spark',clear:()=>{db.skillSettings.mode='auto';save();syncToggles();}});
+  if(typeof fileFocus==='function'&&fileFocus())chips.push({label:DOC_FORMATS[fileFocus()].label+' file',icon:'file',clear:()=>setFileFocus('')});
   if(style)chips.push({label:style.name,icon:'pen',clear:()=>{db.activeStyleId=null;if(conv)conv.styleId=null;save();renderStudioContext();}});
   // Bypass all is always visible while it is on; removing the chip turns it off.
   if(permissionMode()==='bypass')chips.unshift({label:'Bypass all: tools run without asking',icon:'spark',warn:true,clear:()=>{db.permissionMode='balanced';save();renderStudioContext();toast('Bypass all is off. Tools ask again.');}});
