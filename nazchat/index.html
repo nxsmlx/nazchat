@@ -3112,6 +3112,15 @@ function renderToolsSheet(){
   const newStyle=el("button","mini-btn","New");newStyle.id="newStyleTool";newStyle.type="button";newStyle.setAttribute("aria-label","New response style");newStyle.onclick=createStyle;
   style.querySelector(".tools-row-actions").append(styles,newStyle);
   rows.appendChild(style);
+  // Make a file: answer this conversation with one kind of file (PDF, Word, Excel, PowerPoint).
+  if(typeof fileFocus==="function"){
+    const file=el("div","tools-row");
+    file.innerHTML=`<span><strong>Make a file</strong><small>Answer with one kind of file to download</small></span><span class="tools-row-actions"></span>`;
+    const pick=el("select");pick.id="fileFocusPick";pick.setAttribute("aria-label","Make a file");
+    pick.innerHTML=[["","Only when asked"],["pdf","PDF"],["docx","Word"],["xlsx","Excel"],["pptx","PowerPoint"]].map(([v,l])=>`<option value="${v}" ${v===fileFocus()?"selected":""}>${l}</option>`).join("");
+    pick.onchange=()=>setFileFocus(pick.value);
+    file.querySelector(".tools-row-actions").appendChild(pick);rows.appendChild(file);
+  }
   const test=el("div","tools-row");
   test.innerHTML=`<span><strong>Test web pages</strong><small>Run pages Kita writes and fix errors automatically</small></span>`;
   const testSwitch=el("button","switch"+(db.autoCheckCode!==false?" on":""));testSwitch.type="button";testSwitch.setAttribute("role","switch");testSwitch.setAttribute("aria-checked",String(db.autoCheckCode!==false));testSwitch.setAttribute("aria-label","Test web pages");
@@ -4491,6 +4500,7 @@ function ensureConv(){
   if(!conv){
     conv = { id:uid(), title:"New chat", mode:db.uiMode==="code"?"code":"chat", providerId:db.lastProviderId, modelId:db.lastModelId, projectId:db.activeProjectId||null, styleId:db.activeStyleId||null, updatedAt:Date.now(), messages:[] };
     db.conversations.push(conv);
+    if(typeof takePendingFileFocus==="function") takePendingFileFocus(conv);
   }
   return conv;
 }

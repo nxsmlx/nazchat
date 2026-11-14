@@ -684,10 +684,36 @@ function documentMenuItems(msg){
   items.push(['PowerPoint (.pptx)','pptx']);
   return items.map(([label,format])=>[label,()=>saveDocument(format,clean,base)]);
 }
-/* Tells the model how to make files, only when the request is about one. */
+/* File focus: the user can turn on one kind of file for a conversation (Tools → Make a
+   file). Kita then answers with that file only. Stored on the conversation as fileFormat. */
+let pendingFileFormat='';
+function fileFocus(){ const f=typeof conv!=='undefined'&&conv?conv.fileFormat:pendingFileFormat; return DOC_FORMATS[f]?f:''; }
+function setFileFocus(format){
+  format=DOC_FORMATS[format]?format:'';
+  if(typeof conv!=='undefined'&&conv){ if((conv.fileFormat||'')!==format){ conv.fileFormat=format; save(); } }
+  else pendingFileFormat=format;
+  if(typeof renderStudioContext==='function') renderStudioContext();
+}
+/* A new conversation takes the choice made before its first message. */
+function takePendingFileFocus(c){ if(pendingFileFormat&&c&&!c.fileFormat){ c.fileFormat=pendingFileFormat; } pendingFileFormat=''; }
+const DOC_GUIDE={
+  docx:'Word: a full document starting with a # title, then headings, paragraphs, lists and tables.',
+  pdf:'PDF: a full document starting with a # title, then headings, paragraphs, lists and tables.',
+  xlsx:'Excel: one Markdown table per sheet, each after a ## heading that names the sheet; put plain numbers in cells (1200.50, 15%, RM 300); formulas start with = and use Excel cell references where row 1 is the header and data starts at row 2 (for example =SUM(B2:B6)).',
+  pptx:'PowerPoint: # title and an optional short subtitle line for the cover, then one ## heading per slide with 3 to 6 short bullets, or a small table.'
+};
+const DOC_EXAMPLE={docx:'Laporan-Jualan.docx',pdf:'Invois-001.pdf',xlsx:'Bajet-2026.xlsx',pptx:'Pitch-Deck.pptx'};
+/* Tells the model how to make files: always when a file kind is turned on, otherwise only
+   when the request is about a file. Only the format asked for is made. */
 function documentSystemNote(query){
+  const focus=fileFocus();
+  if(focus){
+    const m=DOC_FORMATS[focus];
+    return '\n\n[File: '+m.label+']\nThe user turned on '+m.label+' output for this conversation. Answer by making one '+m.kind+': put the whole file in one fenced block whose info string is '+focus+' and a short file name without spaces, for example ```'+focus+' '+DOC_EXAMPLE[focus]+'. '+DOC_GUIDE[focus]
+      +' Make only this '+m.label+' file: no other format and no second file unless the user asks for one. Kita shows it as a file card with a Download button, so never say you cannot create files. Outside the block write at most one or two sentences. If the message is not about content for a file (for example a greeting or a quick question), answer briefly without a file.';
+  }
   if(!/\b(pdf|docx?|word|excel|xlsx?|spreadsheet|sheet|powerpoint|pptx?|slides?|slaid|deck|hamparan|dokumen|document|laporan|report|resume|cv|invois|invoice|sebut\s*harga|quotation|bajet|budget)\b/i.test(String(query||''))) return '';
-  return '\n\n[Files]\nKita can turn Markdown into downloadable files on the phone. When the user asks for a PDF, Word, Excel or PowerPoint file (or a document, report, sheet or slides they will download), put the whole file content in one fenced block whose info string is the format and a file name without spaces, for example ```docx Laporan-Jualan.docx, ```xlsx Bajet-2026.xlsx, ```pptx Pitch-Deck.pptx or ```pdf Invois-001.pdf. Kita shows it as a file card with a Download button, so never say you cannot create files and do not give conversion steps. '
-    +'Inside the block write normal Markdown: headings, paragraphs, **bold**, lists and tables. Word and PDF: a full document, starting with a # title. Excel: one Markdown table per sheet, each after a ## heading that names the sheet; put plain numbers in cells (1200.50, 15%, RM 300), and formulas start with = using Excel cell references where row 1 is the header and data starts at row 2 (for example =SUM(B2:B6)). PowerPoint: # title and an optional short subtitle line for the cover, then one ## heading per slide with 3 to 6 short bullets, or a small table. '
-    +'Outside the block, add at most one or two sentences.';
+  return '\n\n[Files]\nKita can turn Markdown into downloadable files on the phone. When the user asks for a PDF, Word, Excel or PowerPoint file (or a document, report, sheet or slides to download), put the whole file content in one fenced block whose info string is the format and a file name without spaces, for example ```docx Laporan-Jualan.docx, ```xlsx Bajet-2026.xlsx, ```pptx Pitch-Deck.pptx or ```pdf Invois-001.pdf. Kita shows it as a file card with a Download button, so never say you cannot create files and do not give conversion steps. '
+    +'Make only the format the user asked for, and only one file unless they ask for more. If they want a file but do not name a format, pick the one that fits: Word for reports and letters, Excel for budgets and tables, PowerPoint for slides and pitches, PDF for invoices and certificates. If they did not ask for a file, do not make one. '
+    +'Inside the block write normal Markdown. '+DOC_GUIDE.docx+' '+DOC_GUIDE.xlsx+' '+DOC_GUIDE.pptx+' Outside the block, add at most one or two sentences.';
 }

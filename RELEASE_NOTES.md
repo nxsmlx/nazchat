@@ -1,6 +1,7 @@
 # Kita Chat 4.23.0
 
 - Make PDF, Word, Excel and PowerPoint files in chat. Ask for a report, a budget, an invoice or a pitch deck, and Kita shows a file card with Download; the file is made on your phone and opens in Microsoft Office, Google Docs, WPS and LibreOffice.
+- Kita makes only the file you ask for: ask for slides and you get a PowerPoint, nothing else. To work on one kind of file, open Tools → Make a file and choose PDF, Word, Excel or PowerPoint; a chip above the message box shows it, and tapping its × turns it off.
 - Excel files keep numbers, RM amounts and percentages as real numbers, with working formulas such as =SUM(B2:B6). One sheet per table.
 - PowerPoint files get a title slide, one slide per heading, bullets, tables and slide numbers; long lists continue on the next slide.
 - Any answer can be saved as a PDF, Word, Excel (when it has a table) or PowerPoint file from its ⋯ menu → Download as….

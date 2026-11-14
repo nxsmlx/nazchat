@@ -189,6 +189,30 @@ ${'Ayat panjang untuk menguji pembalutan baris dan halaman. '.repeat(60)}
    assert.match(r.slides,/\[Files\]/);
    assert(!r.hello.includes('[Files]'));
  });
+ await scenario('Make a file: one kind of file per conversation, shown as a chip, only that format asked for',async page=>{
+   await page.evaluate(()=>{conv=db.conversations[0];renderAll();renderToolsSheet();openSheet('toolsSheet');});
+   assert.equal(await page.locator('#fileFocusPick').inputValue(),'');
+   await page.selectOption('#fileFocusPick','pptx');
+   assert.equal(await page.evaluate(()=>conv.fileFormat),'pptx');
+   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('nazchat_v1')).conversations[0].fileFormat),'pptx');
+   await page.evaluate(()=>closeSheet('toolsSheet'));
+   assert.match(await page.locator('#studioContext').innerText(),/PowerPoint file/);
+   const note=await page.evaluate(()=>skillSystemMessage([],'tolong buat tentang kopi'));
+   assert.match(note,/\[File: PowerPoint\][\s\S]*```pptx Pitch-Deck\.pptx[\s\S]*Make only this PowerPoint file/);
+   assert(!/```xlsx|```docx/.test(note),'only the chosen format is described');
+   // Removing the chip turns it off.
+   await page.locator('#studioContext .studio-context-chip').filter({hasText:'PowerPoint file'}).locator('button').click();
+   assert.equal(await page.evaluate(()=>fileFocus()),'');
+   assert(!(await page.evaluate(()=>skillSystemMessage([],'tolong buat tentang kopi'))).includes('[File'));
+   // Chosen before the first message: the new conversation keeps it.
+   const r=await page.evaluate(()=>{conv=null;setFileFocus('xlsx');const before=fileFocus();const c=ensureConv();return {before,saved:c.fileFormat,after:pendingFileFormat};});
+   assert.deepEqual(r,{before:'xlsx',saved:'xlsx',after:''});
+   // Without a choice, a file request is told to make only the format asked for.
+   const general=await page.evaluate(()=>{conv=db.conversations[0];return skillSystemMessage([],'buat slaid powerpoint pasal kopi');});
+   assert.match(general,/\[Files\][\s\S]*Make only the format the user asked for, and only one file/);
+   // Old conversations without the field read as "only when asked" and are not rewritten.
+   assert.equal(await page.evaluate(()=>{const c=db.conversations[0];delete c.fileFormat;conv=c;return fileFocus()+'|'+('fileFormat' in c);}),'|false');
+ });
  await b.close();
  if(failed){console.error(failed+' scenario(s) failed');process.exit(1);}
  console.log('PASS documents: PDF, Word, Excel and PowerPoint files from Markdown');
