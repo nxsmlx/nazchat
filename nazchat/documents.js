@@ -307,6 +307,11 @@ function pptxSlides(markdown){
   }
   return fitted.length?fitted:[{title:'Slide',items:[],tables:[],cover:false}];
 }
+/* Body text size (1/100 pt) for a content slide: smaller when there is more to fit. */
+function pptxBodySize(s){
+  const chars=docRunsText(s.items.flatMap(i=>i.runs)).length+s.items.length*20;
+  return s.tables.length?(s.items.length?1600:1800):chars>520?1600:chars>320?1800:chars>160?2000:2400;
+}
 function buildPptx(markdown, title){
   const slides=pptxSlides(markdown);
   title=title||slides[0]?.title||'Presentation';
@@ -342,8 +347,7 @@ function buildPptx(markdown, title){
       shapes+=box(X,411480,CW,822960,'<a:p>'+textRuns([{text:s.title||'',bold:true}],(s.title||'').length>70?2400:3000,DARK)+'</a:p>','b');
       shapes+=rect(X,1325880,640080,36576,ACCENT);
       let top=1554480; const bottom=H-640080;
-      const chars=docRunsText(s.items.flatMap(i=>i.runs)).length+s.items.length*20;
-      const size=s.tables.length?(s.items.length?1600:1800):chars>520?1600:chars>320?1800:chars>160?2000:2400;
+      const size=pptxBodySize(s);
       if(s.items.length){
         const lines=s.items.reduce((n,i)=>n+Math.max(1,Math.ceil(docRunsText(i.runs).length*size/100*0.55*PPT.EMU/(CW-i.level*457200))),0);
         const h=s.tables.length?Math.min(bottom-top-900000,Math.round(lines*size/100*PPT.EMU*1.45+80000)):bottom-top;
@@ -662,18 +666,20 @@ function renderDocumentCards(container){
     const nameEl=el('strong','doc-card-name'); nameEl.textContent=file;
     const sub=el('span','doc-card-sub'); sub.textContent=meta.kind+(markdown.trim()?' · '+documentSummary(format,markdown):'');
     text.append(nameEl,sub);
-    const dl=el('button','doc-card-download','Download'); dl.type='button'; dl.setAttribute('aria-label','Download '+file);
+    const actions=el('div','doc-card-actions');
+    const pv=el('button','doc-card-preview','Preview');pv.type='button';pv.setAttribute('aria-label','Preview '+file);
+    pv.onclick=()=>openDocumentPreview(format,markdown,file);
+    const dl=el('button','doc-card-download','Download');dl.type='button';dl.setAttribute('aria-label','Download '+file);
     dl.onclick=()=>saveDocument(format,markdown,file,dl);
-    top.append(ico,text,dl);
-    const details=el('details','doc-card-source');
-    const summary=el('summary',null,'Show content'); details.appendChild(summary);
-    const src=el('pre'); src.textContent=markdown; details.appendChild(src);
-    card.append(top,details);
+    actions.append(pv,dl);
+    top.append(ico,text);
+    text.onclick=()=>openDocumentPreview(format,markdown,file);
+    card.append(top,actions);
     pre.replaceWith(card); made++;
   });
   return made;
 }
-/* "Download as…" in an answer's ⋯ menu. */
+/* "Download as…" in an answer's ⋯ menu: the file opens in the preview, with Download there. */
 function documentMenuItems(msg){
   const source=String(msg?.content||'');
   const clean=typeof stripErrorNote==='function'?stripErrorNote(typeof extractThink==='function'?extractThink(source).content:source):source;
@@ -682,7 +688,7 @@ function documentMenuItems(msg){
   const items=[['PDF','pdf'],['Word (.docx)','docx']];
   if(/^\s*\|.+\|\s*$/m.test(clean)) items.push(['Excel (.xlsx)','xlsx']);
   items.push(['PowerPoint (.pptx)','pptx']);
-  return items.map(([label,format])=>[label,()=>saveDocument(format,clean,base)]);
+  return items.map(([label,format])=>[label,()=>openDocumentPreview(format,clean,base)]);
 }
 /* File focus: the user can turn on one kind of file for a conversation (Tools → Make a
    file). Kita then answers with that file only. Stored on the conversation as fileFormat. */
@@ -716,4 +722,162 @@ function documentSystemNote(query){
   return '\n\n[Files]\nKita can turn Markdown into downloadable files on the phone. When the user asks for a PDF, Word, Excel or PowerPoint file (or a document, report, sheet or slides to download), put the whole file content in one fenced block whose info string is the format and a file name without spaces, for example ```docx Laporan-Jualan.docx, ```xlsx Bajet-2026.xlsx, ```pptx Pitch-Deck.pptx or ```pdf Invois-001.pdf. Kita shows it as a file card with a Download button, so never say you cannot create files and do not give conversion steps. '
     +'Make only the format the user asked for, and only one file unless they ask for more. If they want a file but do not name a format, pick the one that fits: Word for reports and letters, Excel for budgets and tables, PowerPoint for slides and pitches, PDF for invoices and certificates. If they did not ask for a file, do not make one. '
     +'Inside the block write normal Markdown. '+DOC_GUIDE.docx+' '+DOC_GUIDE.xlsx+' '+DOC_GUIDE.pptx+' Outside the block, add at most one or two sentences.';
+}
+
+/* ---------- preview before download ---------- */
+/* The preview shows what the file will contain: the PDF itself (pdf.js), the Word pages,
+   the Excel sheets with formulas worked out, and the PowerPoint slides. */
+let docPreviewToken=0;
+function docRunsHtml(runs){
+  return (runs||[]).map(r=>{
+    let h=esc(r.text).replace(/\n/g,'<br>');
+    if(r.code) h='<code>'+h+'</code>';
+    if(r.bold) h='<strong>'+h+'</strong>';
+    if(r.italic) h='<em>'+h+'</em>';
+    if(r.strike) h='<del>'+h+'</del>';
+    if(r.link) h='<a href="'+esc(r.link)+'" target="_blank" rel="noopener">'+h+'</a>';
+    return h;
+  }).join('');
+}
+function docTableHtml(b){
+  const cols=Math.max(b.header.length,...b.rows.map(r=>r.length),1);
+  const al=i=>b.align[i]==='right'||b.align[i]==='center'?' style="text-align:'+b.align[i]+'"':'';
+  return '<table><thead><tr>'+Array.from({length:cols},(_,i)=>'<th'+al(i)+'>'+docRunsHtml(b.header[i])+'</th>').join('')+'</tr></thead><tbody>'
+    +b.rows.map(r=>'<tr>'+Array.from({length:cols},(_,i)=>'<td'+al(i)+'>'+docRunsHtml(r[i])+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+}
+function docxPreview(markdown){
+  const paper=el('article','doc-paper');paper.setAttribute('aria-label','Word document preview');
+  let html='', firstH1=true;
+  for(const b of docBlocks(markdown)){
+    if(b.type==='heading'){ const cover=b.level===1&&firstH1; if(b.level===1) firstH1=false; html+=cover?'<h1 class="doc-title">'+docRunsHtml(b.runs)+'</h1>':'<h'+(b.level+1)+'>'+docRunsHtml(b.runs)+'</h'+(b.level+1)+'>'; }
+    else if(b.type==='para') html+=b.quote?'<blockquote>'+docRunsHtml(b.runs)+'</blockquote>':'<p>'+docRunsHtml(b.runs)+'</p>';
+    else if(b.type==='item') html+='<div class="doc-li" style="--lvl:'+b.level+'"><span class="doc-mark">'+(b.ordered?b.number+'.':['•','◦','▪','•','◦','▪'][b.level])+'</span><span>'+docRunsHtml(b.runs)+'</span></div>';
+    else if(b.type==='code') html+='<pre>'+esc(b.text)+'</pre>';
+    else if(b.type==='hr') html+='<hr>';
+    else if(b.type==='table') html+='<div class="doc-table">'+docTableHtml(b)+'</div>';
+  }
+  paper.innerHTML=html||'<p class="doc-empty">This document is empty.</p>';
+  return paper;
+}
+/* Works out simple formulas for the preview: + - * /, brackets, cell references and
+   SUM, AVERAGE, MIN, MAX, COUNT over ranges. Anything else shows the formula itself. */
+function xlsxPreviewValues(sheet){
+  const all=(sheet.header?[sheet.header]:[]).concat(sheet.rows);
+  const cells={}, fmt={}, cols=Math.max(1,...all.map(r=>r.length)), colFmt=Array(cols).fill('');
+  all.forEach((row,ri)=>{ for(let ci=0;ci<cols;ci++){ const ref=xlsxColumn(ci)+(ri+1), text=docRunsText(row[ci]||[]).trim(); const head=!!sheet.header&&ri===0;
+    const v=head||!text?{t:text}:xlsxValue(text); cells[ref]=v; if(v.n!==undefined&&v.fmt) colFmt[ci]=v.fmt; fmt[ref]=v.f?colFmt[ci]:v.fmt||''; } });
+  const memo={}, busy=new Set();
+  const colNum=s=>[...s].reduce((n,c)=>n*26+c.charCodeAt(0)-64,0)-1;
+  const value=ref=>{
+    ref=ref.toUpperCase(); if(ref in memo) return memo[ref];
+    const c=cells[ref]; if(!c) return 0;
+    if(c.n!==undefined) return c.n;
+    if(c.f){ if(busy.has(ref)) throw new Error('loop'); busy.add(ref); try{ return memo[ref]=formula(c.f); } finally{ busy.delete(ref); } }
+    return c.t&&c.t.trim()?NaN:0;
+  };
+  const range=(a,b)=>{ const m1=a.match(/^([A-Z]+)(\d+)$/i), m2=b.match(/^([A-Z]+)(\d+)$/i); const out=[];
+    for(let r=Math.min(+m1[2],+m2[2]);r<=Math.max(+m1[2],+m2[2]);r++) for(let c=Math.min(colNum(m1[1].toUpperCase()),colNum(m2[1].toUpperCase()));c<=Math.max(colNum(m1[1].toUpperCase()),colNum(m2[1].toUpperCase()));c++) out.push(xlsxColumn(c)+r);
+    return out; };
+  function formula(src){
+    const toks=String(src).match(/\s*([A-Z]+\d+:[A-Z]+\d+|[A-Z]+\d+|[A-Z]+(?=\()|\d+(?:\.\d+)?%?|[-+*/(),])/gi)||[];
+    if(toks.join('').replace(/\s/g,'')!==String(src).replace(/\s/g,'')) throw new Error('unsupported');
+    let i=0; const peek=()=>(toks[i]||'').trim(), next=()=>(toks[i++]||'').trim();
+    const nums=list=>list.filter(x=>typeof x==='number'&&!Number.isNaN(x));
+    const FN={SUM:a=>nums(a).reduce((s,x)=>s+x,0),AVERAGE:a=>{const n=nums(a);return n.length?n.reduce((s,x)=>s+x,0)/n.length:0;},MIN:a=>Math.min(...nums(a)),MAX:a=>Math.max(...nums(a)),COUNT:a=>nums(a).length};
+    const expr=()=>{ let v=term(); while(peek()==='+'||peek()==='-'){ const op=next(), w=term(); v=op==='+'?v+w:v-w; } return v; };
+    const term=()=>{ let v=factor(); while(peek()==='*'||peek()==='/'){ const op=next(), w=factor(); v=op==='*'?v*w:v/w; } return v; };
+    const factor=()=>{
+      const t=next();
+      if(t==='-') return -factor();
+      if(t==='(') { const v=expr(); if(next()!==')') throw new Error('bracket'); return v; }
+      if(/^\d/.test(t)) return t.endsWith('%')?Number(t.slice(0,-1))/100:Number(t);
+      if(/^[A-Z]+\d+$/i.test(t)) return value(t);
+      const fn=FN[t.toUpperCase()];
+      if(fn&&next()==='('){ const args=[]; if(peek()!==')'){ do{ const a=peek(); if(/^[A-Z]+\d+:[A-Z]+\d+$/i.test(a)){ next(); const [x,y]=a.split(':'); args.push(...range(x,y).map(value)); } else args.push(expr()); } while(peek()===','&&next()); } if(next()!==')') throw new Error('bracket'); return fn(args); }
+      throw new Error('unsupported');
+    };
+    const v=expr(); if(i<toks.length) throw new Error('unsupported'); if(typeof v!=='number'||!Number.isFinite(v)) throw new Error('not a number'); return v;
+  }
+  const show=(ref)=>{
+    const c=cells[ref], f=fmt[ref];
+    let n;
+    if(c.f){ try{ n=value(ref); }catch(e){ return {text:'='+c.f,formula:true,raw:true}; } }
+    else if(c.n!==undefined) n=c.n; else return {text:c.t||''};
+    const text=f==='money'?n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):f==='pct'?Math.round(n*100)+'%':f==='pct2'?(n*100).toFixed(2)+'%':String(Math.round(n*1e10)/1e10);
+    return {text,num:true,formula:!!c.f};
+  };
+  return {rows:all.map((row,ri)=>Array.from({length:cols},(_,ci)=>{ const ref=xlsxColumn(ci)+(ri+1); return {...show(ref),ref,bold:(!!sheet.header&&ri===0)||(row[ci]||[]).some(r=>r.bold),formulaText:cells[ref].f?'='+cells[ref].f:''}; })),cols};
+}
+function xlsxPreview(markdown){
+  const sheets=xlsxSheets(markdown), wrap=el('div','xls-preview');
+  const tabs=el('div','xls-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Sheets');
+  const view=el('div','xls-grid');view.tabIndex=0;view.setAttribute('role','region');
+  const showSheet=i=>{
+    [...tabs.children].forEach((t,k)=>{t.setAttribute('aria-selected',String(k===i));t.classList.toggle('active',k===i);});
+    const {rows,cols}=xlsxPreviewValues(sheets[i]);
+    view.setAttribute('aria-label','Sheet '+sheets[i].name);
+    view.innerHTML='<table><thead><tr><th class="xls-corner"></th>'+Array.from({length:cols},(_,c)=>'<th>'+xlsxColumn(c)+'</th>').join('')+'</tr></thead><tbody>'
+      +rows.map((r,ri)=>'<tr><th>'+(ri+1)+'</th>'+r.map(c=>'<td class="'+[c.num?'num':'',c.bold?'bold':'',ri===0&&sheets[i].header?'head':'',c.formula?'formula':'',c.raw?'raw':''].filter(Boolean).join(' ')+'"'+(c.formulaText?' title="'+esc(c.formulaText)+'"':'')+'>'+esc(c.text)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+  };
+  sheets.forEach((s,i)=>{const t=el('button','xls-tab');t.type='button';t.setAttribute('role','tab');t.textContent=s.name;t.onclick=()=>showSheet(i);tabs.appendChild(t);});
+  wrap.append(tabs,view);
+  wrap.appendChild(el('p','xls-note','Formulas are worked out here so you can check them; Excel recalculates them when you open the file.'));
+  showSheet(0);
+  return wrap;
+}
+function pptxPreview(markdown){
+  const slides=pptxSlides(markdown), deck=el('div','ppt-preview');
+  slides.forEach((s,i)=>{
+    const slide=el('section','ppt-slide'+(s.cover?' cover':''));slide.setAttribute('aria-label','Slide '+(i+1)+' of '+slides.length);
+    if(s.cover){
+      slide.innerHTML='<div class="ppt-cover-bar"></div><h2 class="ppt-cover-title" style="--fs:'+((s.title||'').length>60?36:44)+'">'+esc(s.title||'')+'</h2>'
+        +s.items.map(it=>'<p class="ppt-cover-sub">'+docRunsHtml(it.runs)+'</p>').join('');
+    }else{
+      const size=pptxBodySize(s)/100;
+      let body=s.items.map(it=>{
+        const cls=it.plain||it.sub?(it.code?'ppt-code':it.sub?'ppt-sub':'ppt-plain'):'ppt-bullet';
+        const mark=it.plain||it.sub?'':'<span class="ppt-mark">'+(it.ordered?it.number+'.':it.level?'–':'•')+'</span>';
+        return '<div class="'+cls+'" style="--lvl:'+it.level+'">'+mark+'<span>'+(docRunsHtml(it.runs)||'&nbsp;')+'</span></div>';
+      }).join('');
+      if(s.tables.length) body+='<div class="ppt-table">'+docTableHtml(s.tables[0])+'</div>';
+      slide.innerHTML='<div class="ppt-top-bar"></div><h2 class="ppt-title" style="--fs:'+((s.title||'').length>70?24:30)+'">'+esc(s.title||'')+'</h2><div class="ppt-rule"></div><div class="ppt-body" style="--fs:'+size+'">'+body+'</div><span class="ppt-num">'+(i+1)+'</span>';
+    }
+    deck.appendChild(slide);
+  });
+  // Slides scale with their width: 1 unit = 1 pt of a 960 pt wide slide.
+  const fit=()=>deck.querySelectorAll('.ppt-slide').forEach(n=>n.style.setProperty('--u',(n.clientWidth/960)+'px'));
+  if(typeof ResizeObserver==='function') new ResizeObserver(fit).observe(deck);
+  requestAnimationFrame(fit);
+  return deck;
+}
+async function pdfPreview(body, bytes, token){
+  await loadVendorScript('vendor/pdf.min.js');
+  pdfjsLib.GlobalWorkerOptions.workerSrc='vendor/pdf.worker.min.js';
+  const pdf=await pdfjsLib.getDocument({data:bytes.slice(),isEvalSupported:false}).promise;
+  body.innerHTML='';
+  const width=Math.max(240,(body.clientWidth||360)-24), ratio=Math.min(2,window.devicePixelRatio||1);
+  for(let n=1;n<=pdf.numPages;n++){
+    if(token!==docPreviewToken) return;
+    const page=await pdf.getPage(n), base=page.getViewport({scale:1}), vp=page.getViewport({scale:width/base.width*ratio});
+    const canvas=document.createElement('canvas');canvas.className='doc-page';canvas.width=Math.round(vp.width);canvas.height=Math.round(vp.height);
+    canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Page '+n+' of '+pdf.numPages);
+    body.appendChild(canvas);
+    await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+  }
+}
+async function openDocumentPreview(format, markdown, name){
+  const meta=DOC_FORMATS[format]; if(!meta) return;
+  const title=docTitle(docBlocks(markdown),'Document'), file=docFileName(name,format,title), token=++docPreviewToken;
+  $('#docPreviewTitle').textContent=file;
+  $('#docPreviewSub').textContent=meta.kind+(String(markdown).trim()?' · '+documentSummary(format,markdown):'');
+  const body=$('#docPreviewBody');body.innerHTML='';body.dataset.format=format;body.scrollTop=0;
+  const dl=$('#docPreviewDownload');dl.textContent='Download '+meta.label;dl.disabled=false;dl.onclick=()=>saveDocument(format,markdown,file,dl);
+  openSheet('docPreview');
+  try{
+    if(format==='pdf'){ body.appendChild(el('p','doc-preview-wait','Making the PDF…')); await pdfPreview(body,await buildPdf(markdown,title),token); }
+    else body.appendChild(format==='docx'?docxPreview(markdown):format==='xlsx'?xlsxPreview(markdown):pptxPreview(markdown));
+  }catch(e){
+    if(token!==docPreviewToken) return;
+    body.innerHTML='';const err=el('p','doc-preview-error');err.textContent='Could not show a preview: '+(e.message||e)+'. You can still download the file.';body.appendChild(err);
+  }
 }

@@ -1,3 +1,9 @@
+# Kita Chat 4.25.0
+
+- Preview files before you download them. File cards in chat now have Preview: a PDF shows its real pages, a Word file shows its pages, an Excel file shows each sheet with the totals and formulas worked out, and a PowerPoint file shows every slide. Download is right there in the preview.
+- Download as… in an answer's ⋯ menu now opens the preview first, so you can check the file before saving it.
+- VersionCode 82, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.24.0
 
 - Folders for your chats. In the chat list, tap New folder, then use ⋯ on any chat → Move to folder. Chats in a folder are listed inside it, with a count beside each folder; search still finds every chat and shows its folder.

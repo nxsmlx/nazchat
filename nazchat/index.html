@@ -993,6 +993,15 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
   <div class="sheet-body"><div id="studioChatControls"></div><div id="toolsSheetBody"></div></div>
 </div>
 
+<!-- Document preview sheet (4.25.0): check a PDF, Word, Excel or PowerPoint file before downloading it -->
+<div class="sheet-scrim" id="docPreviewScrim"></div>
+<div class="sheet doc-preview-sheet" id="docPreview" style="max-height:94dvh">
+  <div class="grab"></div>
+  <div class="sheet-head"><div class="doc-preview-head"><h3 id="docPreviewTitle">Preview</h3><small id="docPreviewSub"></small></div><button class="icon-btn" data-close="docPreview"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body doc-preview-body" id="docPreviewBody"></div>
+  <div class="doc-preview-actions"><button class="btn doc-preview-download" id="docPreviewDownload" type="button">Download</button></div>
+</div>
+
 <!-- Provider form sheet -->
 <div class="sheet-scrim" id="provSheetScrim"></div>
 <div class="sheet" id="provSheet" style="max-height:94dvh">
@@ -1877,8 +1886,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.24.0";
-const APP_VERSION_CODE = 81;
+const APP_VERSION = "4.25.0";
+const APP_VERSION_CODE = 82;
 const UPDATE_REPO = "nxsmlx/nazchat";
 const KITA_SITE = "https://keetakita.my";
 
