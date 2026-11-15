@@ -1,9 +1,9 @@
 {
-  "version": "4.24.0",
-  "versionCode": 81,
+  "version": "4.25.0",
+  "versionCode": 82,
   "name": "Kita Chat",
-  "changelog": "Folders for your chats. In the chat list, tap New folder, then use ⋯ on any chat → Move to folder. Chats in a folder are listed inside it, with a count beside each folder; search still finds every chat and shows its folder.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.24.0/NazChat.apk",
-  "sha256": "5b6ca2b1c2e1aebd96d5628ac55e4eb29a65ad21873d8f62adf7d638b5368d6b",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.24.0"
+  "changelog": "Preview files before you download them. File cards in chat now have Preview: a PDF shows its real pages, a Word file shows its pages, an Excel file shows each sheet with the totals and formulas worked out, and a PowerPoint file shows every ",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.25.0/NazChat.apk",
+  "sha256": "baca60d34d9a2bb3d13fcf735fea657417457aec0ef22f5e599d2d03e74c76be",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.25.0"
 }
