@@ -148,10 +148,26 @@ ${'Ayat panjang untuk menguji pembalutan baris dan halaman. '.repeat(60)}
    assert.equal(await cards.nth(0).locator('.doc-card-sub').innerText(),'Excel workbook · 1 sheet · 3 rows');
    assert.equal(await cards.nth(1).locator('.doc-card-name').innerText(),'Laporan.docx');
    assert.match(await cards.nth(1).locator('.doc-card-sub').innerText(),/^Word document · \d+ words$/);
-   // Show content reveals the Markdown behind the file.
-   await cards.nth(0).locator('summary').click();
-   assert.match(await cards.nth(0).locator('.doc-card-source pre').innerText(),/\| Sewa \| RM 1,200 \|/);
-   await cards.nth(0).getByRole('button',{name:'Download Bajet-2026.xlsx'}).click();
+   // Preview first: the sheet with its formula worked out, then Download from the preview.
+   await cards.nth(0).getByRole('button',{name:'Preview Bajet-2026.xlsx'}).click();
+   await page.waitForSelector('#docPreview.open');
+   assert.equal(await page.locator('#docPreviewTitle').innerText(),'Bajet-2026.xlsx');
+   assert.equal(await page.locator('#docPreviewSub').innerText(),'Excel workbook · 1 sheet · 3 rows');
+   const grid=await page.locator('#docPreviewBody .xls-grid tbody tr').evaluateAll(rows=>rows.map(r=>[...r.children].map(c=>c.textContent)));
+   assert.deepEqual(grid,[['1','Item','Kos'],['2','Sewa','1,200.00'],['3','Gaji','3,000.50'],['4','Jumlah','4,200.50']]);
+   assert.equal(await page.locator('#docPreviewBody td[title="=SUM(B2:B3)"]').innerText(),'4,200.50');
+   assert.equal(await page.evaluate(()=>window.__saves.length),0,'nothing is saved by opening the preview');
+   // Escape (and Android Back) close the preview.
+   await page.keyboard.press('Escape');
+   assert.equal(await page.locator('#docPreview.open').count(),0);
+   await cards.nth(0).getByRole('button',{name:'Preview Bajet-2026.xlsx'}).click();
+   await page.waitForSelector('#docPreview.open');
+   assert.equal(await page.evaluate(()=>window.kitaHandleBack()),true);
+   assert.equal(await page.locator('#docPreview.open').count(),0);
+   await cards.nth(0).getByRole('button',{name:'Preview Bajet-2026.xlsx'}).click();
+   await page.waitForSelector('#docPreview.open');
+   assert.equal(await page.locator('#docPreviewDownload').innerText(),'Download Excel');
+   await page.click('#docPreviewDownload');
    await page.waitForFunction(()=>window.__saves.length===1);
    const s=await page.evaluate(()=>window.__saves[0]);
    assert.equal(s.name,'Bajet-2026.xlsx');assert.equal(s.mime,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -160,7 +176,34 @@ ${'Ayat panjang untuk menguji pembalutan baris dan halaman. '.repeat(60)}
    await page.evaluate(n=>window.nazFileSaved(true,n,''),s.name);
    assert.match(await page.evaluate(()=>document.querySelector('#toast').textContent),/Excel file saved · Bajet-2026\.xlsx/);
    // Touch target size.
-   const box=await cards.nth(0).locator('.doc-card-download').boundingBox();assert(box.height>=44&&box.width>=44);
+   await page.evaluate(()=>closeSheet('docPreview'));
+   for(const sel of ['.doc-card-download','.doc-card-preview']){ const box=await cards.nth(0).locator(sel).boundingBox();assert(box.height>=44&&box.width>=44,sel); }
+   // The card's own Download still saves straight away.
+   await cards.nth(1).getByRole('button',{name:'Download Laporan.docx'}).click();
+   await page.waitForFunction(()=>window.__saves.length===2);
+   assert.equal(await page.evaluate(()=>window.__saves[1].name),'Laporan.docx');
+ });
+ await scenario('Preview: Word pages, PowerPoint slides and the PDF itself',async page=>{
+   await page.evaluate(md=>openDocumentPreview('docx',md,'Laporan'),SAMPLE);
+   await page.waitForSelector('#docPreview.open .doc-paper');
+   assert.equal(await page.locator('.doc-paper .doc-title').innerText(),'Laporan Jualan Kopi Kita 2026');
+   assert.equal(await page.locator('.doc-paper .doc-li').count(),6);
+   assert.match(await page.locator('.doc-paper').innerText(),/Café & "teh tarik" <selamat>/);
+   assert.equal(await page.locator('.doc-paper a[href="https://keetakita.my"]').count(),1);
+   assert.equal(await page.locator('.doc-paper script, .doc-paper img').count(),0);
+   await page.evaluate(md=>openDocumentPreview('pptx',md,'Pitch'),SAMPLE);
+   await page.waitForSelector('#docPreview.open .ppt-slide');
+   assert.equal(await page.locator('.ppt-slide').count(),5);
+   assert.equal(await page.locator('.ppt-slide.cover .ppt-cover-title').innerText(),'Laporan Jualan Kopi Kita 2026');
+   assert.equal(await page.locator('.ppt-slide').nth(2).locator('.ppt-table tr').count(),4);
+   const ratio=await page.locator('.ppt-slide').first().evaluate(n=>n.clientWidth/n.clientHeight);assert(Math.abs(ratio-16/9)<0.05,'16:9 slides');
+   await page.evaluate(md=>openDocumentPreview('pdf',md,'Laporan'),SAMPLE);
+   await page.waitForFunction(()=>document.querySelectorAll('#docPreviewBody canvas.doc-page').length===2,null,{timeout:20000});
+   assert.equal(await page.locator('#docPreviewBody canvas.doc-page').first().getAttribute('aria-label'),'Page 1 of 2');
+   assert.equal(await page.locator('#docPreviewDownload').innerText(),'Download PDF');
+   // Formulas the preview cannot work out are shown as written.
+   const v=await page.evaluate(()=>xlsxPreviewValues({name:'S',header:[[{text:'A'}],[{text:'B'}]],rows:[[[{text:'2'}],[{text:'=VLOOKUP(A2,A:A,1)'}]],[[{text:'3'}],[{text:'=A2*A3+(A3-1)/2'}]],[[{text:'=MAX(A2:A3)'}],[{text:'=B3'}]]]}).rows.map(r=>r.map(c=>c.text)));
+   assert.deepEqual(v,[['A','B'],['2','=VLOOKUP(A2,A:A,1)'],['3','7'],['3','7']]);
  });
  await scenario('Chat: ⋯ → Download as… offers PDF, Word, Excel (with a table) and PowerPoint',async page=>{
    await page.evaluate(()=>{conv=db.conversations[0];renderAll();});
@@ -174,6 +217,12 @@ ${'Ayat panjang untuk menguji pembalutan baris dan halaman. '.repeat(60)}
    assert.equal(await page.locator('.msg-menu').count(),0,'Escape closes the menu');
    await more.click();await page.locator('.msg-menu-item',{hasText:'Download as…'}).click();
    await page.locator('.msg-menu .msg-menu-item',{hasText:'PDF'}).click();
+   // Download as… opens the preview first; the file is saved from there.
+   await page.waitForSelector('#docPreview.open');
+   assert.equal(await page.locator('#docPreviewTitle').innerText(),'Ringkasan.pdf');
+   await page.waitForSelector('#docPreviewBody canvas.doc-page',{timeout:20000});
+   assert.equal(await page.evaluate(()=>window.__saves.length),0);
+   await page.click('#docPreviewDownload');
    await page.waitForFunction(()=>window.__saves.length===1);
    const s=await page.evaluate(()=>window.__saves[0]);
    assert.equal(s.name,'Ringkasan.pdf');assert.equal(s.mime,'application/pdf');
