@@ -1,9 +1,9 @@
 {
-  "version": "4.26.0",
-  "versionCode": 83,
+  "version": "4.27.0",
+  "versionCode": 84,
   "name": "Kita Chat",
-  "changelog": "A calmer home on phones: notices such as Bypass all, Web search or a file choice are now small pills inside the message box instead of a large banner over the page.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.26.0/NazChat.apk",
-  "sha256": "b21eda5474efd57a2a2e60f646dab372409d419b2b08be719d1c1d6904880355",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.26.0"
+  "changelog": "A quieter Kita: fewer words and more room. Recent chats are one line each with a short time, new ideas are small chips, and the extra lines of text on the home page are gone.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.27.0/NazChat.apk",
+  "sha256": "642a8422d4f7ecfa33effd409223b53903571b931e6edb848b260c4fc9a792fe",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.27.0"
 }
