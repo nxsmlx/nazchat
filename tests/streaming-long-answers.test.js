@@ -64,7 +64,7 @@ const assert=require('assert');
  assert(elapsed<20000,'long stream took too long: '+elapsed+'ms');
  console.log('PASS long HTML stream completes in',elapsed+'ms','len',afterBig.len);
 
- await p.locator('.action-bar button', {hasText:'Preview'}).last().click();await p.waitForTimeout(600);
+ await p.locator('.msg.assistant .artifact-card .artifact-btn.primary').last().click();await p.waitForTimeout(600);
  assert(await p.locator('#htmlPreview.open').count(),'preview did not open');
  let sawFirst=false;
  for(const f of p.frames()){ if(f===p.mainFrame())continue; try{ if((await f.locator('#anchor').innerText({timeout:1200})).includes('First Version'))sawFirst=true; }catch(e){} }
@@ -78,7 +78,7 @@ const assert=require('assert');
  const editState=await p.evaluate(()=>({blocks:document.querySelectorAll('.msg.assistant').length,html:extractHtmlBlock(conv.messages.at(-1).content)}));
  assert(editState.blocks>=2,'second assistant answer missing');
  assert(editState.html.includes('Edited Version'),'edited HTML not detected: '+editState.html.slice(0,80));
- await p.locator('.msg.assistant').last().locator('.action-bar button', {hasText:'Preview'}).click();
+ await p.locator('.msg.assistant').last().locator('.artifact-card .artifact-btn.primary').click();
  await p.waitForTimeout(600);
  let sawEdited=false;
  for(const f of p.frames()){ if(f===p.mainFrame())continue; try{ if((await f.locator('#anchor').innerText({timeout:1200})).includes('Edited Version'))sawEdited=true; }catch(e){} }

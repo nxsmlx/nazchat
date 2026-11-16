@@ -28,7 +28,7 @@ const assert=require('node:assert/strict');
    assert.equal(await page.locator('.studio-welcome-mark').isVisible(),false,'the header already shows the mark');
    // The Bypass chip is a small pill inside the composer, still impossible to miss.
    const chip=page.locator('#composer #studioContext .studio-context-chip.warn');
-   assert.equal(await chip.innerText(),'Bypass all is on');
+   assert.equal(await chip.innerText(),'Bypass on');
    assert.equal(await chip.getAttribute('title'),'Bypass all: tools run without asking. Tap × to turn it off.');
    const box=await chip.boundingBox();assert(box.height<=36,'compact chip, got '+box.height);
    const composer=await page.locator('#composer').boundingBox();assert(box.y>=composer.y&&box.y+box.height<=composer.y+composer.height,'chip inside the composer');

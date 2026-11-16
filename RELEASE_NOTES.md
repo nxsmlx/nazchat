@@ -1,3 +1,13 @@
+# Kita Chat 4.27.0
+
+- A quieter Kita: fewer words and more room. Recent chats are one line each with a short time, new ideas are small chips, and the extra lines of text on the home page are gone.
+- Code options (Style, Files and where to publish) moved from the home page to Tools.
+- The message box shows the model on one line, Tools as an icon, and Bypass as a small "Bypass on" pill.
+- Result cards have one button with a word, Open; Publish and Code are icons. A clean page test shows as ✓ tested on the card instead of another line, and Preview is no longer repeated under the answer.
+- Answers no longer start with a "Kita" label. Tap your own message to show Edit.
+- Previews are named after the page, also on Android, and the in-app preview keeps its tabs and options in one row.
+- VersionCode 84, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.26.0
 
 - A calmer home on phones: notices such as Bypass all, Web search or a file choice are now small pills inside the message box instead of a large banner over the page.

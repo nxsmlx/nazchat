@@ -4132,7 +4132,7 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .studio-assistant-label:not(:has(small)) { display: none; }
 /* Your message: Edit shows when you tap it, or when it has keyboard focus. */
 .msg.user > .action-bar { display: none; }
-.msg.user.show-actions > .action-bar, .msg.user:focus-within > .action-bar { display: flex; }
+.msg.user.show-actions > .action-bar, .msg.user:has(.bubble:focus-visible) > .action-bar, .msg.user:has(.action-bar :focus-visible) > .action-bar { display: flex; }
 .msg.user .bubble:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* In-app preview: tabs, widths and JS share one row under the title. */
 .preview-tabs { align-items: center; padding-bottom: 4px; border-bottom: 1px solid var(--border); }

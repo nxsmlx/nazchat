@@ -36,7 +36,10 @@ console.log('PASS preview and publish inline the icons; other files untouched');
 
 // 3. Code home: style picker, saved choice, notes for builds and the Designer agent.
 await page.evaluate(()=>{conv=null;setKitaMode('code');renderAll();});
-const pick=page.locator('select[aria-label="Design style for new builds"]');await pick.waitFor();
+// Code options are in Tools, not on the home page.
+assert.equal(await page.locator('#empty select[aria-label="Design style for new builds"]').count(),0);
+await page.evaluate(()=>{renderToolsSheet();openSheet('toolsSheet');});
+const pick=page.locator('#toolsSheet select[aria-label="Design style for new builds"]');await pick.waitFor();
 assert.equal(await pick.inputValue(),'auto');
 assert.equal(await page.evaluate(()=>codeStyleNote()),'','Auto adds no style note');
 assert.equal(await page.evaluate(()=>'codeStyle' in db),false,'reading must not create the setting');
