@@ -91,6 +91,29 @@ const assert=require('node:assert/strict');
    assert.deepEqual(r,{a:'My name',b:'hello there',c:'hello there',asked:false,pending:0,clean:['Pelan Kedai','Bajet Bulanan','','','']});
  });
 
+ await scenario('Settings → Workspace → Short chat titles off: no extra request, the placeholder stays',seed({}),async page=>{
+   await page.evaluate(()=>{renderStudioWorkspaceSettings();openSheet('setSheet');});
+   const sw=page.getByRole('switch',{name:'Short chat titles'});
+   assert.equal(await sw.getAttribute('aria-checked'),'true');
+   await sw.click();
+   assert.equal(await sw.getAttribute('aria-checked'),'false');
+   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('nazchat_v1')).autoTitles),false);
+   await page.evaluate(()=>closeSheet('setSheet'));
+   await page.evaluate(()=>{window.__bodies=[];});
+   await page.fill('#promptInput','tolong rancang menu kedai kopi');
+   await page.click('#sendBtn');
+   await page.waitForFunction(()=>!generating&&db.conversations[0]?.messages?.length===2,null,{timeout:15000});
+   await page.waitForTimeout(400);
+   assert.equal(await page.evaluate(()=>db.conversations[0].title),'tolong rancang menu kedai kopi');
+   assert.equal(await page.evaluate(()=>pendingAutoTitles.size),0);
+ },async r=>{
+   const u=r.request().url();
+   if(!u.startsWith('https://api.test/')) return r.fulfill({status:503,body:'{}'});
+   const body=JSON.parse(r.request().postData()||'{}');
+   assert(body.stream,'only the answer is requested when short titles are off');
+   return r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:'data: '+JSON.stringify({choices:[{delta:{content:'Baik.'}}]})+'\n\ndata: [DONE]\n\n'});
+ });
+
  await b.close();
  if(failed){console.error(failed+' scenario(s) failed');process.exit(1);}
  console.log('PASS home polish: composer chips, ☰ beside the nav, one mark, mode icons, short titles');

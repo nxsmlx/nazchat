@@ -9,7 +9,7 @@ const SB='https://api.supabase.com';
 const enc=o=>'data: '+JSON.stringify(o)+'\n\n';
 const text=t=>enc({choices:[{delta:{content:t}}]})+enc({choices:[{delta:{},finish_reason:'stop'}]})+'data: [DONE]\n\n';
 const toolCall=(name,args)=>enc({choices:[{delta:{tool_calls:[{index:0,id:'call_1',type:'function',function:{name,arguments:JSON.stringify(args)}}]}}]})+enc({choices:[{delta:{},finish_reason:'tool_calls'}]})+'data: [DONE]\n\n';
-const seed=extra=>({schemaVersion:3,onboardingDone:true,thinking:false,search:false,autoCheckCode:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
+const seed=extra=>({schemaVersion:3,onboardingDone:true,autoTitles:false,thinking:false,search:false,autoCheckCode:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
 const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'application/json'},body:JSON.stringify(obj)});
 
 (async()=>{

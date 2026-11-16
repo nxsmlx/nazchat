@@ -4760,7 +4760,7 @@ async function send(text,opts){
   catch(e){abortGeneration();toast("Response failed: "+String(e.message||e).slice(0,150));}
   finally{finishRun(run);}
   // After the first answer (never during it, so it cannot slow or block it), name the chat.
-  if(run.conversation && pendingAutoTitles.has(run.conversation.id)) autoTitleConversation(run.conversation, run.model);
+  if(run.conversation && pendingAutoTitles.has(run.conversation.id)){ if(db.autoTitles!==false) autoTitleConversation(run.conversation, run.model); else pendingAutoTitles.delete(run.conversation.id); }
 }
 /* Short chat titles (4.26.0). The first message is only a placeholder title; once the first
    answer is in, the same model names the chat in 2 to 5 words in the user's language. A title

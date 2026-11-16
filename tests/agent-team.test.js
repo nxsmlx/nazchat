@@ -13,7 +13,7 @@ const CSS=':root{--brand:#6b4f3a}\n.k-section{padding:24px}';
 const providers=[
   {id:'p',name:'Fast',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m','small'],modelMeta:{},capabilities:{tools:false}},
   {id:'q',name:'Strong',baseUrl:'https://big.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k2',headers:[],selectedModels:['big'],modelMeta:{},capabilities:{tools:false}}];
-const seed=extra=>({schemaVersion:3,onboardingDone:true,thinking:false,search:false,uiMode:'code',providers,lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
+const seed=extra=>({schemaVersion:3,onboardingDone:true,autoTitles:false,thinking:false,search:false,uiMode:'code',providers,lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
 const ASK='buat landing page lengkap untuk kedai kopi dengan hero dan menu';
 const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'application/json'},body:JSON.stringify(obj)});
 

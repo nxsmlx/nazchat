@@ -29,7 +29,7 @@ async function showModeOf(page,title){
 function legacyDb() {
   const timestamp = 1700000000000;
   return {
-    schemaVersion:3, onboardingDone:true, theme:'dark', search:false, thinking:false,
+    schemaVersion:3, onboardingDone:true,autoTitles:false, theme:'dark', search:false, thinking:false,
     reasoningEffort:'medium', activeProjectId:null,
     lastProviderId:'studio-fixture-provider', lastModelId:'studio-test-a',
     providers:[{
@@ -65,7 +65,7 @@ function legacyDb() {
 }
 
 function emptyDb() {
-  return {schemaVersion:3,onboardingDone:true,providers:[],conversations:[],projects:[],prompts:[],styles:[],artifacts:[]};
+  return {schemaVersion:3,onboardingDone:true,autoTitles:false,providers:[],conversations:[],projects:[],prompts:[],styles:[],artifacts:[]};
 }
 
 async function ready(page) {

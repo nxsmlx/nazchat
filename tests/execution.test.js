@@ -7,7 +7,7 @@ const API='https://studio.test/v1/chat/completions';
 fs.mkdirSync(output,{recursive:true});
 
 const fixture=()=>({
-  schemaVersion:3,onboardingDone:true,theme:'dark',search:false,thinking:false,reasoningEffort:'medium',textSize:'default',
+  schemaVersion:3,onboardingDone:true,autoTitles:false,theme:'dark',search:false,thinking:false,reasoningEffort:'medium',textSize:'default',
   lastProviderId:'p1',lastModelId:'builder-1',activeProjectId:null,activeStyleId:null,
   providers:[{id:'p1',name:'Fixture Provider',baseUrl:'https://studio.test/v1',apiType:'chat',secretRef:'provider:p1',
     selectedModels:['builder-1'],modelMeta:{'builder-1':{context_length:128000}},headers:[],capabilities:{tools:false}}],

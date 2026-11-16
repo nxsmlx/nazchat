@@ -183,6 +183,12 @@ function renderStudioAppearance(){renderSettingsPage('Appearance',null,null,list
 });}
 function renderStudioWorkspaceSettings(){renderSettingsPage('Workspace',null,null,list=>{
   const group=el('div','settings-hub-group');group.appendChild(settingsHubRow('workspace','Projects','Shared instructions and reference material',()=>{closeSheet('setSheet');studioNavigate('projects');}));group.appendChild(settingsHubRow('skills','Library','Saved prompts and artifacts',()=>{closeSheet('setSheet');studioNavigate('library');}));list.appendChild(group);
+  // Short chat titles (on unless turned off): one small request after a new chat's first answer.
+  list.appendChild(el('div','settings-section-label','Chats'));
+  const titles=el('div','settings-row');titles.innerHTML='<div class="sr-text"><strong>Short chat titles</strong><small>After the first answer, your model names the chat in a few words. Uses one small extra request.</small></div>';
+  const sw=el('button','switch'+(db.autoTitles!==false?' on':''));sw.type='button';sw.setAttribute('role','switch');sw.setAttribute('aria-checked',String(db.autoTitles!==false));sw.setAttribute('aria-label','Short chat titles');
+  sw.onclick=()=>{db.autoTitles=db.autoTitles===false;save();sw.classList.toggle('on',db.autoTitles!==false);sw.setAttribute('aria-checked',String(db.autoTitles!==false));};
+  titles.appendChild(sw);list.appendChild(titles);
   list.appendChild(el('div','settings-section-label','Data & backup'));
   const note=el('p','hint','Backups can contain private conversations. Store exported files securely. Provider keys are excluded from a standard backup.');list.appendChild(note);
   for(const [label,fn] of [['Export backup',exportBackup],['Export encrypted backup',exportEncryptedBackup],['Restore backup',importBackup]]){const b=el('button','btn secondary',label);b.onclick=fn;list.appendChild(b);}
