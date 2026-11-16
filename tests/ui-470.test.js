@@ -6,7 +6,7 @@ const assert=require('assert');
 const API='https://api.test/v1/chat/completions';
 const sse=frames=>frames.map(f=>'data: '+JSON.stringify(f)).join('\n\n')+'\n\ndata: [DONE]\n\n';
 const answer=t=>sse([{choices:[{delta:{content:t}}]},{choices:[{delta:{},finish_reason:'stop'}]}]);
-const seed=extra=>({schemaVersion:3,onboardingDone:true,thinking:false,search:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{},capabilities:{tools:false}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
+const seed=extra=>({schemaVersion:3,onboardingDone:true,autoTitles:false,thinking:false,search:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{},capabilities:{tools:false}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
 
 (async()=>{
  const b=await launch();let failed=0;

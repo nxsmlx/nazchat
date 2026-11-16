@@ -7,7 +7,7 @@ const API='https://studio.test/v1/chat/completions';
 fs.mkdirSync(output,{recursive:true});
 
 const fixture=()=>({
-  schemaVersion:3,onboardingDone:true,theme:'dark',search:false,thinking:false,reasoningEffort:'medium',textSize:'default',
+  schemaVersion:3,onboardingDone:true,autoTitles:false,theme:'dark',search:false,thinking:false,reasoningEffort:'medium',textSize:'default',
   lastProviderId:'p1',lastModelId:'builder-1',activeProjectId:null,activeStyleId:null,
   providers:[{id:'p1',name:'Fixture Provider',baseUrl:'https://studio.test/v1',apiType:'chat',secretRef:'provider:p1',
     selectedModels:['builder-1'],modelMeta:{'builder-1':{context_length:128000}},headers:[],capabilities:{tools:false}}],
@@ -79,7 +79,9 @@ async function mockIncremental(page, parts){
     assert(Array.isArray(msg.phases.parts)&&msg.phases.parts.length===4,'plan was not turned into parts');
     assert.equal(msg.phases.parts.filter(p=>p.status==='done').length,4);
     assert.equal(msg.phases.state,'done');
-    assert(calls.length===5,'expected 1 plan + 4 part calls, got '+calls.length);
+    // The short chat title (asked for after the answer) is not part of the build.
+    const buildCalls=calls.filter(c=>!c.some(t=>/short title of 2 to 5 words/.test(t)));
+    assert(buildCalls.length===5,'expected 1 plan + 4 part calls, got '+buildCalls.length);
     assert(calls.some(c=>c.some(t=>/build planner/i.test(t))),'no plan call');
     assert(/<h1>Hero heading<\/h1>/.test(msg.content)&&/<footer>Footer<\/footer>/.test(msg.content),'assembled HTML missing parts');
     assert(/<style>body\{font-family:sans-serif\}<\/style>/.test(msg.content),'head styles missing from assembly');

@@ -4,7 +4,7 @@ const assert=require('assert');
 // 4.14.0: network tools. Uses a mocked NazNetScan (the real limits are tested on the
 // host JVM in native-scan): device sweep, port notes, discovery, the website audit,
 // mobile-data refusal and "Ask Kita" with the report attached.
-const seed=extra=>({schemaVersion:3,onboardingDone:true,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
+const seed=extra=>({schemaVersion:3,autoTitles:false,onboardingDone:true,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
 const mock=(info)=>`(()=>{let n=0;window.__scan=[];const emit=(id,o)=>setTimeout(()=>nazScanEvent(id,JSON.stringify(o)),5);
  window.NazNetScan={info:()=>JSON.stringify(${JSON.stringify(info)}),cancel:id=>__scan.push(['cancel',id]),
   sweep:()=>{const id=++n;__scan.push(['sweep']);emit(id,{type:'host',ip:'192.168.1.1',name:'router.lan',open:[80,53]});emit(id,{type:'host',ip:'192.168.1.40',name:'',open:[554,23]});emit(id,{type:'progress',done:64,total:253});setTimeout(()=>nazScanEvent(id,JSON.stringify({type:'done',cancelled:false,total:253})),30);return id;},

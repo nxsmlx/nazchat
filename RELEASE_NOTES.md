@@ -1,3 +1,11 @@
+# Kita Chat 4.26.0
+
+- A calmer home on phones: notices such as Bypass all, Web search or a file choice are now small pills inside the message box instead of a large banner over the page.
+- New chats get a short title. After the first answer, your model names the chat in a few words in your language (for example "Pelan Laman Kedai Kopi"). A name you choose yourself is never replaced. Turn it off in Settings → Workspace → Short chat titles.
+- The ☰ menu steps aside while the bottom bar is shown, since Chats there opens the same list; it is back inside a conversation.
+- The home page no longer repeats the Kita logo, and every row uses the same soft icon tile. Recent Code projects show the code icon.
+- VersionCode 83, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.25.0
 
 - Preview files before you download them. File cards in chat now have Preview: a PDF shows its real pages, a Word file shows its pages, an Excel file shows each sheet with the totals and formulas worked out, and a PowerPoint file shows every slide. Download is right there in the preview.

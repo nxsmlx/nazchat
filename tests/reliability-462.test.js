@@ -7,7 +7,7 @@ const API='https://api.test/v1/chat/completions';
 const sse=frames=>frames.map(f=>'data: '+JSON.stringify(f)).join('\n\n')+'\n\n';
 const delta=t=>({choices:[{delta:{content:t}}]});
 const stop={choices:[{delta:{},finish_reason:'stop'}]};
-const seed=(model='m')=>({schemaVersion:3,onboardingDone:true,thinking:false,search:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:[model],modelMeta:{},capabilities:{tools:false}}],lastProviderId:'p',lastModelId:model,conversations:[],projects:[]});
+const seed=(model='m')=>({schemaVersion:3,onboardingDone:true,autoTitles:false,thinking:false,search:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:[model],modelMeta:{},capabilities:{tools:false}}],lastProviderId:'p',lastModelId:model,conversations:[],projects:[]});
 
 (async()=>{
  const b=await launch();let failed=0;

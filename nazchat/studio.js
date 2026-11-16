@@ -43,6 +43,7 @@ function renderBottomNav(chat,has){
   const nav=ensureBottomNav();
   const show=innerWidth<=760&&!(chat&&has);
   nav.hidden=!show;$('#main').classList.toggle('with-nav',show);document.body.classList.toggle('with-nav',show);
+  const menu=$('#menuBtn');if(menu){menu.classList.toggle('nav-covered',show);if(show){menu.setAttribute('aria-hidden','true');menu.tabIndex=-1;}else{menu.removeAttribute('aria-hidden');menu.removeAttribute('tabindex');}}
   const current=chat?'home':studioView;
   nav.querySelectorAll('[data-nav-key]').forEach(b=>{const on=b.dataset.navKey===current;b.classList.toggle('active',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
 }
@@ -62,7 +63,7 @@ function renderStudioHome(){
     const head=el('div','studio-resume-head');head.appendChild(el('p','studio-section-title','Continue where you left off'));
     if(recents.length>3){const all=el('button','studio-see-all','All chats');all.type='button';all.onclick=()=>openSidebar();head.appendChild(all);}
     box.appendChild(head);
-    recents.slice(0,3).forEach(c=>box.appendChild(item('chat',c.title||'New chat',`${conversationDay(c.updatedAt)} · ${c.messages.length} message${c.messages.length===1?'':'s'}`,()=>studioOpenConversation(c))));
+    recents.slice(0,3).forEach(c=>box.appendChild(item(mode==='code'?'code':'chat',c.title||'New chat',`${conversationDay(c.updatedAt)} · ${c.messages.length} message${c.messages.length===1?'':'s'}`,()=>studioOpenConversation(c))));
     if(sugg)sugg.setAttribute('aria-label','Start something new');
   }
 }
@@ -82,8 +83,8 @@ function renderStudioContext(){
   if(typeof fileFocus==='function'&&fileFocus())chips.push({label:DOC_FORMATS[fileFocus()].label+' file',icon:'file',clear:()=>setFileFocus('')});
   if(style)chips.push({label:style.name,icon:'pen',clear:()=>{db.activeStyleId=null;if(conv)conv.styleId=null;save();renderStudioContext();}});
   // Bypass all is always visible while it is on; removing the chip turns it off.
-  if(permissionMode()==='bypass')chips.unshift({label:'Bypass all: tools run without asking',icon:'spark',warn:true,clear:()=>{db.permissionMode='balanced';save();renderStudioContext();toast('Bypass all is off. Tools ask again.');}});
-  chips.forEach(c=>{const chip=el('div','studio-context-chip'+(c.warn?' warn':''));chip.innerHTML=kitaIcon(c.icon);const label=el('span');label.textContent=c.label;chip.appendChild(label);const remove=el('button',null,kitaIcon(c.icon==='folder'?'chevron':'close'));remove.setAttribute('aria-label',(c.icon==='folder'?'Change project: ':c.warn?'Turn off ':'Remove ')+c.label.split(':')[0]);remove.onclick=()=>{if(generating){toast('Stop the response before changing context.');return;}c.clear();};chip.appendChild(remove);host.appendChild(chip);});host.hidden=!chips.length;
+  if(permissionMode()==='bypass')chips.unshift({label:'Bypass all is on',title:'Bypass all: tools run without asking. Tap × to turn it off.',short:'Bypass all',icon:'spark',warn:true,clear:()=>{db.permissionMode='balanced';save();renderStudioContext();toast('Bypass all is off. Tools ask again.');}});
+  chips.forEach(c=>{const chip=el('div','studio-context-chip'+(c.warn?' warn':''));chip.innerHTML=kitaIcon(c.icon);const label=el('span');label.textContent=c.label;if(c.title)chip.title=c.title;chip.appendChild(label);const remove=el('button',null,kitaIcon(c.icon==='folder'?'chevron':'close'));remove.setAttribute('aria-label',(c.icon==='folder'?'Change project: ':c.warn?'Turn off ':'Remove ')+(c.short||c.label.split(':')[0]));remove.onclick=()=>{if(generating){toast('Stop the response before changing context.');return;}c.clear();};chip.appendChild(remove);host.appendChild(chip);});host.hidden=!chips.length;
   const count=Number(!!db.search)+Number(!!db.thinking)+Number(db.skillSettings.mode==='manual');const badge=$('.studio-tool-count');if(badge){badge.textContent=count;badge.hidden=!count;}
 }
 function studioEmpty(title,text,action,label){const box=el('div','studio-empty-state');box.innerHTML=`${kitaIcon('folder')}<h2>${esc(title)}</h2><p>${esc(text)}</p>`;if(action){const b=el('button','btn secondary',esc(label));b.onclick=action;box.appendChild(b);}return box;}
@@ -182,6 +183,12 @@ function renderStudioAppearance(){renderSettingsPage('Appearance',null,null,list
 });}
 function renderStudioWorkspaceSettings(){renderSettingsPage('Workspace',null,null,list=>{
   const group=el('div','settings-hub-group');group.appendChild(settingsHubRow('workspace','Projects','Shared instructions and reference material',()=>{closeSheet('setSheet');studioNavigate('projects');}));group.appendChild(settingsHubRow('skills','Library','Saved prompts and artifacts',()=>{closeSheet('setSheet');studioNavigate('library');}));list.appendChild(group);
+  // Short chat titles (on unless turned off): one small request after a new chat's first answer.
+  list.appendChild(el('div','settings-section-label','Chats'));
+  const titles=el('div','settings-row');titles.innerHTML='<div class="sr-text"><strong>Short chat titles</strong><small>After the first answer, your model names the chat in a few words. Uses one small extra request.</small></div>';
+  const sw=el('button','switch'+(db.autoTitles!==false?' on':''));sw.type='button';sw.setAttribute('role','switch');sw.setAttribute('aria-checked',String(db.autoTitles!==false));sw.setAttribute('aria-label','Short chat titles');
+  sw.onclick=()=>{db.autoTitles=db.autoTitles===false;save();sw.classList.toggle('on',db.autoTitles!==false);sw.setAttribute('aria-checked',String(db.autoTitles!==false));};
+  titles.appendChild(sw);list.appendChild(titles);
   list.appendChild(el('div','settings-section-label','Data & backup'));
   const note=el('p','hint','Backups can contain private conversations. Store exported files securely. Provider keys are excluded from a standard backup.');list.appendChild(note);
   for(const [label,fn] of [['Export backup',exportBackup],['Export encrypted backup',exportEncryptedBackup],['Restore backup',importBackup]]){const b=el('button','btn secondary',label);b.onclick=fn;list.appendChild(b);}

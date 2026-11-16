@@ -5,7 +5,7 @@ const assert=require('assert');
 // GitHub (repository, Pages) with mocked service APIs.
 const PAGE='<!doctype html><html><body>Hi</body></html>';
 const PAGE_HASH='788e3bf7836e296a075a37322a3a9984'; // blake3(base64(PAGE)+"html")[:32] from the reference implementation
-const seed=extra=>({schemaVersion:3,onboardingDone:true,thinking:false,search:false,autoCheckCode:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{},capabilities:{tools:false}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
+const seed=extra=>({schemaVersion:3,autoTitles:false,onboardingDone:true,thinking:false,search:false,autoCheckCode:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{},capabilities:{tools:false}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
 const sse=t=>'data: '+JSON.stringify({choices:[{delta:{content:t}}]})+'\n\ndata: '+JSON.stringify({choices:[{delta:{},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n';
 const json=(r,status,obj)=>r.fulfill({status,headers:{'content-type':'application/json'},body:JSON.stringify(obj)});
 

@@ -7,7 +7,7 @@ const assert=require('assert');
 (async()=>{
  const b=await launch();
  let failed=0;
- const seed={schemaVersion:3,onboardingDone:true,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',secretRef:'provider:p',apiKey:'sk-must-not-leak',headers:[],selectedModels:['m']}],lastProviderId:'p',lastModelId:'m',
+ const seed={schemaVersion:3,autoTitles:false,onboardingDone:true,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',secretRef:'provider:p',apiKey:'sk-must-not-leak',headers:[],selectedModels:['m']}],lastProviderId:'p',lastModelId:'m',
    conversations:[{id:'c',title:'Code',updatedAt:Date.now(),messages:[{id:'u',role:'user',content:'code'},{id:'a',role:'assistant',content:'```js\nconsole.log(1)\n```'}]}]};
  async function scenario(name,native,run){
    const ctx=await b.newContext({viewport:{width:390,height:844},acceptDownloads:true});

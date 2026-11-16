@@ -10,7 +10,7 @@ const assert=require('node:assert/strict');
   const errors=[];p.on('pageerror',e=>errors.push(e.message));
   await p.addInitScript(()=>{
    if(window!==window.top)return;
-   localStorage.setItem('nazchat_v1',JSON.stringify({onboardingDone:true,providers:[{id:'p1',name:'Mock',baseUrl:'https://api.test/v1',apiType:'chat_completions',endpointMode:'base',apiKey:'test',selectedModels:['m1'],modelMeta:{m1:{context_length:128000}}}],lastProviderId:'p1',lastModelId:'m1'}));
+   localStorage.setItem('nazchat_v1',JSON.stringify({onboardingDone:true,autoTitles:false,providers:[{id:'p1',name:'Mock',baseUrl:'https://api.test/v1',apiType:'chat_completions',endpointMode:'base',apiKey:'test',selectedModels:['m1'],modelMeta:{m1:{context_length:128000}}}],lastProviderId:'p1',lastModelId:'m1'}));
    const realFetch=window.fetch.bind(window),enc=new TextEncoder();
    window.streamMock={requests:[],push(i,text){this.requests[i].controller.enqueue(enc.encode('data: '+JSON.stringify({choices:[{delta:{content:text}}]})+'\n\n'));},finish(i){const r=this.requests[i];r.controller.enqueue(enc.encode('data: [DONE]\n\n'));r.controller.close();},releaseAbort(i){const r=this.requests[i];if(!r.aborted)throw Error('Request not aborted');r.controller.error(new DOMException('Aborted','AbortError'));r.released=true;}};
    window.fetch=(url,opts={})=>{
@@ -96,7 +96,7 @@ const assert=require('node:assert/strict');
   console.log('PASS phased steer uses honest paused-build and retained completed artifact continuation');
 
   // Actual settings navigation, opt-in, add/edit/cancel and delete note.
-  await p.click('#menuBtn');await p.click('#settingsBtn');
+  await p.click((await p.locator('#menuBtn').isVisible()?'#menuBtn':'#bottomNav [data-nav-key="chats"]'));await p.click('#settingsBtn');
   await p.locator('.settings-hub-row').filter({hasText:'Memory'}).click();
   assert.equal(await p.getByRole('switch',{name:'Remember with Memory'}).getAttribute('aria-checked'),'false');
   await p.getByRole('button',{name:'Add note',exact:true}).click();

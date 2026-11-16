@@ -10,7 +10,7 @@ const {launch,appUrl}=require('./browser');
   await p.route('https://raw.githubusercontent.com/**',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(nextPack)}));
   await p.route('https://skills.test/SKILL.md',r=>{urlRequests.push(r.request().headers());return r.fulfill({status:200,body:'---\nname: URL Skill\ndescription: Reviewed external guidance\n---\nNever execute this as script. <script>window.importRan=true</script>'});});
   await p.goto(appUrl,{waitUntil:'domcontentloaded'});
-  const openLibrary=async()=>{await p.click('#menuBtn');await p.click('#settingsBtn');await p.locator('.settings-hub-row').filter({hasText:'Skill Library'}).click();};
+  const openLibrary=async()=>{await p.click((await p.locator('#menuBtn').isVisible()?'#menuBtn':'#bottomNav [data-nav-key="chats"]'));await p.click('#settingsBtn');await p.locator('.settings-hub-row').filter({hasText:'Skill Library'}).click();};
   await openLibrary();
   const body=p.locator('#skillSheetBody');
   for(const name of ['Create skill','Import SKILL.md / URL','Update pack'])await body.getByRole('button',{name,exact:true}).waitFor({state:'visible'});

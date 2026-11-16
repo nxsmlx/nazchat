@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');const {launch,appUrl}=require('./brow
    image_url / input_image parts, keep full images out of the chat data, survive a reload,
    and tell text-only models instead of sending them pictures. */
 const API='https://api.test/v1/chat/completions',RESP='https://api.test/v1/responses';
-const seed={schemaVersion:3,onboardingDone:true,search:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['see','blind'],
+const seed={schemaVersion:3,onboardingDone:true,autoTitles:false,search:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['see','blind'],
   modelMeta:{see:{context_length:128000,capabilities:{vision:true}},blind:{context_length:128000,capabilities:{vision:false}}}}],conversations:[],projects:[],lastProviderId:'p',lastModelId:'see'};
 const sse=t=>'data: '+JSON.stringify({choices:[{delta:{content:t},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n';
 (async()=>{const b=await launch();try{

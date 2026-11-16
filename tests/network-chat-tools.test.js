@@ -4,7 +4,7 @@ const assert=require('assert');
 /* Network chat tools reuse the installed app's scanner, ask before scanning and
    feed results back to the model. All providers and native bridges are mocked. */
 const API='https://api.test/v1/chat/completions';
-const seed={schemaVersion:3,onboardingDone:true,search:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],conversations:[],projects:[],lastProviderId:'p',lastModelId:'m'};
+const seed={schemaVersion:3,onboardingDone:true,autoTitles:false,search:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],conversations:[],projects:[],lastProviderId:'p',lastModelId:'m'};
 const nativeMock=`(()=>{let n=0;window.__scan=[];
  window.NazNetScan={info:()=>JSON.stringify({type:'wifi',ip:'192.168.1.23',prefix:24,gateway:'192.168.1.1',dns:['192.168.1.1'],scannable:true}),
   cancel:id=>__scan.push(['cancel',id]),

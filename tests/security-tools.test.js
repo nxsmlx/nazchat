@@ -4,7 +4,7 @@ const assert=require('assert');
 // 4.15.0: capture analysis (pcap + pcapng built here byte by byte), the website test
 // (passive checks; active checks only after domain verification) and the scanner's
 // port profiles, UDP probes and report export. Native parts are mocked.
-const seed=extra=>({schemaVersion:3,onboardingDone:true,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
+const seed=extra=>({schemaVersion:3,autoTitles:false,onboardingDone:true,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
 
 // ---- capture builders ----
 const u16=n=>[n>>8&255,n&255];

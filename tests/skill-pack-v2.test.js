@@ -32,7 +32,7 @@ const path=require('node:path');
  const errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.route('https://raw.githubusercontent.com/**',route=>route.abort());
  await p.route('https://api.test/v1/chat/completions',route=>route.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:'data: '+JSON.stringify({choices:[{delta:{content:'ok'}}]})+'\n\ndata: [DONE]\n\n'}));
- await p.addInitScript(()=>{if(window===window.top)localStorage.setItem('nazchat_v1',JSON.stringify({onboardingDone:true,providers:[{id:'p1',name:'Mock',baseUrl:'https://api.test/v1',apiType:'chat',endpointMode:'chat',secretRef:'provider:p1',selectedModels:['m1'],models:[{id:'m1',name:'M1'}],apiKey:'test',modelMeta:{m1:{context_length:128000}}}],skillPackCache:{packVersion:1,skills:[{id:'legacy',name:'Legacy',content:'Old cached guidance'}]}}));});
+ await p.addInitScript(()=>{if(window===window.top)localStorage.setItem('nazchat_v1',JSON.stringify({onboardingDone:true,autoTitles:false,providers:[{id:'p1',name:'Mock',baseUrl:'https://api.test/v1',apiType:'chat',endpointMode:'chat',secretRef:'provider:p1',selectedModels:['m1'],models:[{id:'m1',name:'M1'}],apiKey:'test',modelMeta:{m1:{context_length:128000}}}],skillPackCache:{packVersion:1,skills:[{id:'legacy',name:'Legacy',content:'Old cached guidance'}]}}));});
  await p.goto(appUrl,{waitUntil:'domcontentloaded',timeout:60000});
  await p.waitForFunction(()=>typeof db!=='undefined'&&typeof renderAll==='function');
  assert.equal(await p.evaluate(()=>skillPack.packVersion),pack.packVersion,'v1 cache must not downgrade the bundled pack');

@@ -18,7 +18,7 @@ function fixture({active = 'delete', last = false, shared = false} = {}) {
   const pid = active === 'keep' ? 'p-keep' : 'p-delete';
   const mid = active === 'keep' ? 'kept-chosen' : 'deleted-model';
   return {
-    schemaVersion: 3, onboardingDone: true, providers,
+    schemaVersion: 3, onboardingDone: true, autoTitles: false, providers,
     lastProviderId: pid, lastModelId: mid,
     conversations: [{id: 'chat-kept', title: 'Existing readable chat', providerId: pid,
       modelId: mid, projectId: 'project-kept', createdAt: 1, updatedAt: 2,
@@ -51,7 +51,7 @@ function unrelated(db) {
   return rest;
 }
 async function openProviders(page) {
-  await page.locator('#menuBtn').click();
+  await page.locator((await page.locator('#menuBtn').isVisible()?'#menuBtn':'#bottomNav [data-nav-key="chats"]')).click();
   await page.locator('#settingsBtn').click();
   assert.equal(await page.locator('#setSheetTitle').innerText(), 'Settings');
   await page.locator('.settings-hub-row').filter({has: page.locator('strong', {hasText: /^Providers$/})}).click();
@@ -71,7 +71,7 @@ async function confirmDelete(page) {
   await page.waitForFunction(() => !providerDeletionBusy);
 }
 async function readChat(page) {
-  await page.locator('#menuBtn').click();
+  await page.locator((await page.locator('#menuBtn').isVisible()?'#menuBtn':'#bottomNav [data-nav-key="chats"]')).click();
   await page.locator('.studio-conv-open').filter({hasText: 'Existing readable chat'}).click();
   assert.match(await page.locator('#chatInner').innerText(), /Keep this question/);
   assert.match(await page.locator('#chatInner').innerText(), /Keep this answer and its artifact\./);
