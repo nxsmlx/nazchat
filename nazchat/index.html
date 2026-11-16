@@ -905,8 +905,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
       </div>
     </div>
     <div id="composerWrap">
-      <div id="studioContext" hidden></div>
       <div id="composer">
+        <div id="studioContext" hidden></div>
         <div id="attachmentPreview"></div>
         <div class="attachment-inline" id="attachmentInline"></div>
         <div id="inputRow">
@@ -1886,8 +1886,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.25.0";
-const APP_VERSION_CODE = 82;
+const APP_VERSION = "4.26.0";
+const APP_VERSION_CODE = 83;
 const UPDATE_REPO = "nxsmlx/nazchat";
 const KITA_SITE = "https://keetakita.my";
 
@@ -4759,6 +4759,32 @@ async function send(text,opts){
   try{await sendResponse(text,opts,run);}
   catch(e){abortGeneration();toast("Response failed: "+String(e.message||e).slice(0,150));}
   finally{finishRun(run);}
+  // After the first answer (never during it, so it cannot slow or block it), name the chat.
+  if(run.conversation && pendingAutoTitles.has(run.conversation.id)) autoTitleConversation(run.conversation, run.model);
+}
+/* Short chat titles (4.26.0). The first message is only a placeholder title; once the first
+   answer is in, the same model names the chat in 2 to 5 words in the user's language. A title
+   the user changed is never replaced, and on any failure the placeholder simply stays. */
+const pendingAutoTitles=new Map();
+function cleanAutoTitle(raw){
+  let t=String(raw||"");
+  if(typeof extractThink==="function") t=extractThink(t).content;
+  t=t.split("\n").map(l=>l.trim()).find(Boolean)||"";
+  t=t.replace(/^[#>*\-\s"'“”‘’`]+/,"").replace(/^(title|tajuk)\s*:\s*/i,"").replace(/^[#>*\-\s"'“”‘’`]+|["'“”‘’`*.!。]+$/g,"").replace(/\s+/g," ").trim();
+  if(t.length<2||t.length>60||/^\(no text returned\)$/i.test(t)) return "";
+  return t;
+}
+async function autoTitleConversation(c, model){
+  const placeholder=pendingAutoTitles.get(c.id); pendingAutoTitles.delete(c.id);
+  const user=c.messages.find(m=>m.role==="user"), answer=[...c.messages].reverse().find(m=>m.role==="assistant");
+  if(!model?.provider || !user || !answer || answer.failed || !String(answer.content||"").trim()) return;
+  const strip=s=>String(s||"").replace(/```[\s\S]*?(```|$)/g," ").replace(/\s+/g," ").trim();
+  const prompt="Write a short title of 2 to 5 words for this chat, in the same language as the user's message. Reply with the title only: no quotes, no full stop, no emoji.\n\nUser: "+strip(user.content).slice(0,600)+"\n\nAssistant: "+strip(answer.content).slice(0,400);
+  try{
+    const title=cleanAutoTitle(await requestOnce(model, prompt));
+    if(!title || c.title!==placeholder || !db.conversations.includes(c)) return;
+    c.title=title; save(); renderSidebar(); if(conv?.id===c.id) renderHeader(); if(typeof renderStudioHome==="function") renderStudioHome();
+  }catch(e){ /* Optional naming: the placeholder title stays. */ }
 }
 async function sendResponse(text, opts, run){
   opts = opts||{};
@@ -4774,7 +4800,7 @@ async function sendResponse(text, opts, run){
   const steerMode = !!opts.steer;
   const userMsg = { id:uid(), role:"user", content:text, attachments:attachments.map(a=>a.imageId?{name:a.name,type:a.type,imageId:a.imageId,thumb:a.thumb,width:a.width,height:a.height}:({name:a.name,type:a.type,text:a.text,...(a.pasted?{pasted:true}:{})})), timestamp:Date.now() };
   if(!opts.editing && !steerMode && !opts.resumeMessage && !opts.continueMessage) conv_.messages.push(userMsg);
-  if(!opts.skipTitle && conv_.title==="New chat"){ conv_.title = text.slice(0,42) + (text.length>42?"…":""); }
+  if(!opts.skipTitle && conv_.title==="New chat"){ conv_.title = text.slice(0,42) + (text.length>42?"…":""); pendingAutoTitles.set(conv_.id, conv_.title); }
   conv_.updatedAt = Date.now(); save();
 
   const usedSkills=opts.review?activeSkills().filter(s=>["design-critique","code-review","testing"].includes(s.id)).slice(0,3):selectSkills(text,model);

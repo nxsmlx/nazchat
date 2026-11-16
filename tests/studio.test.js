@@ -76,9 +76,10 @@ async function reload(page) { await page.goto(page.url()); await ready(page); }
 async function stored(page) { return page.evaluate(() => JSON.parse(localStorage.getItem('nazchat_v1'))); }
 async function screenshot(page, name) { await page.screenshot({path:path.join(output, name+'.png')}); }
 async function sidebar(page) {
-  if (await page.locator('#menuBtn').isVisible() && !(await page.locator('[data-studio-view="projects"]').isVisible())) {
-    await page.locator('#menuBtn').click();
-  }
+  if (await page.locator('[data-studio-view="projects"]').isVisible()) return;
+  // Phones: ☰ in a conversation; on Home, Projects and Library the bottom nav's Chats opens the list.
+  if (await page.locator('#menuBtn').isVisible()) await page.locator('#menuBtn').click();
+  else if (await page.locator('#bottomNav [data-nav-key="chats"]').isVisible()) await page.locator('#bottomNav [data-nav-key="chats"]').click();
 }
 async function navigate(page, view) {
   await sidebar(page);
@@ -782,6 +783,15 @@ async function target(page, selector, scroll = false) {
       await page.waitForFunction(() => document.activeElement.id === 'modelSheet');
       await escapeSheet(page,'modelSheet');
       assert(await page.locator('#bottomModelBtn').evaluate(n => n === document.activeElement));
+      // On the phone Home the bottom nav's Chats opens the chat list (☰ steps aside there).
+      assert.equal(await page.locator('#menuBtn').isVisible(),false);
+      const opener=page.locator('#bottomNav [data-nav-key="chats"]');
+      await opener.click();
+      await page.keyboard.press('Escape');
+      assert.equal(await page.locator('#menuBtn').getAttribute('aria-expanded'),'false');
+      assert(await opener.evaluate(n => n === document.activeElement));
+      // Inside a conversation ☰ is back and keeps its focus behaviour.
+      await page.evaluate(() => studioOpenConversation(db.conversations.find(c => c.messages?.length)));
       await page.locator('#menuBtn').click();
       await page.keyboard.press('Escape');
       assert.equal(await page.locator('#menuBtn').getAttribute('aria-expanded'),'false');
