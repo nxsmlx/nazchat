@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');const {launch,appUrl}=require('./brow
    errors come back for a small fix, and the result is a normal artifact. */
 const API='https://api.test/v1/chat/completions';
 const PAGE='<!doctype html>\n<html><head><title>Kopi</title>\n<style>\nh1{color:#222}\n</style></head>\n<body>\n<h1>Hello coffee</h1>\n<p>'+'Menu line. '.repeat(400)+'</p>\n<script>\ndocument.title="Kopi";\n</script>\n</body></html>';
-const seed={schemaVersion:3,onboardingDone:true,search:false,uiMode:'code',agentTeam:{designer:false,review:false},providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],
+const seed={schemaVersion:3,autoTitles:false,onboardingDone:true,search:false,uiMode:'code',agentTeam:{designer:false,review:false},providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{m:{context_length:128000}}}],
   conversations:[{id:'c1',title:'Kopi',mode:'code',messages:[{id:'u1',role:'user',content:'Buat landing page kedai kopi',timestamp:1},{id:'a1',role:'assistant',content:'Here is the page.\n\n```html\n'+PAGE+'\n```',timestamp:2}],createdAt:1,updatedAt:2}],projects:[],lastProviderId:'p',lastModelId:'m'};
 const enc=x=>'data: '+JSON.stringify(x)+'\n\n';
 const call=(name,args,id)=>enc({choices:[{delta:{tool_calls:[{index:0,id,type:'function',function:{name,arguments:JSON.stringify(args)}}]}}]})+enc({choices:[{delta:{},finish_reason:'tool_calls'}]})+'data: [DONE]\n\n';

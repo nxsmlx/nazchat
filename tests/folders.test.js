@@ -8,7 +8,7 @@ const assert=require('node:assert/strict');
  const b=await launch();
  let failed=0;
  const now=Date.now();
- const seed={schemaVersion:3,onboardingDone:true,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',secretRef:'provider:p',headers:[],selectedModels:['m']}],lastProviderId:'p',lastModelId:'m',
+ const seed={schemaVersion:3,autoTitles:false,onboardingDone:true,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',secretRef:'provider:p',headers:[],selectedModels:['m']}],lastProviderId:'p',lastModelId:'m',
    conversations:[
      {id:'c1',title:'Bajet kedai kopi',mode:'chat',updatedAt:now-1000,messages:[{id:'u1',role:'user',content:'bajet'}]},
      {id:'c2',title:'Laporan jualan',mode:'chat',updatedAt:now-2000,messages:[{id:'u2',role:'user',content:'laporan'}]},

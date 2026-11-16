@@ -42,7 +42,7 @@ ${'Ayat panjang untuk menguji pembalutan baris dan halaman. '.repeat(60)}
 (async()=>{
  const b=await launch();
  let failed=0;
- const seed={schemaVersion:3,onboardingDone:true,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',secretRef:'provider:p',headers:[],selectedModels:['m']}],lastProviderId:'p',lastModelId:'m',
+ const seed={schemaVersion:3,autoTitles:false,onboardingDone:true,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',secretRef:'provider:p',headers:[],selectedModels:['m']}],lastProviderId:'p',lastModelId:'m',
    conversations:[{id:'c',title:'Bajet',updatedAt:Date.now(),messages:[{id:'u',role:'user',content:'buat bajet excel dan laporan word'},
      {id:'a',role:'assistant',content:'Ini fail anda.\n\n```xlsx Bajet-2026.xlsx\n## Bajet\n| Item | Kos |\n|--|--|\n| Sewa | RM 1,200 |\n| Gaji | RM 3,000.50 |\n| **Jumlah** | =SUM(B2:B3) |\n```\n\n```docx Laporan.docx\n# Laporan\n\nRingkasan pendek.\n```\n\nSelesai.'},
      {id:'u2',role:'user',content:'ringkaskan'},{id:'a2',role:'assistant',content:'## Ringkasan\n\n- Satu\n- Dua\n\n| A | B |\n|--|--|\n| 1 | 2 |'}]}]};

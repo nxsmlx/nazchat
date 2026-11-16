@@ -11,7 +11,7 @@ const stop={choices:[{delta:{},finish_reason:'stop'}]};
 const done=t=>sse([delta(t),stop])+'data: [DONE]\n\n';
 const PLAN='CONTRACT:\n--brand: #6b4f3a; --font: "Inter"\nSection ids: #hero, #menu, #gallery\nClass prefix per part: hero-, menu-, gal-\nPARTS:\n1. Head and styles — <head> with all shared CSS\n2. Hero — #hero banner\n3. Menu — #menu list\n4. Gallery — #gallery grid\n5. Footer and scripts — footer + JS';
 const PARTS=['<!doctype html><html><head><title>Kopi Kita</title><style>:root{--brand:#6b4f3a}</style></head><body>','<section id="hero"><h1>Kopi Kita</h1></section>','<section id="menu"><ul><li>Latte</li></ul></section>','<section id="gallery"><div>g</div></section>','<footer>f</footer><script>document.body.dataset.ok="1"</script></body></html>'];
-const seed=extra=>({schemaVersion:3,onboardingDone:true,thinking:false,search:false,autoCheckCode:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{},capabilities:{tools:false}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
+const seed=extra=>({schemaVersion:3,autoTitles:false,onboardingDone:true,thinking:false,search:false,autoCheckCode:false,providers:[{id:'p',name:'Mock',baseUrl:'https://api.test/v1',endpointMode:'base',apiType:'chat_completions',apiKey:'k',headers:[],selectedModels:['m'],modelMeta:{},capabilities:{tools:false}}],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
 const ASK='buat landing page lengkap untuk kedai kopi dengan hero, menu, galeri dan footer';
 
 (async()=>{

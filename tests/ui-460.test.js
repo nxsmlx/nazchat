@@ -19,7 +19,7 @@ const conv=(id,title,at,messages)=>({id,title,updatedAt:at,messages});
    catch(e){console.error('FAIL '+name+'\n'+(e.stack||e));results.push(false);}
    finally{await ctx.close();}
  }
- const base=extra=>({schemaVersion:3,onboardingDone:true,providers:[provider],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
+ const base=extra=>({schemaVersion:3,autoTitles:false,onboardingDone:true,providers:[provider],lastProviderId:'p',lastModelId:'m',conversations:[],projects:[],...extra});
 
  await scenario('first run keeps the welcome; returning users see recent chats first',base({providers:[],conversations:[]}),async page=>{
    assert(await page.getByRole('button',{name:/Connect your first provider/}).isVisible());
