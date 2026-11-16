@@ -75,7 +75,7 @@ const seed=extra=>({schemaVersion:3,onboardingDone:true,providers:[],conversatio
    await page.getByRole('button',{name:'Turn on'}).click();
    assert.equal(await page.evaluate(()=>db.permissionMode),'bypass');
    await page.evaluate(()=>closeSheet('setSheet'));
-   const chip=page.locator('.studio-context-chip.warn');assert(await chip.isVisible());assert.match(await chip.innerText(),/Bypass all/);
+   const chip=page.locator('.studio-context-chip.warn');assert(await chip.isVisible());assert.match(await chip.innerText(),/Bypass on/);
    for(const t of ['search_docs','create_issue','delete_project']){await call(page,t);assert.equal(await result(page),true,t);assert.equal(await dialogOpen(page),false);}
    const urlOk=await page.evaluate(()=>confirmFetchUrl('https://elsewhere.test/a',null));assert.equal(urlOk,true);
    assert.equal(await page.evaluate(()=>db.toolActivity.filter(e=>e.how==='Bypass all').length),4);

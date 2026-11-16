@@ -30,13 +30,18 @@ const conv=(id,title,at,messages)=>({id,title,updatedAt:at,messages});
    assert(order,'recent chats must come before suggestions');
    assert.deepEqual(await page.locator('#studioResume .studio-resume-item strong').allTextContents(),['Connect a provider','Chat 1','Chat 2','Chat 3']);
    assert(await page.getByRole('button',{name:'All chats',exact:true}).isVisible());
-   assert.match(await page.locator('#studioResume .studio-resume-item').nth(1).innerText(),/1 message$/);
+   // One line: the title and a short time, nothing else to read.
+   assert.equal(await page.locator('#studioResume .studio-recent').nth(0).innerText(),'Chat 1\nNow');
+   assert.equal(await page.locator('#studioResume .studio-recent time').count(),3);
  });
 
  await scenario('answer actions: Copy and Regenerate visible, the rest in a keyboard menu',base({conversations:[conv('c','Code',Date.now(),[{id:'u',role:'user',content:'make a page'},{id:'a',role:'assistant',content:'```html\n<!doctype html><html><body>x</body></html>\n```'}])]}),async page=>{
    await page.evaluate(()=>{conv=db.conversations[0];renderAll();});
    const bar=page.locator('.msg.assistant .action-bar');
-   for(const n of ['Copy','Regenerate','Preview','More actions']) assert(await bar.getByRole('button',{name:n,exact:true}).isVisible(),n+' missing');
+   for(const n of ['Copy','Regenerate','More actions']) assert(await bar.getByRole('button',{name:n,exact:true}).isVisible(),n+' missing');
+   // The page card already has Open, so the bar does not repeat Preview.
+   assert.equal(await bar.getByRole('button',{name:'Preview',exact:true}).count(),0);
+   assert(await page.locator('.msg.assistant .artifact-card .artifact-btn.primary').isVisible(),'Open missing on the page card');
    assert.equal(await bar.getByRole('button',{name:'Review & Improve'}).count(),0,'secondary action should be in the menu');
    await bar.getByRole('button',{name:'More actions'}).click();
    assert.equal(await bar.getByRole('button',{name:'More actions'}).getAttribute('aria-expanded'),'true');

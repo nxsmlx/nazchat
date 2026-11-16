@@ -85,7 +85,8 @@ const seed=extra=>({schemaVersion:3,onboardingDone:true,autoTitles:false,thinkin
    const reqs=[];let reply=fixed;
    await page.route(API,r=>{reqs.push(1);r.fulfill({status:200,headers:{'content-type':'text/event-stream'},body:answer(reply)});});
    await ask(page,'tiny shop page');assert.equal(reqs.length,1);
-   assert.match(await page.locator('.msg.assistant .code-check').last().innerText(),/no errors/);
+   assert.match(await page.locator('.msg.assistant .artifact-card .artifact-status').last().innerText(),/✓ tested/);
+   assert.equal(await page.locator('.msg.assistant').last().locator('.code-check').count(),0,'the clean result is not said twice');
    reply='Just a plain explanation.';await ask(page,'explain');assert.equal(reqs.length,2);
    await page.evaluate(()=>{db.autoCheckCode=false;});reply=broken;await ask(page,'again');assert.equal(reqs.length,3);
    assert.equal(await page.evaluate(()=>conv.messages.at(-1).codeChecks),undefined);

@@ -78,8 +78,8 @@ assert.equal(zip['css/styles.css'][0],css);assert.deepEqual(zip['js/app.js'][1],
 console.log('PASS zip: valid archive with the split files');
 
 // 4. Code home: Files picker, read-only default, saved choice.
-await page.evaluate(()=>{conv=null;setKitaMode('code');renderAll();});
-const pick=page.locator('select[aria-label="How pages are saved and published"]');await pick.waitFor();
+await page.evaluate(()=>{conv=null;setKitaMode('code');renderAll();renderToolsSheet();openSheet('toolsSheet');});
+const pick=page.locator('#toolsSheet select[aria-label="How pages are saved and published"]');await pick.waitFor();
 assert.equal(await pick.inputValue(),'single');assert.equal(await page.evaluate(()=>'codeFiles' in db),false);
 await pick.tap();await page.locator('.kita-select').waitFor();
 assert.match(await page.locator('.kita-select-option',{hasText:'Separate files'}).innerText(),/Production layout/);
@@ -87,6 +87,7 @@ await page.locator('.kita-select-option',{hasText:'Separate files'}).click();awa
 assert.equal(await page.evaluate(()=>db.codeFiles),'separate');
 assert.match(await pick.locator('xpath=ancestor::label').locator('small').innerText(),/css\/styles\.css/);
 console.log('PASS Code home Files picker saves the layout');
+await page.evaluate(()=>closeSheet('toolsSheet'));
 
 // 5. A multi-file answer: Open previews with its own CSS/JS; menu offers the project .zip.
 await page.evaluate(()=>{
