@@ -44,7 +44,7 @@ const assert=require('assert');
     for(const runJs of [true,false]){document.querySelector('#previewJs').checked=runJs;openPreview(html);}
     delete window.NazPreview;return seen;
   },html);
-  assert.deepEqual(calls,[['Kita Chat Preview',true],['Kita Chat Preview',false]],'native preview did not receive the Run JS setting');
+  assert.deepEqual(calls,[['Preview',true],['Preview',false]],'native preview did not receive the Run JS setting');
   console.log('PASS native preview receives the Run JS setting');
   assert.deepEqual(errors,[]);
  }finally{await b.close();}

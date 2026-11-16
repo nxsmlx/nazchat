@@ -538,13 +538,21 @@ function renderModeHome(){
   if(mode!=='code'){sites?.remove();return;}
   if(!sites){sites=el('div','code-sites');home.appendChild(sites);}
   sites.innerHTML='';
-  if(typeof renderCodeStylePicker==='function') sites.appendChild(renderCodeStylePicker());
-  if(typeof renderCodeFilesPicker==='function') sites.appendChild(renderCodeFilesPicker());
+  appendPublishedSites(sites);
+  if(!sites.children.length) sites.remove();
+}
+/* Code options (4.27.0): in Tools, not on the home page. */
+function renderCodeToolsSection(container){
+  container.appendChild(el('div','settings-section-label tools-section-label','Code'));
+  if(typeof renderCodeStylePicker==='function') container.appendChild(renderCodeStylePicker());
+  if(typeof renderCodeFilesPicker==='function') container.appendChild(renderCodeFilesPicker());
   const connected=Object.keys(INTEGRATIONS).filter(integrationConnected);
   const bar=el('button','code-integrations');bar.type='button';
   bar.innerHTML='<span class="integration-icons">'+Object.keys(INTEGRATIONS).map(s=>'<span class="integration-icon'+(integrationConnected(s)?' on':'')+'">'+integrationIcon(s)+'</span>').join('')+'</span><span><strong>'+(connected.length?'Publishing to '+connected.map(s=>INTEGRATIONS[s].name).join(', '):'Connect where to publish')+'</strong><small>'+(connected.length?'Manage integrations':'GitHub, Vercel and Cloudflare')+'</small></span>'+kitaIcon('arrow');
-  bar.onclick=()=>{renderIntegrationsSettings();openSheet('setSheet');};
-  sites.appendChild(bar);
+  bar.onclick=()=>{closeSheet('toolsSheet');renderIntegrationsSettings();openSheet('setSheet');};
+  container.appendChild(bar);
+}
+function appendPublishedSites(sites){
   const published=[];db.conversations.forEach(c=>Object.values(c.sites||{}).forEach(s=>published.push({c,s})));
   published.sort((a,b)=>(b.s.at||0)-(a.s.at||0));
   if(published.length){

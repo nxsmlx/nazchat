@@ -1037,14 +1037,14 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
     <button class="preview-tab active" data-tab="preview" role="tab">Preview</button>
     <button class="preview-tab" data-tab="code" role="tab">Code</button>
     <button class="preview-tab" data-tab="console" role="tab">Console <span id="consoleCount" class="console-count">0</span></button>
-  </div>
   <div class="preview-toolbar">
     <div class="vp-seg" role="group" aria-label="Preview width">
       <button class="vp-btn" data-vp="mobile" title="Mobile width" aria-label="Mobile width" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg></button>
       <button class="vp-btn" data-vp="tablet" title="Tablet width" aria-label="Tablet width" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M11 18h2"/></svg></button>
       <button class="vp-btn active" data-vp="full" title="Full width" aria-label="Full width" aria-pressed="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="1.5"/><path d="M8 20.5h8M12 17v3.5"/></svg></button>
     </div>
-    <label class="js-toggle"><input type="checkbox" id="previewJs" checked><span>Run JS</span></label>
+    <label class="js-toggle"><input type="checkbox" id="previewJs" checked><span>JS</span></label>
+  </div>
   </div>
   <div class="preview-stage">
     <div class="preview-frame-wrap" id="previewFrameWrap">
@@ -2188,16 +2188,20 @@ function makeArtifactCard(wrap, info){
     acts.appendChild(open);
   }
   if(info.isPage && typeof openPublishSheet==="function"){
-    const pub=el("button","artifact-btn publish","Publish");
+    const pub=el("button","artifact-btn publish icon-only",'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>');pub.title="Publish";
     pub.setAttribute("aria-label","Publish "+title);
     pub.onclick=()=>openPublishSheet({...info, title, messageId:card.closest('[data-message-id]')?.dataset.messageId||null});
     acts.appendChild(pub);
   }
-  const codeBtn=el("button","artifact-btn",info.isPage?"Code":"View code");
+  const codeIcon='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg>';
+  // A page's code is a quiet icon; a code file keeps its word, it is the main action there.
+  const codeBtn=el("button","artifact-btn"+(info.isPage?" icon-only":""),info.isPage?codeIcon:"View code");
+  if(info.isPage){ codeBtn.setAttribute("aria-label","Show code"); codeBtn.title="Code"; }
   codeBtn.setAttribute("aria-expanded","false");
   codeBtn.onclick=()=>{
     const on=card.classList.toggle("show-code");
-    codeBtn.textContent=on?"Hide code":(info.isPage?"Code":"View code");
+    if(info.isPage){ codeBtn.setAttribute("aria-label",on?"Hide code":"Show code"); }
+    else codeBtn.textContent=on?"Hide code":"View code";
     codeBtn.setAttribute("aria-expanded",String(on));
     if(on && info.toggle && wrap.classList.contains("collapsed")) info.toggle.click();
   };
@@ -2433,6 +2437,8 @@ function msgEl(msg){
     bubble.appendChild(pv);
   }
     wrap.appendChild(bubble);
+    bubble.tabIndex=0; bubble.setAttribute("aria-label","Your message. Tap to edit.");
+    bubble.addEventListener("click",e=>{ if(e.target.closest("a,button")) return; document.querySelectorAll(".msg.show-actions").forEach(n=>{ if(n!==wrap) n.classList.remove("show-actions"); }); wrap.classList.toggle("show-actions"); });
     const bar = el("div","action-bar");
     const edit = el("button","act-btn",`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit`);
     edit.onclick = ()=>openEdit(msg);
@@ -2656,7 +2662,8 @@ function renderAssistant(bubble, msg, live){
     const box=el("div","settings-card");box.innerHTML=`<h4>Model comparison</h4>`;msg.comparisons.forEach(c=>{const item=el("div","");item.style.cssText="border-top:1px solid var(--border);padding-top:9px;margin-top:9px";item.innerHTML=`<strong>${esc(c.label)}</strong><small style="display:block;color:var(--text2);margin:3px 0 7px">${c.ms}ms${c.error?" · error":""}</small>`;const out=el("div","md");out.innerHTML=renderMarkdown(c.content);item.appendChild(out);enhance(out);box.appendChild(item);});bubble.appendChild(box);
   }
   // Result of the automatic page test (coding loop).
-  if(!live && msg.codeChecks?.length){
+  // A clean first test is already the "✓ tested" on the page card, so it is not said twice.
+  if(!live && msg.codeChecks?.length && !(msg.codeChecks[0].errors.length===0 && bubble.querySelector(".artifact-card.is-page"))){
     const first=msg.codeChecks[0].errors.length, last=msg.codeChecks.at(-1).errors.length;
     const note=el("div","code-check "+(last?"warn":"ok"));
     note.setAttribute("role","status");
@@ -2687,7 +2694,8 @@ function renderAssistant(bubble, msg, live){
     if(msg.comparisons?.length || models>1) more.push(["Compare models",()=>compareLastAnswer(msg)]);
     if(/```[\w+-]*\n[\s\S]+/.test(msg.content||"") || extractHtmlBlock(msg.content)){
       const htmlCandidate=extractHtmlBlock(msg.content);
-      if(htmlCandidate){const pv=el("button","act-btn","Preview");pv.onclick=()=>openPreview(htmlCandidate,{live:false});bar.appendChild(pv);}
+      // The page card already has Open; the bar only offers Preview when there is no card.
+      if(htmlCandidate && !bubble.querySelector(".artifact-card.is-page")){const pv=el("button","act-btn","Preview");pv.onclick=()=>openPreview(htmlCandidate,{live:false});bar.appendChild(pv);}
       more.push(["Review & Improve",()=>reviewAndImprove(msg)]);
       more.push(["Save artifact",()=>saveArtifactFromMessage(msg)]);
     }
@@ -2764,6 +2772,12 @@ function extractHtmlBlock(content){
   const outside = src.replace(/```[\s\S]*?(?:```|$)/g, "\n");
   const bare = outside.match(/(?:<!doctype html[\s\S]*<\/html\s*>|<html[\s\S]*<\/html\s*>)/i);
   return bare ? bare[0].trim() : "";
+}
+/* The page's own <title> (or first heading) names the preview. */
+function previewPageTitle(html){
+  const m=String(html||"").match(/<title[^>]*>([^<]{1,120})<\/title>/i)||String(html||"").match(/<h1[^>]*>([^<]{1,120})<\/h1>/i);
+  const t=m?decodeEntities(m[1]).replace(/\s+/g," ").trim():"";
+  return t||"Preview";
 }
 function hasNativePreview(){ return typeof window.NazPreview === "object" && typeof window.NazPreview.open === "function"; }
 function previewDiagInfo(reason){
@@ -2860,7 +2874,7 @@ async function renderPreview(){
     const code=$('#previewCode').value;
     if(!code.trim())return;
     const runJs=$('#previewJs').checked;
-    window.NazPreview.open(buildPreviewDoc(code,runJs),'Kita Chat Preview',runJs);
+    window.NazPreview.open(buildPreviewDoc(code,runJs),previewPageTitle(code),runJs);
     return;
   }
   const code = $("#previewCode").value;
@@ -2888,13 +2902,14 @@ async function renderPreview(){
 function openNativePreview(){
   if(!hasNativePreview()) return false;
   const runJs=$("#previewJs").checked;
-  try{ window.NazPreview.open(buildPreviewDoc(previewOriginal, runJs), "Kita Chat Preview", runJs); haptic("light"); return true; }catch(e){ return false; }
+  try{ window.NazPreview.open(buildPreviewDoc(previewOriginal, runJs), previewPageTitle(previewOriginal), runJs); haptic("light"); return true; }catch(e){ return false; }
 }
 function openPreview(html, opts){
   opts = opts || {};
   previewNonce = uid();
   previewOriginal = html || "";
   previewDiagText = "";
+  if($("#previewTitle")) $("#previewTitle").textContent = previewPageTitle(previewOriginal);
   if(!previewOriginal.trim()){ toast("Nothing to preview in this block"); return; }
   $("#previewCode").value = previewOriginal;
   if(hasNativePreview() && !opts.inApp && openNativePreview()) return;
@@ -3153,6 +3168,7 @@ function renderToolsSheet(){
   // Same row pattern as the switches above: label and state on the left, control on the right.
   const chevron='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
   const rows=el("div","tools-rows");
+  if(typeof kitaMode==="function" && kitaMode()==="code" && typeof renderCodeToolsSection==="function"){ const code=el("div","tools-code"); renderCodeToolsSection(code); body.appendChild(code); }
   const linkRow=(title,value,label,onclick)=>{const b=el("button","tools-row tools-link");b.type="button";b.setAttribute("aria-label",label);b.innerHTML=`<span><strong>${esc(title)}</strong><small>${esc(value)}</small></span>${chevron}`;b.onclick=onclick;return b;};
   const projectName=currentProject()?.name||'None';
   rows.appendChild(linkRow("Project",projectName==='None'?'Not in a project':projectName,'Project: '+projectName,openStudioProjectPicker));

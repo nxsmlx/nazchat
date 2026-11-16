@@ -4094,3 +4094,52 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .glass-nav { padding: 4px; border-radius: 24px; }
 .glass-nav-item { min-height: 50px; padding: 5px 2px; }
 #main.with-nav { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+
+/* ---------------------------------------------------------------------------
+   4.27.0 Quiet UI: fewer words, more room.
+   One line per row, no arrows, plain icons; ideas as chips; Code options in Tools;
+   a single-line model chip, icon-only Tools; one primary action on result cards;
+   no name label above answers; Edit appears when you tap your message.
+   ------------------------------------------------------------------------- */
+#empty .studio-greeting { display: none; }
+#empty .studio-home.in-project .studio-greeting { display: block; }
+#empty .studio-home > p:not(.studio-greeting) { display: none; }
+#empty .studio-home h2 { font-size: 26px; line-height: 1.2; }
+.studio-home.returning #studioResume { margin: 22px 0 4px; }
+.studio-resume-head .studio-section-title { font-size: 13px; color: var(--text3); }
+#studioResume .studio-recent { min-height: 48px; padding: 4px 0; gap: 12px; }
+#studioResume .studio-recent .studio-resume-icon { flex: 0 0 20px; width: 20px; height: 20px; border: 0; border-radius: 0; background: transparent; color: var(--text3); }
+#studioResume .studio-recent .studio-resume-icon svg { width: 18px; height: 18px; }
+#studioResume .studio-recent strong { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+#studioResume .studio-recent time { flex: 0 0 auto; color: var(--text3); font-size: 12px; }
+/* New ideas: a row of chips. The description stays for screen readers only. */
+.studio-home.returning .sugg::before { content: none; }
+#empty .sugg { flex-direction: row; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; }
+.studio-home.returning #studioResume + .sugg { margin-top: 14px; }
+#empty .sugg button { width: auto; min-height: 44px; padding: 0 14px 0 10px; gap: 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg2); }
+#empty .sugg button .ico, #empty .sugg button:nth-child(2) .ico, #empty .sugg button:nth-child(3) .ico { flex: 0 0 18px; width: 18px; height: 18px; border-radius: 0; background: transparent; color: var(--accent); }
+#empty .sugg button .ico svg { width: 17px; height: 17px; }
+#empty .sugg button strong { font-size: 13.5px; font-weight: 500; }
+#empty .sugg button small, #empty .sugg button > .studio-arrow { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Composer: model on one line, Tools as an icon, no tagline. */
+#bottomModelBtn .model-label small, .model-chip .model-label small { display: none; }
+#moreToolsBtn .tool-label { display: none; }
+.studio-composer-note { display: none !important; }
+/* Results: Open is the one button with a word; Publish and Code are icons. */
+.artifact-actions .artifact-btn.icon-only { flex: 0 0 44px; width: 44px; min-width: 44px; padding: 0; display: grid; place-items: center; }
+.artifact-actions .artifact-btn.primary { flex: 1 1 auto; }
+/* Answers: no "Kita" label (a model name for comparisons still shows). */
+.studio-assistant-label:not(:has(small)) { display: none; }
+/* Your message: Edit shows when you tap it, or when it has keyboard focus. */
+.msg.user > .action-bar { display: none; }
+.msg.user.show-actions > .action-bar, .msg.user:focus-within > .action-bar { display: flex; }
+.msg.user .bubble:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* In-app preview: tabs, widths and JS share one row under the title. */
+.preview-tabs { align-items: center; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.preview-tabs .preview-toolbar { display: flex; align-items: center; gap: 4px; margin-left: auto; padding: 0; border: 0; }
+.preview-tabs .preview-tab { padding: 0 10px; }
+.tools-code { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.tools-code .tools-section-label { margin: 2px 0 0; }
+.preview-tabs .preview-tab { white-space: nowrap; }
+.preview-tabs .console-count:empty, .preview-tabs .console-count[data-zero] { display: none; }
+@media (max-width: 600px) { .preview-tabs .vp-seg { display: none; } }

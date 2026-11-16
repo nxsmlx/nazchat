@@ -47,6 +47,17 @@ function renderBottomNav(chat,has){
   const current=chat?'home':studioView;
   nav.querySelectorAll('[data-nav-key]').forEach(b=>{const on=b.dataset.navKey===current;b.classList.toggle('active',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
 }
+/* Short time for a one-line row: Now, 5m, 3h, Yesterday, Mon, 12 Nov. */
+function shortWhen(ts){
+  const t=Number(ts)||0, d=Date.now()-t, day=86400000;
+  if(d<60000) return 'Now';
+  if(d<3600000) return Math.floor(d/60000)+'m';
+  const date=new Date(t), today=new Date();today.setHours(0,0,0,0);
+  if(t>=today.getTime()) return Math.floor(d/3600000)+'h';
+  if(t>=today.getTime()-day) return 'Yesterday';
+  if(t>=today.getTime()-6*day) return date.toLocaleDateString('en-GB',{weekday:'short'});
+  return date.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+}
 function renderStudioHome(){
   $('#studioGreeting').textContent=currentProject()?'Working in '+currentProject().name:'A fresh thought starts here.';
   const box=$('#studioResume');box.innerHTML='';
@@ -58,12 +69,15 @@ function renderStudioHome(){
   home?.classList.toggle('returning',returning);
   if(home&&sugg){if(returning&&box.nextElementSibling!==sugg)home.insertBefore(box,sugg);else if(!returning&&sugg.nextElementSibling!==box)sugg.after(box);}
   const item=(icon,title,sub,onclick)=>{const b=el('button','studio-resume-item');b.innerHTML=`<span class="studio-resume-icon">${kitaIcon(icon)}</span><span><strong>${esc(title)}</strong><small>${esc(sub)}</small></span>${kitaIcon('arrow')}`;b.onclick=onclick;return b;};
+  // Recent chats: one line each, the title and a short time. Nothing else to read.
+  const recent=(icon,c)=>{const b=el('button','studio-resume-item studio-recent');b.setAttribute('aria-label',(c.title||'New chat')+', '+conversationDay(c.updatedAt));b.innerHTML=`<span class="studio-resume-icon">${kitaIcon(icon)}</span><strong>${esc(c.title||'New chat')}</strong><time>${esc(shortWhen(c.updatedAt))}</time>`;b.onclick=()=>studioOpenConversation(c);return b;};
+  home?.classList.toggle('in-project',!!currentProject());
   if(!db.providers.length)box.appendChild(returning?item('plus','Connect a provider','Add your API key to keep chatting',()=>openProvForm(null)):item('plus','Connect your first provider','Bring your own API key to start chatting',()=>openProvForm(null)));
   if(returning){
-    const head=el('div','studio-resume-head');head.appendChild(el('p','studio-section-title','Continue where you left off'));
+    const head=el('div','studio-resume-head');head.appendChild(el('p','studio-section-title','Recent'));
     if(recents.length>3){const all=el('button','studio-see-all','All chats');all.type='button';all.onclick=()=>openSidebar();head.appendChild(all);}
     box.appendChild(head);
-    recents.slice(0,3).forEach(c=>box.appendChild(item(mode==='code'?'code':'chat',c.title||'New chat',`${conversationDay(c.updatedAt)} · ${c.messages.length} message${c.messages.length===1?'':'s'}`,()=>studioOpenConversation(c))));
+    recents.slice(0,3).forEach(c=>box.appendChild(recent(mode==='code'?'code':'chat',c)));
     if(sugg)sugg.setAttribute('aria-label','Start something new');
   }
 }
@@ -83,7 +97,7 @@ function renderStudioContext(){
   if(typeof fileFocus==='function'&&fileFocus())chips.push({label:DOC_FORMATS[fileFocus()].label+' file',icon:'file',clear:()=>setFileFocus('')});
   if(style)chips.push({label:style.name,icon:'pen',clear:()=>{db.activeStyleId=null;if(conv)conv.styleId=null;save();renderStudioContext();}});
   // Bypass all is always visible while it is on; removing the chip turns it off.
-  if(permissionMode()==='bypass')chips.unshift({label:'Bypass all is on',title:'Bypass all: tools run without asking. Tap × to turn it off.',short:'Bypass all',icon:'spark',warn:true,clear:()=>{db.permissionMode='balanced';save();renderStudioContext();toast('Bypass all is off. Tools ask again.');}});
+  if(permissionMode()==='bypass')chips.unshift({label:'Bypass on',title:'Bypass all: tools run without asking. Tap × to turn it off.',short:'Bypass all',icon:'spark',warn:true,clear:()=>{db.permissionMode='balanced';save();renderStudioContext();toast('Bypass all is off. Tools ask again.');}});
   chips.forEach(c=>{const chip=el('div','studio-context-chip'+(c.warn?' warn':''));chip.innerHTML=kitaIcon(c.icon);const label=el('span');label.textContent=c.label;if(c.title)chip.title=c.title;chip.appendChild(label);const remove=el('button',null,kitaIcon(c.icon==='folder'?'chevron':'close'));remove.setAttribute('aria-label',(c.icon==='folder'?'Change project: ':c.warn?'Turn off ':'Remove ')+(c.short||c.label.split(':')[0]));remove.onclick=()=>{if(generating){toast('Stop the response before changing context.');return;}c.clear();};chip.appendChild(remove);host.appendChild(chip);});host.hidden=!chips.length;
   const count=Number(!!db.search)+Number(!!db.thinking)+Number(db.skillSettings.mode==='manual');const badge=$('.studio-tool-count');if(badge){badge.textContent=count;badge.hidden=!count;}
 }
