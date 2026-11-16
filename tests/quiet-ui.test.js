@@ -84,7 +84,9 @@ const assert=require('node:assert/strict');
  await scenario('previews are named after the page, also on Android',data({}),async page=>{
    await page.evaluate(()=>studioOpenConversation(db.conversations[0]));
    await page.locator('.msg.assistant .artifact-card .artifact-btn.primary').click();
-   assert.equal(await page.locator('#previewTitle').innerText(),'Kopi Kita');
+   await page.waitForSelector('#htmlPreview.open');
+   await page.waitForFunction(()=>document.querySelector('#previewTitle').textContent==='Kopi Kita');
+   assert.equal(await page.locator('#previewTitle').textContent(),'Kopi Kita');
    assert.equal(await page.locator('.preview-tabs .vp-seg').isVisible(),false,'width buttons are hidden on a phone');
    assert(await page.locator('.preview-tabs #previewJs').isVisible());
    const titles=await page.evaluate(()=>{const out=[];window.NazPreview={open:(h,t,js)=>out.push(t)};openPreview('<html><head><title>Kedai &amp; Kafe</title></head></html>');openPreview('<h1>Menu</h1>');openPreview('<p>x</p>');delete window.NazPreview;return out;});
