@@ -4143,3 +4143,53 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 .preview-tabs .preview-tab { white-space: nowrap; }
 .preview-tabs .console-count:empty, .preview-tabs .console-count[data-zero] { display: none; }
 @media (max-width: 600px) { .preview-tabs .vp-seg { display: none; } }
+
+/* ---------------------------------------------------------------------------
+   4.29.0 Elegance pass: the same quiet rules everywhere.
+   Icon actions without boxes, one row per header, one label style, fewer lines.
+   ------------------------------------------------------------------------- */
+/* Code frame: name on the left, three small icons on the right. */
+.code-head { flex-wrap: nowrap !important; gap: 8px; min-height: 44px; padding: 0 2px 0 12px; }
+.code-head .code-meta { flex: 1 1 auto; flex-wrap: nowrap; overflow: hidden; }
+.code-head .code-actions { flex: 0 0 auto; flex-wrap: nowrap; gap: 0; min-height: 44px; }
+.code-ico { display: grid; place-items: center; width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0; border: 0 !important; border-radius: 10px; background: transparent !important; color: var(--text2); }
+.code-ico svg { transition: transform .16s ease; }
+.code-ico.copied { color: var(--success); }
+.code-wrap.collapsed .code-toggle svg, .code-live.collapsed-live .code-toggle svg { transform: rotate(-90deg); }
+.code-wrap.code-short .code-toggle { display: none; }
+.code-head .copy-btn.supabase-run { width: auto; padding: 0 10px; }
+@media (prefers-reduced-motion: reduce) { .code-ico svg { transition: none; } }
+/* Answer details: skills as plain small text, Copy as an icon like its neighbours. */
+.skill-badge { padding: 0; border: 0; background: transparent; color: var(--text3); font-size: 12px; }
+.skill-badges { gap: 10px; margin-bottom: 6px; }
+.msg.assistant .action-bar .act-btn > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Tools: the Code options are rows like every other row. */
+#toolsSheet .sheet-head h3 { font-size: 17px; }
+.tools-code { gap: 0; margin-bottom: 6px; }
+.tools-code .code-style, .tools-code .code-integrations { width: 100%; min-height: 64px; padding: 10px 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: transparent; box-shadow: none; }
+.tools-code .code-style strong, .tools-code .code-integrations strong { font-size: 14px; font-weight: 550; }
+.tools-code .code-style select { flex: 0 0 auto; width: auto; max-width: 150px; }
+.tools-code .code-integrations { gap: 12px; text-align: left; }
+.tools-code .tools-section-label, .tools-rows + .tools-section-label { margin: 6px 0 2px; }
+/* One label style for every small section heading. */
+.studio-section-title, .conv-group-label, .folder-section-head .conv-group-label, .settings-section-label, .studio-history-head { color: var(--text3); font-size: 12px; font-weight: 500; letter-spacing: .01em; text-transform: none; }
+/* Sidebar: the search box says what the list is; the close button is a plain icon. */
+.studio-history-head { display: none; }
+#closeSide { border: 0; background: transparent; box-shadow: none; }
+/* Projects and Library: the heading is enough; rows lose their arrows and boxed ⋯. */
+.studio-page-head p { display: none; }
+.studio-page-head h1 { font-size: 26px; line-height: 1.2; }
+.studio-library-row > svg:last-child, .studio-library-open > svg:last-child { display: none; }
+.studio-library-row .mini-btn, .studio-library-actions button { border: 0; background: transparent; box-shadow: none; }
+.studio-project-manage { border: 0; background: transparent; box-shadow: none; }
+/* Sheets: a calmer title and the same close icon everywhere. */
+.sheet-head h3 { font-size: 17px; font-weight: 600; }
+/* Library ⋯ and the settings intro line. */
+.studio-library-row > .icon-btn { border: 0; background: transparent; box-shadow: none; }
+.settings-hub-intro { display: none; }
+/* Action sheets (chat, folder and project menus): a plain list of choices, not a stack of boxes. */
+#toolsSheetBody:has(> p.hint:first-child) > .btn.secondary { display: flex; align-items: center; justify-content: flex-start; width: 100%; min-height: 52px; margin: 0; padding: 0 4px; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: transparent; box-shadow: none; color: var(--text); font-size: 15px; font-weight: 500; text-align: left; }
+#toolsSheetBody:has(> p.hint:first-child) > .btn.secondary:last-child { border-bottom: 0; }
+#toolsSheetBody:has(> p.hint:first-child) > .btn.secondary.danger { color: var(--danger); }
+#toolsSheetBody:has(> p.hint:first-child) > .btn.secondary.active { color: var(--accent); }
+#toolsSheetBody:has(> p.hint:first-child) > p.hint { margin-bottom: 4px; color: var(--text3); }
