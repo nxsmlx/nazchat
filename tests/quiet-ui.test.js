@@ -9,8 +9,10 @@ const assert=require('node:assert/strict');
  const provider={id:'p1',name:'Kita',baseUrl:'https://api.test/v1',apiType:'chat',endpointMode:'chat',secretRef:'provider:p1',selectedModels:['m1'],models:[{id:'m1',name:'M1'}],apiKey:'test'};
  const page_='<!doctype html><html><head><title>Kopi Kita</title></head><body><h1>Kopi</h1></body></html>';
  const now=Date.now();
+ // Noon yesterday, so the short time reads "Yesterday" whatever time the test runs.
+ const yesterdayNoon=(()=>{const d=new Date();d.setDate(d.getDate()-1);d.setHours(12,0,0,0);return d.getTime();})();
  const data=extra=>({schemaVersion:3,onboardingDone:true,autoTitles:false,providers:[provider],lastProviderId:'p1',lastModelId:'m1',
-   conversations:[{id:'c1',title:'Laman kopi',mode:'code',updatedAt:now-3600e3*30,messages:[{id:'u',role:'user',content:'buat laman kopi'},{id:'a',role:'assistant',content:'Siap.\n\n```html\n'+page_+'\n```',codeChecks:[{round:1,errors:[]}]}]}],...extra});
+   conversations:[{id:'c1',title:'Laman kopi',mode:'code',updatedAt:yesterdayNoon,messages:[{id:'u',role:'user',content:'buat laman kopi'},{id:'a',role:'assistant',content:'Siap.\n\n```html\n'+page_+'\n```',codeChecks:[{round:1,errors:[]}]}]}],...extra});
  async function scenario(name,seed,run){
    const ctx=await b.newContext({viewport:{width:390,height:844}});
    const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));

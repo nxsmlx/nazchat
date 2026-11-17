@@ -104,9 +104,32 @@ function renderStudioContext(){
 function studioEmpty(title,text,action,label){const box=el('div','studio-empty-state');box.innerHTML=`${kitaIcon('folder')}<h2>${esc(title)}</h2><p>${esc(text)}</p>`;if(action){const b=el('button','btn secondary',esc(label));b.onclick=action;box.appendChild(b);}return box;}
 function studioPage(title,description,action,label){const page=el('section','studio-workspace'),head=el('div','studio-page-head');head.innerHTML=`<div><h1>${esc(title)}</h1><p>${esc(description)}</p></div>`;if(action){const b=el('button','mini-btn',kitaIcon('plus')+' '+esc(label));b.onclick=action;head.appendChild(b);}page.appendChild(head);$('#workspaceView').replaceChildren(page);return page;}
 function renderStudioProjects(){const page=studioPage('A place for each idea.','Keep related conversations and instructions together.',()=>createProject(),'New project');if(!db.projects.length){page.appendChild(studioEmpty('Start with one idea.','A project gives your conversations shared instructions and reference documents.',()=>createProject(),'Create a project'));return;}const grid=el('div','studio-project-grid');db.projects.forEach(p=>{const b=el('button','studio-project-card');const count=db.conversations.filter(c=>c.projectId===p.id).length;b.innerHTML=`${kitaIcon('folder')}<h2>${esc(p.name)}</h2><p>${esc((p.instructions||'A space for related conversations and ideas.').slice(0,140))}</p><small>${count} conversation${count===1?'':'s'} · ${(p.sources||[]).length} source sections</small>`;b.onclick=()=>openStudioProject(p);grid.appendChild(b);});page.appendChild(grid);}
+/* Rename or delete a project. Deleting keeps its chats: they simply leave the project. */
+function studioProjectMenu(project){
+  const body=$('#toolsSheetBody');body.innerHTML='';$('#studioChatControls').hidden=true;$('#toolsSheet .sheet-head h3').textContent='Project';
+  body.appendChild(el('p','hint',esc(project.name)));
+  const rename=el('button','btn secondary','Rename project');rename.type='button';
+  rename.onclick=async()=>{closeSheet('toolsSheet');const next=await promptDialog('Rename this project',project.name,{title:'Rename project'});if(next&&next.trim()){project.name=next.trim().slice(0,80);project.updatedAt=Date.now();save();openStudioProject(project);renderStudioContext();}};
+  const del=el('button','btn secondary danger','Delete project');del.type='button';
+  del.onclick=async()=>{
+    closeSheet('toolsSheet');
+    if(!studioCanNavigate())return;
+    const chats=db.conversations.filter(c=>c.projectId===project.id), sources=(project.sources||[]).length;
+    const ok=await confirmDialog('Delete the project “'+project.name+'”? '+(chats.length?'Its '+chats.length+' chat'+(chats.length===1?' is':'s are')+' kept and moved out of the project. ':'')+'Its instructions'+(sources?' and '+sources+' source section'+(sources===1?'':'s'):'')+' are removed.',{title:'Delete project',danger:true,confirmText:'Delete project'});
+    if(!ok)return;
+    chats.forEach(c=>{c.projectId=null;});
+    if(db.activeProjectId===project.id)db.activeProjectId=null;
+    db.projects=db.projects.filter(p=>p.id!==project.id);
+    save();renderStudioProjects();renderStudioContext();toast('Project deleted. Chats kept.');
+  };
+  body.append(rename,del);openSheet('toolsSheet');
+}
 function openStudioProject(project){
   const page=studioPage(project.name,'Your conversations, context and next steps.',()=>studioNewChat(project.id),'New chat');
   const back=el('button','settings-back','← All projects');back.onclick=renderStudioProjects;page.prepend(back);
+  // ⋯ beside New chat: rename or delete this project.
+  const manage=el('button','mini-btn studio-project-manage',kitaIcon('more'));manage.type='button';manage.setAttribute('aria-label','Manage project: '+project.name);manage.onclick=()=>studioProjectMenu(project);
+  page.querySelector('.studio-page-head')?.appendChild(manage);
   const label=el('label','fld','Project instructions'),area=el('textarea');area.value=project.instructions||'';area.placeholder='What should Kita know about this project?';area.maxLength=6000;area.onchange=()=>{project.instructions=area.value;project.updatedAt=Date.now();save();};label.appendChild(area);page.appendChild(label);
   const conversations=db.conversations.filter(c=>c.projectId===project.id).sort((a,b)=>b.updatedAt-a.updatedAt);
   if(!conversations.length)page.appendChild(studioEmpty('Ready for a first conversation.','New messages in this project will use its instructions.',()=>studioNewChat(project.id),'Start a conversation'));
