@@ -1,9 +1,9 @@
 {
-  "version": "4.27.0",
-  "versionCode": 84,
+  "version": "4.28.0",
+  "versionCode": 85,
   "name": "Kita Chat",
-  "changelog": "A quieter Kita: fewer words and more room. Recent chats are one line each with a short time, new ideas are small chips, and the extra lines of text on the home page are gone.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.27.0/NazChat.apk",
-  "sha256": "642a8422d4f7ecfa33effd409223b53903571b931e6edb848b260c4fc9a792fe",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.27.0"
+  "changelog": "Rename or delete a project. Open the project and tap ⋯ beside New chat. Deleting a project keeps its chats (they move out of the project) and removes its instructions and source documents.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.28.0/NazChat.apk",
+  "sha256": "ece95bea99777b3dc8ad870c1b47ae43dc0c5e52eb7c36eee39582fffb3f3f09",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.28.0"
 }
