@@ -134,7 +134,9 @@ const {launch, appUrl, root} = require('./browser');
         await page.locator('.model-search input').focus();
         const focus=await page.locator('.model-search input').evaluate(n=>({style:getComputedStyle(n).outlineStyle,width:parseFloat(getComputedStyle(n).outlineWidth)}));
         assert(focus.style!=='none' && focus.width>=2,'keyboard focus must be visible');
-        await page.locator('.model-filter').first().hover();await checkScreen('models-hover',theme);
+        // One provider: no filter row (All and the provider would list the same models).
+        assert.equal(await page.locator('.model-filter').count(),0);
+        await page.locator('.model-item').first().hover();await checkScreen('models-hover',theme);
         await page.evaluate(()=>{db.theme=db.theme==='light'?'dark':'light';applyTheme();});
         await checkScreen('models-open-theme-switch',theme==='light'?'dark':'light');
         await page.evaluate(()=>{db.theme=db.theme==='light'?'dark':'light';applyTheme();});

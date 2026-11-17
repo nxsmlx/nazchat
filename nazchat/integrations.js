@@ -382,7 +382,7 @@ function openPublishSheet(info){
   };
   for(const t of PUBLISH_TARGETS){
     const ok=integrationConnected(t.service),b=el('button','publish-target'+(ok?'':' off'));b.type='button';b.dataset.target=t.id;b.setAttribute('role','radio');
-    b.innerHTML='<span class="integration-icon">'+integrationIcon(t.service)+'</span><span><strong>'+esc(t.label)+'</strong><small>'+esc(ok?(c?.sites?.[t.id]?'Published · '+c.sites[t.id].url.replace(/^https:\/\//,''):t.host('name').replace('name','…')):'Not connected · tap to connect')+'</small></span>';
+    b.innerHTML='<span class="integration-icon">'+integrationIcon(t.service)+'</span><span><strong>'+esc(t.label)+'</strong><small>'+esc(ok?(c?.sites?.[t.id]?'Published · '+c.sites[t.id].url.replace(/^https:\/\//,''):t.host('name').replace('name','…')):'Tap to connect')+'</small></span>';
     b.onclick=()=>{if(!ok){closeSheet('toolsSheet');renderIntegrationsSettings();openSheet('setSheet');return;}chosen=t;refresh();};
     list.appendChild(b);
   }

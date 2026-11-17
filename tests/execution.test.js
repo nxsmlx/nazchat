@@ -144,7 +144,10 @@ async function mockIncremental(page, parts){
     await page.screenshot({path:path.join(output,'code-tabs.png')});
     // Expanded code must never push the chat wider than the viewport.
     await page.locator('.code-tab').nth(0).click();
-    await page.locator('.code-tab-pane').nth(0).locator('.code-toggle').first().click();
+    // Short files are always open (no fold control); longer ones are opened with it.
+    const fold=page.locator('.code-tab-pane').nth(0).locator('.code-toggle').first();
+    if(await fold.isVisible()) await fold.click();
+    assert(!(await page.locator('.code-tab-pane').nth(0).locator('.code-wrap').first().evaluate(n=>n.classList.contains('collapsed'))),'code is not expanded');
     const overflowX=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1);
     assert(overflowX,'code viewer caused page-level horizontal overflow');
   });

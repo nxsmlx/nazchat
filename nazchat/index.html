@@ -989,7 +989,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);}
 <div class="sheet-scrim" id="toolsSheetScrim"></div>
 <div class="sheet" id="toolsSheet" style="max-height:90dvh">
   <div class="grab"></div>
-  <div class="sheet-head"><h3>Tools for this conversation</h3><button class="icon-btn" data-close="toolsSheet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-head"><h3>Tools</h3><button class="icon-btn" data-close="toolsSheet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
   <div class="sheet-body"><div id="studioChatControls"></div><div id="toolsSheetBody"></div></div>
 </div>
 
@@ -1886,8 +1886,8 @@ let activeRun = null;
 let steerHandoff = null;
 let nativeStreamId = null;
 let pendingAttachments = [];
-const APP_VERSION = "4.28.0";
-const APP_VERSION_CODE = 85;
+const APP_VERSION = "4.29.0";
+const APP_VERSION_CODE = 86;
 const UPDATE_REPO = "nxsmlx/nazchat";
 const KITA_SITE = "https://keetakita.my";
 
@@ -2121,37 +2121,42 @@ function decorateCodeBlock(pre, code, opts){
   meta.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9ZM14 2v7h7"/></svg><span class="code-name" title="${esc(shown)}">${esc(shown)}</span><span class="code-lines">${generic?"":esc(lang)+" · "}${count} line${count===1?"":"s"}</span>`;
   head.appendChild(meta);
   const btnWrap = el("div","code-actions");
-  const toggle = el("button","code-toggle","Expand");
-  toggle.setAttribute("aria-label","Expand code");
+  // Quiet header (4.29.0): the file or language on the left, small icon actions on the right.
+  const ico=d=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const toggle = el("button","code-toggle code-ico",ico('<path d="m6 9 6 6 6-6"/>'));
+  toggle.setAttribute("aria-label","Expand code"); toggle.setAttribute("aria-expanded","false");
   toggle.onclick = ()=>{
     const collapsed = wrap.classList.toggle("collapsed");
-    toggle.textContent = collapsed ? "Expand" : "Collapse";
     toggle.setAttribute("aria-label", collapsed ? "Expand code" : "Collapse code");
+    toggle.setAttribute("aria-expanded", String(!collapsed));
   };
-  btnWrap.appendChild(toggle);
   if(lang === "html" || lang === "xhtml" || lang === "htm"){
-    const pv = el("button","preview-btn","Preview");
+    const pv = el("button","preview-btn code-ico",ico('<path d="M7 5v14l11-7z"/>'));
+    pv.setAttribute("aria-label","Preview"); pv.title="Preview";
     pv.onclick = ()=>openPreview(rawCode, {live:false});
     btnWrap.appendChild(pv);
   }
   if(/^(sql|pgsql|postgres|postgresql|plpgsql)$/.test(lang) && typeof supabaseRunButton==="function"){
     const run=supabaseRunButton(rawCode, wrap); if(run) btnWrap.appendChild(run);
   }
-  const dl = el("button","copy-btn","Download");
-  dl.setAttribute("aria-label","Download "+name);
+  const dl = el("button","copy-btn code-ico",ico('<path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/>'));
+  dl.setAttribute("aria-label","Download "+name); dl.title="Download";
   dl.onclick = ()=>downloadText(name, rawCode);
   btnWrap.appendChild(dl);
-  const btn = el("button","copy-btn");
-  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
-  btn.onclick = ()=>copyText(rawCode, btn, "✓ Copied!");
+  const btn = el("button","copy-btn code-ico",ico('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>'));
+  btn.setAttribute("aria-label","Copy code"); btn.title="Copy";
+  btn.onclick = ()=>copyText(rawCode, btn, ico('<path d="m5 12 5 5 9-10"/>'));
   btnWrap.appendChild(btn);
+  // The fold control comes last, at the edge. Short snippets have nothing to fold.
+  btnWrap.appendChild(toggle);
   head.appendChild(btnWrap);
   const body = el("div","code-body");
   body.innerHTML = lineTable(highlighted, count);
   pre.replaceWith(wrap);
   wrap.appendChild(head); wrap.appendChild(body);
   // Short snippets are easier to read than to unfold: show up to 12 lines straight away.
-  if(opts.defaultOpen || count <= 12){ wrap.classList.remove("collapsed"); toggle.textContent="Collapse"; toggle.setAttribute("aria-label","Collapse code"); }
+  if(opts.defaultOpen || count <= 12){ wrap.classList.remove("collapsed"); toggle.setAttribute("aria-label","Collapse code"); toggle.setAttribute("aria-expanded","true"); }
+  if(count <= 12) wrap.classList.add("code-short");
   // Whole pages and long files become an artifact card; the code stays one tap away.
   const isPage = /^(html|htm|xhtml)$/.test(lang) && /<(?:!doctype\s+html|html\b|body\b)/i.test(rawCode);
   if(!opts.noCard && !wrap.closest(".code-tab-pane") && (isPage || count > ARTIFACT_MIN_LINES))
@@ -2496,10 +2501,10 @@ function renderLiveCode(bubble, code){
     pv.onclick=()=>openPreview(code.body,{live:true});
     acts.appendChild(pv);
   }
-  const toggle=el("button","code-toggle","Collapse ⌃");
+  const toggle=el("button","code-toggle code-ico",'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>');toggle.setAttribute("aria-label","Collapse code");
   const body=el("pre","code-live-body");
   body.textContent=code.body;
-  toggle.onclick=()=>{ const c=box.classList.toggle("collapsed-live"); toggle.innerHTML=c?"Expand ⌄":"Collapse ⌃"; if(!c) body.scrollTop=body.scrollHeight; };
+  toggle.onclick=()=>{ const c=box.classList.toggle("collapsed-live"); toggle.setAttribute("aria-label",c?"Expand code":"Collapse code"); if(!c) body.scrollTop=body.scrollHeight; };
   acts.appendChild(toggle);
   box.appendChild(acts);
   box.appendChild(body);
@@ -3001,7 +3006,7 @@ function renderModelSheet(){
   if(!db.providers.length){list.appendChild(el("div","",`<div style="color:var(--text2);text-align:center;padding:28px 0">No models yet.<br>Add a provider in Settings.</div>`));const add=el("button","btn","Add Provider");add.onclick=()=>{closeSheet("modelSheet");openProvForm(null);};list.appendChild(add);return;}
   const searchWrap=el("div","model-search");const search=el("input");search.placeholder="Search models…";searchWrap.appendChild(search);list.appendChild(searchWrap);
   const filters=el("div","model-filters");const all=[{id:"all",name:"All",count:db.providers.reduce((n,p)=>n+p.selectedModels.length,0)},...db.providers.map(p=>({id:p.id,name:p.name,count:p.selectedModels.length}))];
-  all.forEach(f=>{const b=el("button","model-filter"+(modelProviderFilter===f.id?" active":""),`${esc(f.name)} <span>${f.count}</span>`);b.onclick=()=>{modelProviderFilter=f.id;renderModelSheet();};filters.appendChild(b);});list.appendChild(filters);
+  all.forEach(f=>{const b=el("button","model-filter"+(modelProviderFilter===f.id?" active":""),`${esc(f.name)} <span>${f.count}</span>`);b.onclick=()=>{modelProviderFilter=f.id;renderModelSheet();};filters.appendChild(b);});if(db.providers.length>1)list.appendChild(filters);
   const draw=()=>{
     list.querySelectorAll(".model-item,.model-empty,.model-section-label").forEach(x=>x.remove());
     const q=search.value.trim().toLowerCase();let visible=0;
@@ -3164,7 +3169,7 @@ function saveArtifactFromMessage(msg){
 }
 function renderToolsSheet(){
   const body=$("#toolsSheetBody");body.innerHTML="";
-  $('#studioChatControls').hidden=false;$('#toolsSheet .sheet-head h3').textContent='Tools for this conversation';
+  $('#studioChatControls').hidden=false;$('#toolsSheet .sheet-head h3').textContent='Tools';
   // Same row pattern as the switches above: label and state on the left, control on the right.
   const chevron='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
   const rows=el("div","tools-rows");

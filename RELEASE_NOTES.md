@@ -1,3 +1,12 @@
+# Kita Chat 4.29.0
+
+- A cleaner look across the app. Code blocks now have a single slim header with small icons for Copy, Download and fold, instead of a row of boxed buttons. Short snippets are always open.
+- Menus for a chat, a folder or a project are plain lists, and the Tools sheet shows its Code options as rows like the rest.
+- The model list no longer shows a provider filter when you have only one provider.
+- Fewer words: Projects, Library and Settings lose their extra description lines, the chat list loses its "Recent chats" label, and rows lose their arrows and boxed ⋯ buttons.
+- Under an answer, Copy is a small icon like its neighbours, and the skills used are shown as plain small text.
+- VersionCode 86, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.28.0
 
 - Rename or delete a project. Open the project and tap ⋯ beside New chat. Deleting a project keeps its chats (they move out of the project) and removes its instructions and source documents.
