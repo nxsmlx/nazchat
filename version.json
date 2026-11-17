@@ -1,9 +1,9 @@
 {
-  "version": "4.28.0",
-  "versionCode": 85,
+  "version": "4.29.0",
+  "versionCode": 86,
   "name": "Kita Chat",
-  "changelog": "Rename or delete a project. Open the project and tap ⋯ beside New chat. Deleting a project keeps its chats (they move out of the project) and removes its instructions and source documents.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.28.0/NazChat.apk",
-  "sha256": "ece95bea99777b3dc8ad870c1b47ae43dc0c5e52eb7c36eee39582fffb3f3f09",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.28.0"
+  "changelog": "A cleaner look across the app. Code blocks now have a single slim header with small icons for Copy, Download and fold, instead of a row of boxed buttons. Short snippets are always open.",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.29.0/NazChat.apk",
+  "sha256": "e716bcfaf38b5cf788c8cdc758840217b054e69d81b7ca988e10ed00f990111c",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.29.0"
 }
