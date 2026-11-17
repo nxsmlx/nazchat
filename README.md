@@ -1,8 +1,13 @@
-# Kita Chat 4.27.0
+# Kita Chat 4.28.0
 
 Created by **Nazz**. © 2026 Nazz. All rights reserved; see LICENSE.
 
 Website and download: https://keetakita.my
+
+- Rename or delete a project. Open the project and tap ⋯ beside New chat. Deleting a project keeps its chats (they move out of the project) and removes its instructions and source documents.
+- VersionCode 85, same com.nazchat.app package and original signing identity.
+
+# Kita Chat 4.27.0
 
 - A quieter Kita: fewer words and more room. Recent chats are one line each with a short time, new ideas are small chips, and the extra lines of text on the home page are gone.
 - Code options (Style, Files and where to publish) moved from the home page to Tools.
