@@ -1,9 +1,9 @@
 {
-  "version": "4.29.0",
-  "versionCode": 86,
+  "version": "4.29.1",
+  "versionCode": 87,
   "name": "Kita Chat",
-  "changelog": "A cleaner look across the app. Code blocks now have a single slim header with small icons for Copy, Download and fold, instead of a row of boxed buttons. Short snippets are always open.",
-  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.29.0/NazChat.apk",
-  "sha256": "e716bcfaf38b5cf788c8cdc758840217b054e69d81b7ca988e10ed00f990111c",
-  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.29.0"
+  "changelog": "The model list now matches your provider settings. When a provider stops offering some models (for example 15 down to 5), the old ones no longer show in the model list, the counts are right, and Kita switches to an offered model if you were",
+  "apkUrl": "https://github.com/nxsmlx/nazchat/releases/download/v4.29.1/NazChat.apk",
+  "sha256": "3cbd0bb46542df5ba128ff14aefdb11e622e49b423ebcda76ba1a96a49558294",
+  "releaseUrl": "https://github.com/nxsmlx/nazchat/releases/tag/v4.29.1"
 }
