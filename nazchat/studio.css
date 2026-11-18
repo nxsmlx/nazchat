@@ -4193,3 +4193,5 @@ button.tools-row.tools-link:focus-visible { outline: 2px solid var(--accent); ou
 #toolsSheetBody:has(> p.hint:first-child) > .btn.secondary.danger { color: var(--danger); }
 #toolsSheetBody:has(> p.hint:first-child) > .btn.secondary.active { color: var(--accent); }
 #toolsSheetBody:has(> p.hint:first-child) > p.hint { margin-bottom: 4px; color: var(--text3); }
+/* 4.29.1: the sticky provider filter row covers the list as it scrolls under it. */
+.model-filters { position: sticky; top: 0; z-index: 2; background: var(--bg2); box-shadow: 0 -14px 0 0 var(--bg2), 0 1px 0 0 var(--border); }
