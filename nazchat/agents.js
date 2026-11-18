@@ -22,7 +22,7 @@ function setAgentTeam(patch){const cur=db.agentTeam&&typeof db.agentTeam==='obje
    chat-completions providers can run agents (the build calls use that format). */
 function agentModelChoices(){
   const out=[];
-  for(const p of db.providers||[]){ if(p.apiType==='responses') continue; for(const m of p.selectedModels||[]) out.push({key:p.id+'::'+m,provider:p,modelId:m,label:p.name+' · '+prettyModel(m)}); }
+  for(const p of db.providers||[]){ if(p.apiType==='responses') continue; for(const m of (typeof providerModels==='function'?providerModels(p):p.selectedModels||[])) out.push({key:p.id+'::'+m,provider:p,modelId:m,label:p.name+' · '+prettyModel(m)}); }
   return out;
 }
 function agentModel(role,fallback){

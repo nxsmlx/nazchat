@@ -1,3 +1,10 @@
+# Kita Chat 4.29.1
+
+- The model list now matches your provider settings. When a provider stops offering some models (for example 15 down to 5), the old ones no longer show in the model list, the counts are right, and Kita switches to an offered model if you were on an old one.
+- Test connection & fetch models now removes models the provider no longer offers from your selection and says how many, and Save keeps only offered models.
+- The provider filter row above the model list no longer lets text show through as you scroll.
+- VersionCode 87, same com.nazchat.app package and original signing identity.
+
 # Kita Chat 4.29.0
 
 - A cleaner look across the app. Code blocks now have a single slim header with small icons for Copy, Download and fold, instead of a row of boxed buttons. Short snippets are always open.
